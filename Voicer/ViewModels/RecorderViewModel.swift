@@ -105,14 +105,11 @@ final class RecorderViewModel {
         phase = .done
     }
 
-    /// Rich (HTML/RTF) copy by default so Google Docs/Mail/Word paste real formatting;
-    /// raw markdown when the markdown mode is active.
+    /// Plain-text copy by default (markdown characters stripped); raw markdown when
+    /// the markdown mode is active. Always a plain string — rich clipboard items broke
+    /// pasting into single-line inputs on the Mac.
     private func copyStyled(_ text: String) {
-        if copyAsMarkdown {
-            Clipboard.copy(text)
-        } else {
-            Clipboard.copyFormatted(text)
-        }
+        Clipboard.copy(copyAsMarkdown ? text : MarkdownStripper.plainText(text))
     }
 
     /// Toggles markdown-copy mode and immediately re-copies the current result in the
