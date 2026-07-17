@@ -1,0 +1,13 @@
+# Secrets — never commit API keys (plan §5a)
+Secrets.xcconfig
+
+# Xcode user state
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+
+# Tuist
+.tuist-cache/
