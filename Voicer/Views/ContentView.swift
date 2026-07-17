@@ -128,11 +128,15 @@ struct ContentView: View {
         }
 
         if let styled = viewModel.styledText, viewModel.phase == .done {
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Copied — \(viewModel.selectedStyle.name)", systemImage: "doc.on.clipboard")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Text(styled)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label("Copied — \(viewModel.selectedStyle.name)", systemImage: "doc.on.clipboard")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    markdownToggle
+                }
+                MarkdownView(markdown: styled)
                     .textSelection(.enabled)
             }
             .padding()
@@ -190,6 +194,31 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
+    }
+
+    /// Sticky copy-mode switch: off = rich copy for Docs/Mail/Word, on = raw markdown.
+    /// Toggling re-copies the current result and the mode persists across recordings.
+    private var markdownToggle: some View {
+        Button {
+            viewModel.toggleMarkdownCopy()
+        } label: {
+            Label("Markdown", systemImage: "number")
+                .font(.caption.weight(.semibold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .foregroundStyle(viewModel.copyAsMarkdown ? Color(.systemBackground) : .secondary)
+                .background {
+                    if viewModel.copyAsMarkdown {
+                        Capsule().fill(.primary)
+                    } else {
+                        Capsule().strokeBorder(.tertiary)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(viewModel.copyAsMarkdown
+            ? "Markdown copy on — tap to copy formatted text instead"
+            : "Copy as markdown")
     }
 
     private func progressRow(_ text: String) -> some View {

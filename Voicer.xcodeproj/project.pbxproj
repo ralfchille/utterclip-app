@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1E8F43E34B3BFAFB436046B2 /* TuistAssets+Voicer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64E7A15A0C8B49D88587AA28 /* TuistAssets+Voicer.swift */; };
+		332B8938E022078E814715C9 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB66FB21AAFF0DCD56AE812 /* MarkdownView.swift */; };
 		4A2FA30A5583300037672276 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB46E1813AF31F37FE094380 /* TranscriptionService.swift */; };
 		5C01DA96286CC70BB84EC887 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4257D407BD6CB6E88E798268 /* Styles.swift */; };
 		653202E78F2FA09D53051888 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = F25DAA2039080DECD7F8BEEE /* WhisperKit */; };
@@ -58,6 +59,7 @@
 		A27667134F9D385786F1E8BE /* KeyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyProvider.swift; sourceTree = "<group>"; };
 		A54FF68708FBC83072A64F86 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		B43D5606C0B3E3365BF7C0DA /* Rewriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rewriter.swift; sourceTree = "<group>"; };
+		BCB66FB21AAFF0DCD56AE812 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
 		C8DF4337737F1AE77E6CD8E2 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		DB46E1813AF31F37FE094380 /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
 		DE766CEB89C1A5D906E47903 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
@@ -83,6 +85,7 @@
 			children = (
 				2121DFFC7193ABACEFCDC91E /* ContentView.swift */,
 				DE766CEB89C1A5D906E47903 /* GlassBackground.swift */,
+				BCB66FB21AAFF0DCD56AE812 /* MarkdownView.swift */,
 				0AB165CD2A434C3119AE6820 /* SettingsView.swift */,
 				0FACAC57B7AC56809C70C3A6 /* StylePickerRow.swift */,
 			);
@@ -279,6 +282,7 @@
 				A9472029651F7B1AC30894AE /* RecorderViewModel.swift in Sources */,
 				B8374FC2BB04BF0A23B822F3 /* ContentView.swift in Sources */,
 				B77508281017D8ADECF0E635 /* GlassBackground.swift in Sources */,
+				332B8938E022078E814715C9 /* MarkdownView.swift in Sources */,
 				DE7C4417CC8F9AB924D59FDB /* SettingsView.swift in Sources */,
 				D1F12EB2DBA4F519A2D231DF /* StylePickerRow.swift in Sources */,
 				EBAEB6320CEDBE674EF1A92B /* VoicerApp.swift in Sources */,

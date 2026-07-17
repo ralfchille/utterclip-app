@@ -27,14 +27,14 @@ enum Styles {
         id: "structured",
         name: "Structured",
         emoji: "🗂️",
-        systemPrompt: "Turn the transcript into a well-organized, structured response. Use a short intro, then clear points (headings or bullets where helpful). Correct grammar, keep it precise. End after the last point — no closing remarks, encouragement, or commentary. Preserve the original language. Output only the formatted answer."
+        systemPrompt: "Turn the transcript into a short, well-organized answer in markdown: a one-line intro, then bullet points. No headings unless truly needed. Correct grammar, keep it precise. End after the last point — no closing remarks or commentary. Preserve the original language. Output only the answer."
     )
 
     static let summary = MessageStyle(
         id: "summary",
         name: "Summary",
         emoji: "📝",
-        systemPrompt: "Summarize the transcript into its key points as a concise digest suitable for a summary channel. Lead with a one-line takeaway, then 3–6 short bullets of the essentials. Drop filler and repetition. Preserve the original language. Output only the summary."
+        systemPrompt: "Summarize the transcript in markdown: a one-line takeaway, then 3–5 short bullets with the essentials. Drop filler and repetition. No closing remarks. Preserve the original language. Output only the summary."
     )
 
     /// All styles, in display order.
