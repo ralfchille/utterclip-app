@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Cloud rewrite engine calling the Anthropic Messages API (plan Phase 5).
 /// The model id and provider stay behind the `Rewriter` protocol so they can be swapped
@@ -28,8 +29,11 @@ struct CloudRewriter: Rewriter {
 
         let data: Data
         let response: URLResponse
+        let start = ContinuousClock.now
         do {
             (data, response) = try await URLSession.shared.data(for: request)
+            Logger(subsystem: "com.babbellabs.voicer", category: "rewrite")
+                .info("Rewrite API call took \(ContinuousClock.now - start, privacy: .public)")
         } catch {
             throw AppError.rewriteFailed("Network error — raw transcript is still on your clipboard.")
         }
