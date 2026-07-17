@@ -23,11 +23,11 @@ enum Styles {
         systemPrompt: "Rewrite the transcript as a WhatsApp message to family or a friend. Warm and personal, but not overly casual — no slang, no exclamation pile-ups, at most one emoji and only if it genuinely fits. Stay close to my own phrasing and word choices from the transcript; fix grammar and drop filler, but don't smooth away how I naturally speak. Preserve the original language. Output only the message."
     )
 
-    static let structured = MessageStyle(
-        id: "structured",
-        name: "Structured",
-        emoji: "🗂️",
-        systemPrompt: "Turn the transcript into a short, well-organized answer in markdown: a one-line intro, then bullet points. No headings unless truly needed. Correct grammar, keep it precise. End after the last point — no closing remarks or commentary. Preserve the original language. Output only the answer."
+    static let prompt = MessageStyle(
+        id: "prompt",
+        name: "Prompt",
+        emoji: "🤖",
+        systemPrompt: "Rewrite the transcript as a clear, well-structured prompt for an AI assistant. Lead with the goal, then the relevant context and constraints, then what the output should look like — use markdown bullets where it helps. Keep everything that was said and don't invent requirements that weren't. Drop filler. Preserve the original language. Output only the prompt."
     )
 
     static let summary = MessageStyle(
@@ -38,7 +38,7 @@ enum Styles {
     )
 
     /// All styles, in display order.
-    static let all: [MessageStyle] = [slack, email, whatsapp, structured, summary]
+    static let all: [MessageStyle] = [slack, prompt, email, whatsapp, summary]
 
     /// The one-tap default for v1 (changeable in Settings).
     static let defaultStyle = slack

@@ -47,6 +47,11 @@ final class RecorderViewModel {
         self.rewriter = rewriter
         self.copyAsMarkdown = UserDefaults.standard.bool(forKey: Self.copyAsMarkdownKey)
         self.selectedStyle = Styles.defaultStyle
+        // A saved default may reference a removed style id (e.g. "structured") —
+        // fall back to the app default so the Settings picker stays consistent.
+        if !Styles.all.contains(where: { $0.id == defaultStyleID }) {
+            defaultStyleID = Styles.defaultStyle.id
+        }
         self.selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
     }
 
