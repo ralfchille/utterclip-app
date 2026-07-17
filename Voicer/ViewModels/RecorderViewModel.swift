@@ -39,7 +39,7 @@ final class RecorderViewModel {
     init(rewriter: Rewriter = CloudRewriter(keyProvider: { KeyProvider.shared.apiKey() })) {
         self.rewriter = rewriter
         self.selectedStyle = Styles.defaultStyle
-        self.selectedStyle = Styles.style(withID: defaultStyleID)
+        self.selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
     }
 
     var isBusy: Bool {
@@ -68,7 +68,7 @@ final class RecorderViewModel {
             rawTranscript = raw
             Clipboard.copy(raw) // fast path: raw text is pasteable before any network call
             try? FileManager.default.removeItem(at: audioURL)
-            await rewrite(with: Styles.style(withID: defaultStyleID))
+            await rewrite(with: StyleStore.shared.style(withID: defaultStyleID))
         } catch {
             phase = .error(error.localizedDescription)
         }
@@ -77,6 +77,8 @@ final class RecorderViewModel {
     /// Runs (or re-runs) the rewrite for a style and copies the result (plan Phase 6).
     func rewrite(with style: MessageStyle) async {
         guard let raw = rawTranscript else { return }
+        // Re-fetch by id so a prompt edited in Settings applies to the next rewrite.
+        let style = StyleStore.shared.style(withID: style.id)
         selectedStyle = style
         rewriteError = nil
         phase = .rewriting
