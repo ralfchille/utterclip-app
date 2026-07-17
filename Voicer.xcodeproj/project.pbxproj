@@ -23,6 +23,7 @@
 		BF2BAC428B302434D0BD6E40 /* TuistBundle+Voicer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E50E42A003370B9E4041869B /* TuistBundle+Voicer.swift */; };
 		C26E67654F20F5E012EDCDE9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFA0A7CFEBBC5CDA8A7ED8E0 /* Assets.xcassets */; };
 		C2D633365E1F6CBCBE492620 /* MessageStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06DD8FDD6A0A2EF751C7FA8E /* MessageStyle.swift */; };
+		CE7CB292A311485EFFF32A46 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5FD7703E3E9F9856E94354 /* StyleStore.swift */; };
 		D1F12EB2DBA4F519A2D231DF /* StylePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FACAC57B7AC56809C70C3A6 /* StylePickerRow.swift */; };
 		DE7C4417CC8F9AB924D59FDB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AB165CD2A434C3119AE6820 /* SettingsView.swift */; };
 		EBAEB6320CEDBE674EF1A92B /* VoicerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 328F295E09D32AA51FDA483B /* VoicerApp.swift */; };
@@ -52,6 +53,7 @@
 		328F295E09D32AA51FDA483B /* VoicerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicerApp.swift; sourceTree = "<group>"; };
 		36F4C379867D3423ACC9CFA8 /* Voicer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Voicer-Info.plist"; sourceTree = "<group>"; };
 		4257D407BD6CB6E88E798268 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
+		4F5FD7703E3E9F9856E94354 /* StyleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleStore.swift; sourceTree = "<group>"; };
 		64E7A15A0C8B49D88587AA28 /* TuistAssets+Voicer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Voicer.swift"; sourceTree = "<group>"; };
 		A27667134F9D385786F1E8BE /* KeyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyProvider.swift; sourceTree = "<group>"; };
 		A54FF68708FBC83072A64F86 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
@@ -167,6 +169,7 @@
 				05B5B30A6F2ABBB3B4B81061 /* CloudRewriter.swift */,
 				A27667134F9D385786F1E8BE /* KeyProvider.swift */,
 				B43D5606C0B3E3365BF7C0DA /* Rewriter.swift */,
+				4F5FD7703E3E9F9856E94354 /* StyleStore.swift */,
 				DB46E1813AF31F37FE094380 /* TranscriptionService.swift */,
 			);
 			path = Services;
@@ -271,6 +274,7 @@
 				8400DCBB05C24A2C6E65DB1E /* CloudRewriter.swift in Sources */,
 				65AFFFFAF41FF37C6CA9AB3B /* KeyProvider.swift in Sources */,
 				672060A27E53FA18B36611DE /* Rewriter.swift in Sources */,
+				CE7CB292A311485EFFF32A46 /* StyleStore.swift in Sources */,
 				4A2FA30A5583300037672276 /* TranscriptionService.swift in Sources */,
 				A9472029651F7B1AC30894AE /* RecorderViewModel.swift in Sources */,
 				B8374FC2BB04BF0A23B822F3 /* ContentView.swift in Sources */,

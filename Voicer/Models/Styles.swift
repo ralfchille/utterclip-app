@@ -27,7 +27,7 @@ enum Styles {
         id: "structured",
         name: "Structured",
         emoji: "🗂️",
-        systemPrompt: "Turn the transcript into a well-organized, structured response. Use a short intro, then clear points (headings or bullets where helpful), then a brief conclusion if warranted. Correct grammar, keep it precise. Preserve the original language. Output only the formatted answer."
+        systemPrompt: "Turn the transcript into a well-organized, structured response. Use a short intro, then clear points (headings or bullets where helpful). Correct grammar, keep it precise. End after the last point — no closing remarks, encouragement, or commentary. Preserve the original language. Output only the formatted answer."
     )
 
     static let summary = MessageStyle(

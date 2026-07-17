@@ -10,7 +10,7 @@ struct StylePickerRow: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(Styles.all) { style in
+                ForEach(StyleStore.shared.styles) { style in
                     Button {
                         onSelect(style)
                     } label: {
@@ -21,9 +21,9 @@ struct StylePickerRow: View {
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .foregroundStyle(style == selected ? Color(.systemBackground) : .primary)
+                        .foregroundStyle(style.id == selected.id ? Color(.systemBackground) : .primary)
                         .background {
-                            if style == selected {
+                            if style.id == selected.id {
                                 Capsule().fill(.primary)
                             }
                         }
