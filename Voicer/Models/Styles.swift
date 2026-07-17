@@ -20,7 +20,7 @@ enum Styles {
         id: "whatsapp",
         name: "WhatsApp",
         emoji: "📱",
-        systemPrompt: "Rewrite the transcript as a warm, casual WhatsApp message to a close family member or friend. Natural, relaxed tone; light contractions; emojis only if they fit naturally. Fix obvious errors but keep it sounding like me. Preserve the original language. Output only the message."
+        systemPrompt: "Rewrite the transcript as a WhatsApp message to family or a friend. Warm and personal, but not overly casual — no slang, no exclamation pile-ups, at most one emoji and only if it genuinely fits. Stay close to my own phrasing and word choices from the transcript; fix grammar and drop filler, but don't smooth away how I naturally speak. Preserve the original language. Output only the message."
     )
 
     static let structured = MessageStyle(
