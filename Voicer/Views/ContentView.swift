@@ -196,7 +196,7 @@ struct ContentView: View {
         .padding(.top, 60)
     }
 
-    /// Sticky copy-mode switch: off = rich copy for Docs/Mail/Word, on = raw markdown.
+    /// Sticky copy-mode switch: off = plain text (markdown stripped), on = raw markdown.
     /// Toggling re-copies the current result and the mode persists across recordings.
     private var markdownToggle: some View {
         Button {
@@ -217,7 +217,7 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(viewModel.copyAsMarkdown
-            ? "Markdown copy on — tap to copy formatted text instead"
+            ? "Markdown copy on — tap to copy plain text instead"
             : "Copy as markdown")
     }
 
