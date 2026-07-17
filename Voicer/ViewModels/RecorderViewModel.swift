@@ -26,6 +26,13 @@ final class RecorderViewModel {
     private let rewriter: Rewriter
 
     private static let defaultStyleKey = "defaultStyleID"
+    private static let copyAsMarkdownKey = "copyAsMarkdown"
+
+    /// When on, copies put raw markdown on the clipboard instead of the rich
+    /// (HTML/RTF) representations. Persists across recordings and launches.
+    var copyAsMarkdown: Bool {
+        didSet { UserDefaults.standard.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) }
+    }
 
     var defaultStyleID: String {
         get {
@@ -38,6 +45,7 @@ final class RecorderViewModel {
 
     init(rewriter: Rewriter = CloudRewriter(keyProvider: { KeyProvider.shared.apiKey() })) {
         self.rewriter = rewriter
+        self.copyAsMarkdown = UserDefaults.standard.bool(forKey: Self.copyAsMarkdownKey)
         self.selectedStyle = Styles.defaultStyle
         self.selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
     }
@@ -85,13 +93,31 @@ final class RecorderViewModel {
         do {
             let styled = try await rewriter.rewrite(raw, style: style)
             styledText = styled
-            // Rich copy: markdown from the model pastes as real formatting in
-            // Google Docs/Mail/Word, while plain-text targets get the raw text.
-            Clipboard.copyFormatted(styled)
+            copyStyled(styled)
         } catch {
             rewriteError = error.localizedDescription
         }
         phase = .done
+    }
+
+    /// Rich (HTML/RTF) copy by default so Google Docs/Mail/Word paste real formatting;
+    /// raw markdown when the markdown mode is active.
+    private func copyStyled(_ text: String) {
+        if copyAsMarkdown {
+            Clipboard.copy(text)
+        } else {
+            Clipboard.copyFormatted(text)
+        }
+    }
+
+    /// Toggles markdown-copy mode and immediately re-copies the current result in the
+    /// new mode. The mode sticks until toggled off.
+    func toggleMarkdownCopy() {
+        copyAsMarkdown.toggle()
+        if let styled = styledText {
+            copyStyled(styled)
+        }
+        haptic(.light)
     }
 
     /// Recovers the raw transcript onto the clipboard in case the rewrite isn't wanted.

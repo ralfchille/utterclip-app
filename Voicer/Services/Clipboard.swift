@@ -15,7 +15,9 @@ enum Clipboard {
     static func copyFormatted(_ markdown: String) {
         let html = MarkdownHTML.render(markdown)
         var item: [String: Any] = [
-            UTType.utf8PlainText.identifier: markdown,
+            // Plain fallback without literal markdown characters — plain-text targets
+            // get "• point", not "- **point**". Raw markdown is a separate copy option.
+            UTType.utf8PlainText.identifier: MarkdownHTML.plainText(markdown),
             UTType.html.identifier: html,
         ]
         // RTF for editors that prefer it (TextEdit, Pages). HTML→NSAttributedString
@@ -97,6 +99,32 @@ enum MarkdownHTML {
         flushParagraph()
         closeList()
         return "<html><body>\(html)</body></html>"
+    }
+
+    /// Markdown stripped to readable plain text: headings become plain lines,
+    /// bullets become "• ", bold/italic/code markers are removed.
+    static func plainText(_ markdown: String) -> String {
+        markdown.components(separatedBy: .newlines).map { rawLine -> String in
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if let (_, text) = heading(line) { return stripInline(text) }
+            if let text = listItem(line, markers: ["- ", "* ", "• "]) {
+                return "• " + stripInline(text)
+            }
+            return stripInline(line)
+        }
+        .joined(separator: "\n")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func stripInline(_ text: String) -> String {
+        var s = text
+        s = s.replacingOccurrences(
+            of: #"\*\*(.+?)\*\*"#, with: "$1", options: .regularExpression)
+        s = s.replacingOccurrences(
+            of: #"(?<![\w*])\*([^*\n]+)\*(?![\w*])"#, with: "$1", options: .regularExpression)
+        s = s.replacingOccurrences(
+            of: #"`([^`]+)`"#, with: "$1", options: .regularExpression)
+        return s
     }
 
     private static func heading(_ line: String) -> (Int, String)? {
