@@ -83,7 +83,9 @@ final class RecorderViewModel {
         do {
             let styled = try await rewriter.rewrite(raw, style: style)
             styledText = styled
-            Clipboard.copy(styled)
+            // Rich copy: markdown from the model pastes as real formatting in
+            // Google Docs/Mail/Word, while plain-text targets get the raw text.
+            Clipboard.copyFormatted(styled)
         } catch {
             rewriteError = error.localizedDescription
         }

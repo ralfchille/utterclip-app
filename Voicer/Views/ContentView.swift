@@ -76,7 +76,25 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             case .failed(let message):
-                errorSection("Model failed to load: \(message)")
+                VStack(spacing: 12) {
+                    Label("Model failed to load", systemImage: "exclamationmark.triangle")
+                        .font(.subheadline.weight(.semibold))
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                    Text("The model downloads once from huggingface.co on first launch — check your internet connection (Wi-Fi recommended, ~500 MB) and retry.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") {
+                        viewModel.transcription.warmUp()
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.bordered)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 40)
             case .ready:
                 VStack(spacing: 6) {
                     Image(systemName: "mic.circle")
