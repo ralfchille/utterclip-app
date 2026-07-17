@@ -52,7 +52,8 @@ struct ContentView: View {
                 case .recording:
                     recordingIndicator
                 case .transcribing:
-                    progressRow("Transcribing…")
+                    progressRow(viewModel.transcription.state == .ready
+                        ? "Transcribing…" : "Finishing model setup…")
                 case .rewriting, .done:
                     transcriptSection
                 case .error(let message):
@@ -70,11 +71,15 @@ struct ContentView: View {
         VStack(spacing: 8) {
             switch viewModel.transcription.state {
             case .cold, .warming:
-                progressRow("Warming up the transcription model…")
-                Text("First launch downloads the model once; afterwards it's instant.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                readyHint
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Model loads in the background — you can record right away.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 12)
             case .failed(let message):
                 VStack(spacing: 12) {
                     Label("Model failed to load", systemImage: "exclamationmark.triangle")
@@ -96,20 +101,24 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 40)
             case .ready:
-                VStack(spacing: 6) {
-                    Image(systemName: "mic.circle")
-                        .font(.system(size: 44, weight: .light))
-                        .foregroundStyle(.secondary)
-                    Text("Tap the mic, speak, tap again.\nYour words land on the clipboard.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 40)
+                readyHint
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var readyHint: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "mic.circle")
+                .font(.system(size: 44, weight: .light))
+                .foregroundStyle(.secondary)
+            Text("Tap the mic, speak, tap again.\nYour words land on the clipboard.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 40)
     }
 
     @ViewBuilder
@@ -210,6 +219,13 @@ struct ContentView: View {
 
     // MARK: - Record button
 
+    /// Recording only needs the mic — it stays available while the model warms up;
+    /// transcription waits for the load. Only a failed load (or mid-flow work) blocks it.
+    private var recordUnavailable: Bool {
+        if case .failed = viewModel.transcription.state { return true }
+        return viewModel.isBusy
+    }
+
     private var recordButton: some View {
         Button {
             Task {
@@ -232,8 +248,8 @@ struct ContentView: View {
                 .glassBackground(shape: Circle())
         }
         .buttonStyle(.plain)
-        .disabled(viewModel.transcription.state != .ready || viewModel.isBusy)
-        .opacity(viewModel.transcription.state == .ready && !viewModel.isBusy ? 1 : 0.4)
+        .disabled(recordUnavailable)
+        .opacity(recordUnavailable ? 0.4 : 1)
         .accessibilityLabel(viewModel.recorder.isRecording ? "Stop recording" : "Start recording")
         .animation(.snappy, value: viewModel.recorder.isRecording)
     }

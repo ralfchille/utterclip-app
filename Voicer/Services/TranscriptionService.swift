@@ -61,7 +61,12 @@ final class TranscriptionService {
     }
 
     func transcribe(_ audioURL: URL) async throws -> String {
-        guard let kit = whisperKit else { throw AppError.modelNotReady }
+        // Recording may start before the model finishes loading — wait for the
+        // in-flight warm-up so the load hides behind the recording time.
+        while state == .cold || state == .warming {
+            try await Task.sleep(for: .milliseconds(150))
+        }
+        guard case .ready = state, let kit = whisperKit else { throw AppError.modelNotReady }
         // Explicit auto-detection: without it the decoder prefills the English token
         // and German speech comes out (loosely) translated instead of transcribed.
         var options = DecodingOptions()
