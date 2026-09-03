@@ -15,7 +15,7 @@ let project = Project(
             "TARGETED_DEVICE_FAMILY": "1",
             "GENERATE_INFOPLIST_FILE": "YES",
             "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
-            "DEVELOPMENT_TEAM": "R3HNWY63U2",
+            "DEVELOPMENT_TEAM": "2F7QR8NL2D",
             "CODE_SIGN_STYLE": "Automatic",
         ]
     ),
