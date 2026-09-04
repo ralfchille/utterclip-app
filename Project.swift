@@ -24,7 +24,7 @@ let project = Project(
             name: "Voicer",
             destinations: [.iPhone],
             product: .app,
-            bundleId: "com.babbellabs.voicer",
+            bundleId: "com.ralfchille.voicer",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Voicer",

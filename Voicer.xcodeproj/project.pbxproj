@@ -309,7 +309,7 @@
 					"$(inherited)",
 					"-L$(DT_TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.babbellabs.voicer;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ralfchille.voicer;
 				PRODUCT_NAME = Voicer;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
@@ -464,7 +464,7 @@
 					"$(inherited)",
 					"-L$(DT_TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.babbellabs.voicer;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ralfchille.voicer;
 				PRODUCT_NAME = Voicer;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
