@@ -20,16 +20,32 @@ let project = Project(
             "GENERATE_INFOPLIST_FILE": "YES",
             "DEVELOPMENT_TEAM": "2F7QR8NL2D",
             "CODE_SIGN_STYLE": "Automatic",
-            // Shared by app and widget extension — the store requires both to match.
-            // Bump the build number whenever the widget changes: iOS caches widget
-            // gallery previews per bundle version and won't re-render otherwise.
+            // Shared by app, core framework and widget extension — the store requires
+            // them to match. Bump the build number whenever the widget changes: iOS caches
+            // widget gallery previews per bundle version and won't re-render otherwise.
             "MARKETING_VERSION": "1.0",
             "CURRENT_PROJECT_VERSION": "2",
-            // FoundationModels exists from iOS 26; weak-link so iOS 17–25 still launch.
+            // FoundationModels exists from iOS 26 / macOS 26; weak-link so older systems
+            // still launch.
             "OTHER_LDFLAGS": ["$(inherited)", "-weak_framework", "FoundationModels"],
         ]
     ),
     targets: [
+        // Everything below the UI — recording, transcription, rewriting, redaction, the
+        // stores and the view model — so a macOS app can share it with the iPhone app.
+        // Builds for both platforms; the few platform differences are `#if`-guarded inside.
+        .target(
+            name: "UtterclipCore",
+            destinations: [.iPhone, .mac],
+            product: .framework,
+            bundleId: "com.ralfchille.voicer.core",
+            deploymentTargets: .multiplatform(iOS: "17.0", macOS: "14.0"),
+            infoPlist: .default,
+            sources: ["UtterclipCore/**/*.swift"],
+            dependencies: [
+                .package(product: "WhisperKit"),
+            ]
+        ),
         .target(
             name: "Utterclip",
             destinations: [.iPhone],
@@ -52,7 +68,7 @@ let project = Project(
             sources: ["Utterclip/**/*.swift"],
             resources: ["Utterclip/Resources/**"],
             dependencies: [
-                .package(product: "WhisperKit"),
+                .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
                 .target(name: "UtterclipWidgets"),
             ],

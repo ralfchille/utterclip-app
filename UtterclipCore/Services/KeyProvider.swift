@@ -4,15 +4,15 @@ import Security
 /// Keychain-backed API key storage (plan §5a). The key is entered once via the Settings
 /// screen and lives only in the device Keychain — never in the repo, never logged.
 /// Swappable by design: user-supplied keys (future work) use this exact same path.
-struct KeyProvider {
-    static let shared = KeyProvider()
+public struct KeyProvider {
+    public static let shared = KeyProvider()
 
     // Unchanged across the rename so the key saved before it stays readable.
     private let service = "com.babbellabs.voicer"
     // Predates multi-provider support; kept so an already-stored key stays readable.
     private let account = "anthropic-api-key"
 
-    func apiKey() -> String? {
+    public func apiKey() -> String? {
         var query = baseQuery
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -23,13 +23,13 @@ struct KeyProvider {
         return String(data: data, encoding: .utf8)
     }
 
-    var hasKey: Bool { apiKey()?.isEmpty == false }
+    public var hasKey: Bool { apiKey()?.isEmpty == false }
 
     /// Which provider the stored key routes to (see `AIProvider.detect`); nil if none or unknown.
-    var provider: AIProvider? { apiKey().flatMap(AIProvider.detect) }
+    public var provider: AIProvider? { apiKey().flatMap(AIProvider.detect) }
 
     @discardableResult
-    func setApiKey(_ key: String) -> Bool {
+    public func setApiKey(_ key: String) -> Bool {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             deleteApiKey()
@@ -48,15 +48,21 @@ struct KeyProvider {
         return status == errSecSuccess
     }
 
-    func deleteApiKey() {
+    public func deleteApiKey() {
         SecItemDelete(baseQuery as CFDictionary)
     }
 
     private var baseQuery: [String: Any] {
-        [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+        #if os(macOS)
+        // The iOS-style data-protection keychain instead of the legacy login keychain,
+        // which would prompt for access on every read. iOS only has the former.
+        query[kSecUseDataProtectionKeychain as String] = true
+        #endif
+        return query
     }
 }

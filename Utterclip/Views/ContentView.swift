@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 
 /// Main record screen (plan Phase 7): big record/stop button, result area,
 /// style picker row, spinner during rewrite. Monochrome, HIG-native.

@@ -4,11 +4,15 @@ import os
 /// Cloud rewrite engine (plan Phase 5). Which API it calls follows from the stored key —
 /// see `AIProvider.detect` — so one key field serves every supported provider. The
 /// prompting itself is `RewritePrompt`, shared with the on-device `LocalRewriter`.
-struct CloudRewriter: Rewriter {
+public struct CloudRewriter: Rewriter {
     /// Key source — the user's key from the Keychain (plan §5a).
-    let keyProvider: () -> String?
+    public let keyProvider: () -> String?
 
-    func rewrite(_ text: String, style: MessageStyle) async throws -> String {
+    public init(keyProvider: @escaping () -> String?) {
+        self.keyProvider = keyProvider
+    }
+
+    public func rewrite(_ text: String, style: MessageStyle) async throws -> String {
         guard let apiKey = keyProvider(), !apiKey.isEmpty else { throw AppError.noApiKey }
         guard let provider = AIProvider.detect(apiKey) else {
             throw AppError.rewriteFailed(

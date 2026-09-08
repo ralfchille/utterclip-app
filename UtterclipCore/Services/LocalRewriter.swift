@@ -4,17 +4,19 @@ import NaturalLanguage
 import FoundationModels
 #endif
 
-/// On-device rewrite through Apple's Foundation Models (iOS 26, Apple Intelligence):
-/// nothing leaves the phone and no API key is needed. Quality sits a notch below the
-/// cloud models — fine for Plain and light restyling, weaker on nuanced tone and German.
-struct LocalRewriter: Rewriter {
+/// On-device rewrite through Apple's Foundation Models (iOS 26 / macOS 26, Apple
+/// Intelligence): nothing leaves the device and no API key is needed. Quality sits a notch
+/// below the cloud models — fine for Plain and light restyling, weaker on nuanced tone and German.
+public struct LocalRewriter: Rewriter {
+    public init() {}
+
     /// True when the system model can run here right now.
-    static var isAvailable: Bool { unavailabilityReason == nil }
+    public static var isAvailable: Bool { unavailabilityReason == nil }
 
     /// Why the on-device model can't be used on this device, or nil if it can.
-    static var unavailabilityReason: String? {
+    public static var unavailabilityReason: String? {
         #if canImport(FoundationModels)
-        guard #available(iOS 26, *) else { return "Needs iOS 26." }
+        guard #available(iOS 26, macOS 26, *) else { return "Needs \(requiredOS)." }
         switch SystemLanguageModel.default.availability {
         case .available:
             return nil
@@ -30,13 +32,24 @@ struct LocalRewriter: Rewriter {
             return "Apple Intelligence isn't available right now."
         }
         #else
-        return "Needs iOS 26."
+        return "Needs \(requiredOS)."
         #endif
     }
 
-    func rewrite(_ text: String, style: MessageStyle) async throws -> String {
+    /// The OS release that ships Apple's on-device model, for user-facing messages.
+    private static let requiredOS: String = {
+        #if os(macOS)
+        "macOS 26"
+        #else
+        "iOS 26"
+        #endif
+    }()
+
+    public func rewrite(_ text: String, style: MessageStyle) async throws -> String {
         #if canImport(FoundationModels)
-        guard #available(iOS 26, *) else { throw AppError.rewriteFailed("On-device rewriting needs iOS 26.") }
+        guard #available(iOS 26, macOS 26, *) else {
+            throw AppError.rewriteFailed("On-device rewriting needs \(Self.requiredOS).")
+        }
         if let reason = Self.unavailabilityReason { throw AppError.rewriteFailed(reason) }
 
         // Small models follow "write in English" far better than "same language as the
@@ -81,7 +94,7 @@ struct LocalRewriter: Rewriter {
     #if canImport(FoundationModels)
     /// Guided generation: the model fills a field instead of composing a reply, which removes
     /// most of the "Sure, here's your text:" framing small models add.
-    @available(iOS 26, *)
+    @available(iOS 26, macOS 26, *)
     private static func generate(_ session: LanguageModelSession, _ prompt: String) async throws -> String {
         let response = try await session.respond(
             to: prompt,
@@ -136,7 +149,7 @@ struct LocalRewriter: Rewriter {
 }
 
 #if canImport(FoundationModels)
-@available(iOS 26, *)
+@available(iOS 26, macOS 26, *)
 @Generable
 private struct Rewrite {
     @Guide(description: "The rewritten transcript and nothing else — no introduction, no commentary, no surrounding quotation marks.")

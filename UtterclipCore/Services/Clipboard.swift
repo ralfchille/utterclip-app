@@ -1,18 +1,29 @@
+import Foundation
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
-/// UIPasteboard wrapper (plan Phase 4). Copies are always plain text — rich
+/// Pasteboard wrapper (plan Phase 4). Copies are always plain text — rich
 /// (HTML/RTF) items broke pasting into plain-line inputs via Universal Clipboard.
-enum Clipboard {
-    static func copy(_ string: String) {
+public enum Clipboard {
+    public static func copy(_ string: String) {
+        #if canImport(UIKit)
         UIPasteboard.general.string = string
+        #elseif canImport(AppKit)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
+        #endif
     }
 }
 
 /// Strips the markdown subset the rewrite styles produce down to readable plain text:
 /// headings become plain lines, list markers become "• ", bold/italic/code markers are
 /// removed. Numbered lists pass through as-is.
-enum MarkdownStripper {
-    static func plainText(_ markdown: String) -> String {
+public enum MarkdownStripper {
+    public static func plainText(_ markdown: String) -> String {
         markdown.components(separatedBy: .newlines).map { rawLine -> String in
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if let text = headingText(line) { return stripInline(text) }

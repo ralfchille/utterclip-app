@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 
 /// Row of style buttons shown after a result — tapping one re-runs the rewrite and
 /// re-copies (plan Phase 6).

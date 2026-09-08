@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 
 /// WhatsApp-style live waveform: one capsule per mic sample, entering on the right
 /// and sliding left as new samples arrive. Quiet samples stay dots; speech grows

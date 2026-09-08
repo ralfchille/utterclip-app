@@ -10,15 +10,15 @@ import os
 /// via `warmUp()` and kept resident so recordings never pay a per-use load cost.
 @Observable
 @MainActor
-final class TranscriptionService {
-    static let shared = TranscriptionService()
+public final class TranscriptionService {
+    public static let shared = TranscriptionService()
 
-    enum State: Equatable {
+    public enum State: Equatable {
         case cold, warming, ready
         case failed(String)
     }
 
-    private(set) var state: State = .cold
+    public private(set) var state: State = .cold
     private var whisperKit: WhisperKit?
     private let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "transcription")
 
@@ -27,7 +27,7 @@ final class TranscriptionService {
     /// Idempotent: loads + compiles the model in a background task. Safe to call again
     /// after a failure to retry. Transient failures (e.g. the first-launch download
     /// losing network) are retried automatically before surfacing an error.
-    func warmUp() {
+    public func warmUp() {
         switch state {
         case .warming, .ready: return
         case .cold, .failed: break
@@ -60,7 +60,7 @@ final class TranscriptionService {
         }
     }
 
-    func transcribe(_ audioURL: URL) async throws -> String {
+    public func transcribe(_ audioURL: URL) async throws -> String {
         // Recording may start before the model finishes loading — wait for the
         // in-flight warm-up so the load hides behind the recording time.
         while state == .cold || state == .warming {

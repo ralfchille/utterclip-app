@@ -3,22 +3,22 @@ import Observation
 
 /// One metered mic sample; the id keeps bar identity stable as the window slides,
 /// so the waveform bars glide left instead of morphing in place.
-struct LevelSample: Identifiable, Equatable {
-    let id: Int
-    let value: Float
+public struct LevelSample: Identifiable, Equatable {
+    public let id: Int
+    public let value: Float
 }
 
 /// Records microphone audio to a temp 16 kHz mono PCM .wav — Whisper's expected format
-/// (plan Phase 2).
+/// (plan Phase 2). Runs on iOS and macOS; only the audio-session handling is iOS-specific.
 @Observable
 @MainActor
-final class AudioRecorder {
+public final class AudioRecorder {
     private var recorder: AVAudioRecorder?
-    private(set) var isRecording = false
-    private(set) var startedAt: Date?
+    public private(set) var isRecording = false
+    public private(set) var startedAt: Date?
 
     /// Rolling window of normalized mic levels (0…1, newest last) for the live waveform.
-    private(set) var levels: [LevelSample] = []
+    public private(set) var levels: [LevelSample] = []
     private static let levelWindow = 40
     private var sampleCount = 0
     private var meterTask: Task<Void, Never>?
@@ -38,9 +38,11 @@ final class AudioRecorder {
             throw AppError.microphonePermissionDenied
         }
 
+        #if os(iOS)
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.record, mode: .default)
         try session.setActive(true)
+        #endif
 
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("utterclip-\(UUID().uuidString).wav")
@@ -70,8 +72,7 @@ final class AudioRecorder {
         self.recorder = nil
         isRecording = false
         startedAt = nil
-        try? AVAudioSession.sharedInstance()
-            .setActive(false, options: .notifyOthersOnDeactivation)
+        deactivateSession()
         return url
     }
 
@@ -85,8 +86,15 @@ final class AudioRecorder {
         recorder = nil
         isRecording = false
         startedAt = nil
+        deactivateSession()
+    }
+
+    /// Hands the audio hardware back. `AVAudioSession` is iOS-only; macOS records without one.
+    private func deactivateSession() {
+        #if os(iOS)
         try? AVAudioSession.sharedInstance()
             .setActive(false, options: .notifyOthersOnDeactivation)
+        #endif
     }
 
     // MARK: - Metering

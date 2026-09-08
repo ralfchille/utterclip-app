@@ -1,7 +1,7 @@
 import Foundation
 
 /// Shared error type used across services (plan Phase 1, step 5).
-enum AppError: LocalizedError {
+public enum AppError: LocalizedError {
     case microphonePermissionDenied
     case recordingFailed
     case modelNotReady
@@ -10,7 +10,7 @@ enum AppError: LocalizedError {
     case noApiKey
     case rewriteFailed(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .microphonePermissionDenied:
             return "Microphone access is denied. Enable it in Settings → Privacy → Microphone."
