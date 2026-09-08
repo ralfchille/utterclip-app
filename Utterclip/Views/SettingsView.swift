@@ -112,16 +112,21 @@ struct SettingsView: View {
                     Text("Stored only in the device Keychain. The provider is detected from the key. Needed for style rewrites; transcription works without it.")
                 }
 
-                Section {
-                    Toggle("Rewrite on device (Apple Intelligence)", isOn: $viewModel.useOnDeviceModel)
-                        .disabled(!viewModel.onDeviceAvailable)
-                } header: {
-                    Text("Rewrite engine")
-                } footer: {
-                    if let reason = viewModel.onDeviceUnavailabilityReason {
-                        Text("Unavailable — \(reason)")
-                    } else {
-                        Text("Apple's on-device model rewrites without an API key and nothing leaves the phone. Quality is a notch below the cloud models — best for Plain and light restyling. Off: rewrites use the API key above.")
+                // Only on devices that can run Apple's model at all (iOS 26, Apple
+                // Intelligence-capable). Elsewhere the section is omitted rather than shown
+                // greyed out — there is nothing the user could do about it.
+                if viewModel.onDeviceSupported {
+                    Section {
+                        Toggle("Rewrite on device (Apple Intelligence)", isOn: $viewModel.useOnDeviceModel)
+                            .disabled(!viewModel.onDeviceAvailable)
+                    } header: {
+                        Text("Rewrite engine")
+                    } footer: {
+                        if let reason = viewModel.onDeviceUnavailabilityReason {
+                            Text("Unavailable — \(reason)")
+                        } else {
+                            Text("Apple's on-device model rewrites without an API key and nothing leaves the phone. Quality is a notch below the cloud models — best for Plain and light restyling. Off: rewrites use the API key above.")
+                        }
                     }
                 }
 

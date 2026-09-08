@@ -282,7 +282,10 @@ struct ContentView: View {
                 }
             }
             .font(.footnote.weight(.semibold))
-            if !viewModel.onDeviceAvailable, let reason = viewModel.onDeviceUnavailabilityReason {
+            // Only worth a line on devices that could run the model but aren't ready (Apple
+            // Intelligence off, model downloading); on ineligible devices say nothing.
+            if viewModel.onDeviceSupported, !viewModel.onDeviceAvailable,
+               let reason = viewModel.onDeviceUnavailabilityReason {
                 Text("On-device model: \(reason)")
                     .font(.caption)
                     .foregroundStyle(.tertiary)

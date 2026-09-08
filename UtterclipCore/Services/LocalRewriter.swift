@@ -13,6 +13,22 @@ public struct LocalRewriter: Rewriter {
     /// True when the system model can run here right now.
     public static var isAvailable: Bool { unavailabilityReason == nil }
 
+    /// Whether this device could run the on-device model at all: an OS that ships it and
+    /// Apple Intelligence-capable hardware. The UI hides the option entirely when this is
+    /// false; when it's true but `isAvailable` isn't (Apple Intelligence switched off, model
+    /// still downloading), the option shows disabled with the reason.
+    public static var isSupported: Bool {
+        #if canImport(FoundationModels)
+        guard #available(iOS 26, macOS 26, *) else { return false }
+        if case .unavailable(.deviceNotEligible) = SystemLanguageModel.default.availability {
+            return false
+        }
+        return true
+        #else
+        return false
+        #endif
+    }
+
     /// Why the on-device model can't be used on this device, or nil if it can.
     public static var unavailabilityReason: String? {
         #if canImport(FoundationModels)
