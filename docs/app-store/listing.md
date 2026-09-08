@@ -26,7 +26,7 @@ list**, where other companies' trademarks tend to get flagged under guideline 2.
 ## Promotional text (170)
 
 ```
-Speak, and a clean Slack message, WhatsApp reply, email or AI prompt lands on your clipboard. Transcribed on your iPhone. No account: bring your own AI key or go on-device.
+Speak, and a clean Slack message, WhatsApp reply, email or AI prompt lands on your clipboard. Transcribed on your iPhone. No account: bring your own key or go on-device.
 ```
 
 ## Description (4000)
