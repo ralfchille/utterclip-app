@@ -1,7 +1,7 @@
 import ProjectDescription
 
 let project = Project(
-    name: "Voicer",
+    name: "Utterclip",
     packages: [
         .remote(
             url: "https://github.com/argmaxinc/WhisperKit",
@@ -25,20 +25,22 @@ let project = Project(
     ),
     targets: [
         .target(
-            name: "Voicer",
+            name: "Utterclip",
             destinations: [.iPhone],
             product: .app,
+            // Kept from the Voicer days on purpose: same app on device, so history and
+            // the stored API key carry over across the rename.
             bundleId: "com.ralfchille.voicer",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(with: [
-                "CFBundleDisplayName": "Voicer",
+                "CFBundleDisplayName": "Utterclip",
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
                 "UILaunchScreen": [:],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "ITSAppUsesNonExemptEncryption": false,
             ]),
-            sources: ["Voicer/**/*.swift"],
-            resources: ["Voicer/Resources/**"],
+            sources: ["Utterclip/**/*.swift"],
+            resources: ["Utterclip/Resources/**"],
             dependencies: [
                 .package(product: "WhisperKit"),
                 .package(product: "HighlightedTextEditor")

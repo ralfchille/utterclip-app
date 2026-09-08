@@ -1,4 +1,4 @@
-# Voicer
+# Utterclip
 
 Record → transcribe locally (Whisper) → raw text on the clipboard instantly → optionally
 rewrite into a message style (Slack, email, WhatsApp, structured, summary) → styled text
@@ -15,10 +15,10 @@ The Xcode project is generated with [Tuist](https://tuist.dev) (installed via mi
 mise exec tuist@4.200.5 -- tuist generate
 ```
 
-This creates `Voicer.xcworkspace` — open it, select the **Voicer** scheme, and run on a
+This creates `Utterclip.xcworkspace` — open it, select the **Utterclip** scheme, and run on a
 device or simulator. WhisperKit is resolved via SPM automatically.
 
-To run on a physical iPhone, set your development team on the Voicer target
+To run on a physical iPhone, set your development team on the Utterclip target
 (Signing & Capabilities) once after generating.
 
 ## First run
@@ -33,8 +33,8 @@ To run on a physical iPhone, set your development team on the Voicer target
 ## Architecture
 
 ```
-Voicer/
-├─ VoicerApp.swift              # @main; warms the Whisper model at launch
+Utterclip/
+├─ UtterclipApp.swift              # @main; warms the Whisper model at launch
 ├─ Models/                      # MessageStyle, style definitions, AppError
 ├─ Services/
 │  ├─ AudioRecorder.swift       # 16 kHz mono WAV to a temp file

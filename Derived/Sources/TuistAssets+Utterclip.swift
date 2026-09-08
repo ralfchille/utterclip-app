@@ -30,13 +30,13 @@ import SwiftUI
 
 // MARK: - Asset Catalogs
 
-public enum VoicerAsset: Sendable {
-  public static let accentColor = VoicerColors(name: "AccentColor")
+public enum UtterclipAsset: Sendable {
+  public static let accentColor = UtterclipColors(name: "AccentColor")
 }
 
 // MARK: - Implementation Details
 
-public final class VoicerColors: Sendable {
+public final class UtterclipColors: Sendable {
   public let name: String
 
   #if os(macOS)
@@ -65,9 +65,9 @@ public final class VoicerColors: Sendable {
   }
 }
 
-public extension VoicerColors.Color {
+public extension UtterclipColors.Color {
   @available(iOS 11.0, tvOS 11.0, watchOS 4.0, macOS 10.13, visionOS 1.0, *)
-  convenience init?(asset: VoicerColors) {
+  convenience init?(asset: UtterclipColors) {
     let bundle = Bundle.module
     #if os(iOS) || os(tvOS) || os(visionOS)
     self.init(named: asset.name, in: bundle, compatibleWith: nil)
@@ -82,7 +82,7 @@ public extension VoicerColors.Color {
 #if canImport(SwiftUI)
 @available(iOS 13.0, tvOS 13.0, watchOS 6.0, macOS 10.15, visionOS 1.0, *)
 public extension SwiftUI.Color {
-  init(asset: VoicerColors) {
+  init(asset: UtterclipColors) {
     let bundle = Bundle.module
     self.init(asset.name, bundle: bundle)
   }

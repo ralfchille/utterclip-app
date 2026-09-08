@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D04517CF2B9825647F37FEA5"
-               BuildableName = "Voicer.app"
-               BlueprintName = "Voicer"
-               ReferencedContainer = "container:Voicer.xcodeproj">
+               BlueprintIdentifier = "C86FCA4A1EA4FF21F8EEE5EA"
+               BuildableName = "Utterclip.app"
+               BlueprintName = "Utterclip"
+               ReferencedContainer = "container:Utterclip.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -26,7 +26,8 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      disableMainThreadChecker = "YES">
       <Testables>
       </Testables>
    </TestAction>
@@ -44,10 +45,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D04517CF2B9825647F37FEA5"
-            BuildableName = "Voicer.app"
-            BlueprintName = "Voicer"
-            ReferencedContainer = "container:Voicer.xcodeproj">
+            BlueprintIdentifier = "C86FCA4A1EA4FF21F8EEE5EA"
+            BuildableName = "Utterclip.app"
+            BlueprintName = "Utterclip"
+            ReferencedContainer = "container:Utterclip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,10 +62,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D04517CF2B9825647F37FEA5"
-            BuildableName = "Voicer.app"
-            BlueprintName = "Voicer"
-            ReferencedContainer = "container:Voicer.xcodeproj">
+            BlueprintIdentifier = "C86FCA4A1EA4FF21F8EEE5EA"
+            BuildableName = "Utterclip.app"
+            BlueprintName = "Utterclip"
+            ReferencedContainer = "container:Utterclip.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

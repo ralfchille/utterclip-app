@@ -7,6 +7,7 @@ import Security
 struct KeyProvider {
     static let shared = KeyProvider()
 
+    // Unchanged across the rename so the key saved before it stays readable.
     private let service = "com.babbellabs.voicer"
     private let account = "anthropic-api-key"
 
