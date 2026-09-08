@@ -177,6 +177,5 @@ change. The version history is in the repository's commit log.
 
 ## Contact
 
-<!-- TODO: fill in before submitting the App Store listing -->
-Ralf Chille · _[TBD: contact email]_ ·
+Ralf Chille · [ralf@chille.de](mailto:ralf@chille.de) ·
 [GitHub Issues](https://github.com/ralfchille/utterclip-app/issues)

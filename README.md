@@ -11,8 +11,7 @@
 </p>
 
 <p align="center">
-  <!-- TODO: replace with the real App Store link once the listing is live -->
-  <a href="#get-utterclip"><strong>Download on the App Store</strong></a> ·
+  <a href="https://apps.apple.com/app/id6809807393"><strong>Download on the App Store</strong></a> ·
   <a href="#install-without-the-app-store">Install without the App Store</a> ·
   <a href="#privacy">Privacy</a> ·
   <a href="#faq">FAQ</a>
@@ -101,8 +100,8 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
 
 ## Get Utterclip
 
-<!-- TODO: fill in when the listing is live -->
-**App Store**: _coming soon_ · [Download on the App Store](#) &nbsp;_[TBD: link]_
+**App Store**: [Download on the App Store](https://apps.apple.com/app/id6809807393) — the
+listing goes live with version 1.0; until then the link shows Apple's "not available" page.
 
 Utterclip is free and open source. The app itself costs nothing. If you use the cloud rewrite
 engine you pay your AI provider directly for what you use, which for short messages is a few
@@ -330,9 +329,8 @@ it never answers.
 
 ## Support
 
-<!-- TODO: App Store Connect also needs a support URL; this section (or the issues page) can be it -->
 - **Bugs and feature requests**: [GitHub Issues](https://github.com/ralfchille/utterclip-app/issues)
-- **Everything else**: _[TBD: email or other contact]_
+- **Everything else**: [ralf@chille.de](mailto:ralf@chille.de)
 
 ## License
 

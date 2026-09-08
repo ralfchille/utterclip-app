@@ -24,7 +24,7 @@ let project = Project(
             // them to match. Bump the build number whenever the widget changes: iOS caches
             // widget gallery previews per bundle version and won't re-render otherwise.
             "MARKETING_VERSION": "1.0",
-            "CURRENT_PROJECT_VERSION": "2",
+            "CURRENT_PROJECT_VERSION": "3",
             // FoundationModels exists from iOS 26 / macOS 26; weak-link so older systems
             // still launch.
             "OTHER_LDFLAGS": ["$(inherited)", "-weak_framework", "FoundationModels"],
@@ -42,6 +42,8 @@ let project = Project(
             deploymentTargets: .multiplatform(iOS: "17.0", macOS: "14.0"),
             infoPlist: .default,
             sources: ["UtterclipCore/**/*.swift"],
+            // Privacy manifest: the stores use UserDefaults (required-reason API CA92.1).
+            resources: ["UtterclipCore/Resources/**"],
             dependencies: [
                 .package(product: "WhisperKit"),
             ]
