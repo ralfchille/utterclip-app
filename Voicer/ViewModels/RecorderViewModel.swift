@@ -233,7 +233,7 @@ final class RecorderViewModel {
         copyStyled(trimmed)
         rewriteCache[selectedStyle] = trimmed // keep the edit when switching pills and back
         updateCurrentEntry { $0.styledText = trimmed }
-        haptic(.light)
+        successHaptic()
     }
 
     /// Applies a user-edited raw transcript and copies it as plain text.
@@ -244,7 +244,7 @@ final class RecorderViewModel {
         Clipboard.copy(trimmed)
         rewriteCache.removeAll() // styled versions no longer match the transcript
         updateCurrentEntry { $0.rawTranscript = trimmed }
-        haptic(.light)
+        successHaptic()
     }
 
     /// Recovers the raw transcript onto the clipboard in case the rewrite isn't wanted.
@@ -269,5 +269,11 @@ final class RecorderViewModel {
 
     private func haptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         UIImpactFeedbackGenerator(style: style).impactOccurred()
+    }
+
+    /// The system "done" pattern for a completed save — clearer than an impact tap,
+    /// which is easy to miss while the editor is dismissing.
+    private func successHaptic() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 }
