@@ -75,6 +75,9 @@ public final class RecorderViewModel {
         }
     }
 
+    /// The device could run Apple's model (right OS, eligible hardware) — gates whether the
+    /// on-device option appears at all. See `onDeviceAvailable` for "ready right now".
+    public var onDeviceSupported: Bool { LocalRewriter.isSupported }
     public var onDeviceAvailable: Bool { LocalRewriter.isAvailable }
     public var onDeviceUnavailabilityReason: String? { LocalRewriter.unavailabilityReason }
 
@@ -215,11 +218,15 @@ public final class RecorderViewModel {
         }
         phase = .rewriting
         do {
+            // A stored on-device preference on a device that can't run the model (restored
+            // backup, older phone) falls back to the cloud — the option is hidden there, so
+            // the user couldn't switch it off themselves.
+            let usingLocal = useOnDeviceModel && onDeviceSupported
             // Cloud only: personal identifiers leave the device as placeholders and come back
             // restored; the cache and history only ever hold the restored text. The on-device
             // model needs no redaction — nothing leaves the phone.
-            let engine: Rewriter = useOnDeviceModel ? localRewriter : cloudRewriter
-            let redaction = (redactPersonalData && !useOnDeviceModel) ? Redactor.redact(raw) : nil
+            let engine: Rewriter = usingLocal ? localRewriter : cloudRewriter
+            let redaction = (redactPersonalData && !usingLocal) ? Redactor.redact(raw) : nil
             var styled = try await engine.rewrite(redaction?.text ?? raw, style: style)
             try Task.checkCancellation() // a late result must not overwrite a cancelled state
             if let redaction { styled = Redactor.restore(styled, redaction) }
