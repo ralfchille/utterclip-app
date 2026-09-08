@@ -14,37 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C86FCA4A1EA4FF21F8EEE5EA"
-               BuildableName = "Utterclip.app"
-               BlueprintName = "Utterclip"
-               ReferencedContainer = "container:Utterclip.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "5836CB25745D6DA8EBA46E62"
                BuildableName = "UtterclipCore.framework"
                BlueprintName = "UtterclipCore"
-               ReferencedContainer = "container:Utterclip.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "840C0F572CD6172E6B06159C"
-               BuildableName = "UtterclipWidgets.appex"
-               BlueprintName = "UtterclipWidgets"
                ReferencedContainer = "container:Utterclip.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -54,7 +26,8 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      disableMainThreadChecker = "YES">
       <Testables>
       </Testables>
    </TestAction>
@@ -68,16 +41,15 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C86FCA4A1EA4FF21F8EEE5EA"
-            BuildableName = "Utterclip.app"
-            BlueprintName = "Utterclip"
+            BlueprintIdentifier = "5836CB25745D6DA8EBA46E62"
+            BuildableName = "UtterclipCore.framework"
+            BlueprintName = "UtterclipCore"
             ReferencedContainer = "container:Utterclip.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -85,16 +57,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C86FCA4A1EA4FF21F8EEE5EA"
-            BuildableName = "Utterclip.app"
-            BlueprintName = "Utterclip"
+            BlueprintIdentifier = "5836CB25745D6DA8EBA46E62"
+            BuildableName = "UtterclipCore.framework"
+            BlueprintName = "UtterclipCore"
             ReferencedContainer = "container:Utterclip.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

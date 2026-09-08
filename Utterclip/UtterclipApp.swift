@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 import WidgetKit
 
 @main

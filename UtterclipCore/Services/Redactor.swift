@@ -5,19 +5,19 @@ import Foundation
 /// emails, phone numbers, links, addresses — because they're opaque to a rewriter, so the
 /// result quality is unaffected. Person names are deliberately left alone: detecting them
 /// is unreliable and they carry tone the rewrite needs.
-enum Redactor {
+public enum Redactor {
     /// One round trip's placeholders and what they stand for.
-    struct Redaction {
+    public struct Redaction {
         /// The text with placeholders in place of the originals.
-        let text: String
+        public let text: String
         /// placeholder → original
-        let originals: [String: String]
+        public let originals: [String: String]
     }
 
     /// `.link` covers both URLs and email addresses (as `mailto:`).
     private static let types: NSTextCheckingResult.CheckingType = [.link, .phoneNumber, .address]
 
-    static func redact(_ text: String) -> Redaction {
+    public static func redact(_ text: String) -> Redaction {
         guard let detector = try? NSDataDetector(types: types.rawValue) else {
             return Redaction(text: text, originals: [:])
         }
@@ -54,7 +54,7 @@ enum Redactor {
     }
 
     /// Restores the originals; a token the model altered or dropped simply stays as is.
-    static func restore(_ text: String, _ redaction: Redaction) -> String {
+    public static func restore(_ text: String, _ redaction: Redaction) -> String {
         redaction.originals.reduce(text) { partial, entry in
             partial.replacingOccurrences(of: entry.key, with: entry.value)
         }

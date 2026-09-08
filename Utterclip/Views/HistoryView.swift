@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 
 /// Browsable log of past dictations. Tapping an entry restores it as the current
 /// result on the main screen; rows can be swipe-deleted, and the whole log cleared.

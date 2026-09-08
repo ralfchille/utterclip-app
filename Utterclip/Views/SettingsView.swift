@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 
 /// Default style preference, the editable rewrite-prompt list, and API key entry
 /// (plan Phase 6 + §5a). The key is written straight to the Keychain and never leaves

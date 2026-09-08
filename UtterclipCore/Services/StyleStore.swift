@@ -6,11 +6,11 @@ import Observation
 /// user added, up to `maxStyles` in total. Everything persists in UserDefaults.
 @Observable
 @MainActor
-final class StyleStore {
-    static let shared = StyleStore()
+public final class StyleStore {
+    public static let shared = StyleStore()
 
     /// Hard cap on the picker row, built-ins included.
-    static let maxStyles = 7
+    public static let maxStyles = 7
 
     private static let overridesKey = "stylePromptOverrides"
     private static let nameOverridesKey = "styleNameOverrides"
@@ -51,7 +51,7 @@ final class StyleStore {
 
     /// All visible styles in display order: built-ins that weren't deleted (with custom
     /// names/prompts applied), then user-added.
-    var styles: [MessageStyle] {
+    public var styles: [MessageStyle] {
         let builtIns = Styles.all.filter { !hiddenBuiltIns.contains($0.id) }.map { style in
             MessageStyle(
                 id: style.id,
@@ -61,31 +61,31 @@ final class StyleStore {
         return builtIns + customStyles
     }
 
-    var canAddStyle: Bool { styles.count < Self.maxStyles }
+    public var canAddStyle: Bool { styles.count < Self.maxStyles }
 
-    func styleIfPresent(withID id: String) -> MessageStyle? {
+    public func styleIfPresent(withID id: String) -> MessageStyle? {
         styles.first { $0.id == id }
     }
 
     /// Falls back to the first visible style (or the app default if none is left), so a
     /// stale id still yields something usable.
-    func style(withID id: String) -> MessageStyle {
+    public func style(withID id: String) -> MessageStyle {
         styleIfPresent(withID: id) ?? styles.first ?? Styles.defaultStyle
     }
 
     /// True for user-added styles: editable name, deletable. Built-ins are neither.
-    func isCustom(_ id: String) -> Bool {
+    public func isCustom(_ id: String) -> Bool {
         customStyles.contains { $0.id == id }
     }
 
     /// True when a built-in's name or prompt differs from its default.
-    func isCustomized(_ id: String) -> Bool {
+    public func isCustomized(_ id: String) -> Bool {
         overrides[id] != nil || nameOverrides[id] != nil
     }
 
     // MARK: - Built-in styles
 
-    func setName(_ name: String, for id: String) {
+    public func setName(_ name: String, for id: String) {
         guard !isCustom(id) else { return } // custom styles are edited via updateStyle
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty || trimmed == Styles.style(withID: id).name {
@@ -95,7 +95,7 @@ final class StyleStore {
         }
     }
 
-    func setPrompt(_ prompt: String, for id: String) {
+    public func setPrompt(_ prompt: String, for id: String) {
         guard !isCustom(id) else { return } // custom styles are edited via updateStyle
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty || trimmed == Styles.style(withID: id).systemPrompt {
@@ -106,7 +106,7 @@ final class StyleStore {
     }
 
     /// Restores a built-in's default name and prompt.
-    func resetToDefault(for id: String) {
+    public func resetToDefault(for id: String) {
         overrides[id] = nil
         nameOverrides[id] = nil
     }
@@ -115,7 +115,7 @@ final class StyleStore {
 
     /// Adds a style if there is room and both fields are non-blank; returns it, else nil.
     @discardableResult
-    func addStyle(name: String, prompt: String) -> MessageStyle? {
+    public func addStyle(name: String, prompt: String) -> MessageStyle? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let prompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard canAddStyle, !name.isEmpty, !prompt.isEmpty else { return nil }
@@ -124,7 +124,7 @@ final class StyleStore {
         return style
     }
 
-    func updateStyle(id: String, name: String, prompt: String) {
+    public func updateStyle(id: String, name: String, prompt: String) {
         guard let index = customStyles.firstIndex(where: { $0.id == id }) else { return }
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let prompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -135,14 +135,14 @@ final class StyleStore {
     // MARK: - Deleting
 
     /// Any visible style can be deleted except the last one — the rewrite flow needs one.
-    func canDelete(_ id: String) -> Bool {
+    public func canDelete(_ id: String) -> Bool {
         styles.count > 1 && styleIfPresent(withID: id) != nil
     }
 
-    var hasHiddenBuiltIns: Bool { !hiddenBuiltIns.isEmpty }
+    public var hasHiddenBuiltIns: Bool { !hiddenBuiltIns.isEmpty }
 
     /// User-added styles are removed; built-ins are hidden so they can be restored.
-    func removeStyle(id: String) {
+    public func removeStyle(id: String) {
         guard canDelete(id) else { return }
         if isCustom(id) {
             customStyles.removeAll { $0.id == id }
@@ -152,7 +152,7 @@ final class StyleStore {
     }
 
     /// Brings deleted built-ins back; their name/prompt overrides, if any, still apply.
-    func restoreDeletedDefaults() {
+    public func restoreDeletedDefaults() {
         hiddenBuiltIns = []
     }
 }

@@ -3,11 +3,11 @@ import Foundation
 /// The cloud LLM behind a rewrite, detected from the API key's prefix so a single key
 /// field serves every supported provider. Each case knows its endpoint, a fast default
 /// model, and how to shape the request and read the reply.
-enum AIProvider: String, CaseIterable {
+public enum AIProvider: String, CaseIterable {
     case anthropic, openAI, gemini, groq
 
     /// Prefix match, most specific first — `sk-ant-` must win over OpenAI's bare `sk-`.
-    static func detect(_ key: String) -> AIProvider? {
+    public static func detect(_ key: String) -> AIProvider? {
         let key = key.trimmingCharacters(in: .whitespacesAndNewlines)
         if key.hasPrefix("sk-ant-") { return .anthropic }
         if key.hasPrefix("gsk_") { return .groq }
@@ -16,7 +16,7 @@ enum AIProvider: String, CaseIterable {
         return nil
     }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .anthropic: "Anthropic"
         case .openAI: "OpenAI"
@@ -26,7 +26,7 @@ enum AIProvider: String, CaseIterable {
     }
 
     /// Fast, inexpensive models suited to short rewrites.
-    var defaultModel: String {
+    public var defaultModel: String {
         switch self {
         case .anthropic: "claude-haiku-4-5"
         case .openAI: "gpt-5-mini"
