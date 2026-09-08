@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B337B9FA74802B4BBC86A4B /* UtterclipCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; };
+		1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */; };
 		1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2590D1835ECF00E098B159 /* Rewriter.swift */; };
 		1A6FE8E17BD232B472E22A6F /* HistoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */; };
 		1AB79A81350866B35ED1AF95 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EA603762F41B74D7D9CAF5 /* HistoryStore.swift */; };
@@ -35,6 +36,8 @@
 		9CE253477E69E4AE72555392 /* TuistAssets+UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */; };
 		A996E9C6CE54CD86A8FCE291 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F371DCE7FFFF2BF874588E3C /* Clipboard.swift */; };
 		B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
+		B5B49810AA6AFC7BE9C30C2C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 753112FFBC0496CDE6B924D2 /* PrivacyInfo.xcprivacy */; };
+		BA543133A438725F553F01E1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */; };
 		BF6A9F57B3FCB0191257D6A4 /* UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */; };
 		C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
 		CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319D09EB2560270E662093E7 /* StyleStore.swift */; };
@@ -44,6 +47,7 @@
 		E1DB7CABDCD93565DF8EF385 /* TuistAssets+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */; };
 		EC091E3637A1401CF24A5AC5 /* RecorderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */; };
 		EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
+		F0D25DF95C58334F3ED3CD2F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */; };
 		F6243ED762A77340D76022DF /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669869C3385DA0D2ACBDDEFC /* AppError.swift */; };
 /* End PBXBuildFile section */
 
@@ -111,12 +115,14 @@
 /* Begin PBXFileReference section */
 		0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipWidgets.swift; sourceTree = "<group>"; };
 		05088FCC2F78975859846EEB /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
+		09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipCore.swift"; sourceTree = "<group>"; };
 		0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderViewModel.swift; sourceTree = "<group>"; };
 		10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UtterclipCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipWidgets.swift"; sourceTree = "<group>"; };
 		28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Utterclip.swift"; sourceTree = "<group>"; };
 		319D09EB2560270E662093E7 /* StyleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleStore.swift; sourceTree = "<group>"; };
 		362ACD5073A9A097201D6FBD /* UtterclipApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipApp.swift; sourceTree = "<group>"; };
+		378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
 		51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyProvider.swift; sourceTree = "<group>"; };
 		522F02B53CA00542B940B288 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -130,6 +136,7 @@
 		6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerRow.swift; sourceTree = "<group>"; };
 		71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		73B5227055701E5621CDAD55 /* Utterclip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Utterclip.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		753112FFBC0496CDE6B924D2 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		76F007D7E0E2D1031D583BED /* LocalRewriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalRewriter.swift; sourceTree = "<group>"; };
 		7811A8B95C5970C951E070F0 /* UtterclipCore-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipCore-Info.plist"; sourceTree = "<group>"; };
 		785D4834B39BC497D3590D82 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
@@ -137,6 +144,7 @@
 		7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		88EA603762F41B74D7D9CAF5 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
 		895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+Utterclip.swift"; sourceTree = "<group>"; };
+		957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		9F87071BCF63570CD4B59C66 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		A87D9C7543EC8DFB48425596 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
@@ -182,6 +190,7 @@
 			isa = PBXGroup;
 			children = (
 				7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */,
+				378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -209,6 +218,7 @@
 			isa = PBXGroup;
 			children = (
 				522F02B53CA00542B940B288 /* Assets.xcassets */,
+				957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -228,6 +238,7 @@
 				28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */,
 				B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */,
 				895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */,
+				09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */,
 				1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */,
 			);
 			path = Sources;
@@ -256,6 +267,7 @@
 			isa = PBXGroup;
 			children = (
 				7970C77CFCB59AAC611314E0 /* Models */,
+				746D82F6238B0D29C3219CA1 /* Resources */,
 				5C9B80E317B0AB58B3F03BF9 /* Services */,
 				E4DC10C3F347E206698F38E9 /* ViewModels */,
 			);
@@ -289,6 +301,14 @@
 				0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */,
 			);
 			path = UtterclipWidgets;
+			sourceTree = "<group>";
+		};
+		746D82F6238B0D29C3219CA1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				753112FFBC0496CDE6B924D2 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		7970C77CFCB59AAC611314E0 /* Models */ = {
@@ -443,6 +463,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D42CC0AE195701AEE9ED2258 /* Assets.xcassets in Resources */,
+				BA543133A438725F553F01E1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -451,6 +472,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */,
+				F0D25DF95C58334F3ED3CD2F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -458,6 +480,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5B49810AA6AFC7BE9C30C2C /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -496,6 +519,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */,
 				F6243ED762A77340D76022DF /* AppError.swift in Sources */,
 				1A6FE8E17BD232B472E22A6F /* HistoryEntry.swift in Sources */,
 				480626F9116B78E1BE4E5610 /* MessageStyle.swift in Sources */,
@@ -639,7 +663,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 2F7QR8NL2D;
@@ -769,7 +793,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 2F7QR8NL2D;
