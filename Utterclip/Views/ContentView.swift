@@ -30,7 +30,7 @@ struct ContentView: View {
                 recordButton
                     .padding(.bottom, 24)
             }
-            .navigationTitle("Voicer")
+            .navigationTitle("Utterclip")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

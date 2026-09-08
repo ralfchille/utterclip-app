@@ -1,0 +1,561 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		03E32C8F4E2005C30BC108E8 /* CloudRewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812D92D08B40A567DE6EFCCA /* CloudRewriter.swift */; };
+		127882C11D135B7BDD265830 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE12F7C96E90499B802BB236 /* HistoryStore.swift */; };
+		1AD09BB1B648103668365B72 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD27C8C744BE6B46B7C7021 /* Clipboard.swift */; };
+		1C5C95B5099926C9F233220E /* MessageStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A813AC65D26FC470B11CB5 /* MessageStyle.swift */; };
+		1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */; };
+		22969BF549180094A90B47A8 /* HistoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2478D94264D187505C091D48 /* HistoryEntry.swift */; };
+		2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 785D4834B39BC497D3590D82 /* MarkdownView.swift */; };
+		2F62C8E257E18A51D23D08EC /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3A467D991973FAC86E183FB8 /* WhisperKit */; };
+		38221FAED67A250DFA1AEF01 /* TuistBundle+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */; };
+		3C2F9D8ADFF3F49325E5CA38 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 785F1651D8F3519BC82E1633 /* AudioRecorder.swift */; };
+		4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */; };
+		4D8F7ABF6B558C8F20E79EEA /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */; };
+		5C1E4070F8ACBEDAA15A2B94 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E14B46A8B7826A42D04494 /* Styles.swift */; };
+		5CB3EE2E32D2FA0371B88F59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
+		824F27C834B8C22064DA1370 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F17C260154B425038E7852 /* AppError.swift */; };
+		8EFE7FE9E590E67A77A3BAE4 /* UtterclipApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362ACD5073A9A097201D6FBD /* UtterclipApp.swift */; };
+		A771A0FA5523CE89814B2536 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB37FFC258E240612F29490F /* StyleStore.swift */; };
+		B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
+		C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
+		C94FA24B183378189AFF75A3 /* RecorderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F6F3C2F30E78D7F7324EFD6 /* RecorderViewModel.swift */; };
+		D828EAAC68E1BA29BE79AA60 /* Rewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C1789D10FD9F4DAA416BBB9 /* Rewriter.swift */; };
+		DE96AF92B18D386A29F9317A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD7150D49FA9A45186D978E /* ContentView.swift */; };
+		E1DB7CABDCD93565DF8EF385 /* TuistAssets+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */; };
+		E48009CD0528910DE2A572E9 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42754655AC4AB3377B3FDE7D /* TranscriptionService.swift */; };
+		EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
+		FD898AAE31A72B742CB8EF36 /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = C3BAFCC920439AB8767F1F7F /* HighlightedTextEditor */; };
+		FE60F6536EC3EA8AAAD89793 /* KeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE85366883968FE4A173F12 /* KeyProvider.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5D870CB08D6181BD61AFD7D2 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2478D94264D187505C091D48 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
+		28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Utterclip.swift"; sourceTree = "<group>"; };
+		362ACD5073A9A097201D6FBD /* UtterclipApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipApp.swift; sourceTree = "<group>"; };
+		3C1789D10FD9F4DAA416BBB9 /* Rewriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rewriter.swift; sourceTree = "<group>"; };
+		3F6F3C2F30E78D7F7324EFD6 /* RecorderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderViewModel.swift; sourceTree = "<group>"; };
+		42754655AC4AB3377B3FDE7D /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
+		4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
+		6BD7150D49FA9A45186D978E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerRow.swift; sourceTree = "<group>"; };
+		71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		73B5227055701E5621CDAD55 /* Utterclip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Utterclip.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		785D4834B39BC497D3590D82 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
+		785F1651D8F3519BC82E1633 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		7AE85366883968FE4A173F12 /* KeyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyProvider.swift; sourceTree = "<group>"; };
+		7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		812D92D08B40A567DE6EFCCA /* CloudRewriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudRewriter.swift; sourceTree = "<group>"; };
+		895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+Utterclip.swift"; sourceTree = "<group>"; };
+		92E14B46A8B7826A42D04494 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
+		9F87071BCF63570CD4B59C66 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		A1F17C260154B425038E7852 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
+		ABD27C8C744BE6B46B7C7021 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
+		B3A813AC65D26FC470B11CB5 /* MessageStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStyle.swift; sourceTree = "<group>"; };
+		CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		D21D8DFF607B93A631014902 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
+		DE12F7C96E90499B802BB236 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
+		EB37FFC258E240612F29490F /* StyleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleStore.swift; sourceTree = "<group>"; };
+		F7F006F06790EC7AE64C846D /* Utterclip-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Utterclip-Info.plist"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A6495B7147E42B0DC1004721 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F62C8E257E18A51D23D08EC /* WhisperKit in Frameworks */,
+				FD898AAE31A72B742CB8EF36 /* HighlightedTextEditor in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		07EAA46595B9B52750B6DC7A /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				3F6F3C2F30E78D7F7324EFD6 /* RecorderViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		1789AE79853DA94EAEA0DB93 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		1D5BB8A557593F7441444B44 /* Project */ = {
+			isa = PBXGroup;
+			children = (
+				31CB782A57C043C62330D23D /* Derived */,
+				5F40266B33E4752A760D0391 /* Utterclip */,
+			);
+			name = Project;
+			sourceTree = "<group>";
+		};
+		1F9A3F51386BDEE3286F3481 = {
+			isa = PBXGroup;
+			children = (
+				66D92E8D6F46BF1470C2CB3D /* Products */,
+				1D5BB8A557593F7441444B44 /* Project */,
+			);
+			sourceTree = "<group>";
+		};
+		31CB782A57C043C62330D23D /* Derived */ = {
+			isa = PBXGroup;
+			children = (
+				E3EA4BB757D5EFD0B007AAC0 /* InfoPlists */,
+				50214B4F9B54FEA823DA4EA3 /* Sources */,
+			);
+			path = Derived;
+			sourceTree = "<group>";
+		};
+		50214B4F9B54FEA823DA4EA3 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */,
+				895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5F40266B33E4752A760D0391 /* Utterclip */ = {
+			isa = PBXGroup;
+			children = (
+				7D9623F8E0D97B33B734E8EE /* Models */,
+				1789AE79853DA94EAEA0DB93 /* Resources */,
+				92916088921848A4DB5927B7 /* Services */,
+				07EAA46595B9B52750B6DC7A /* ViewModels */,
+				EA3D7AE6697EA72F9BEB8A3E /* Views */,
+				362ACD5073A9A097201D6FBD /* UtterclipApp.swift */,
+			);
+			path = Utterclip;
+			sourceTree = "<group>";
+		};
+		66D92E8D6F46BF1470C2CB3D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				73B5227055701E5621CDAD55 /* Utterclip.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7D9623F8E0D97B33B734E8EE /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A1F17C260154B425038E7852 /* AppError.swift */,
+				2478D94264D187505C091D48 /* HistoryEntry.swift */,
+				B3A813AC65D26FC470B11CB5 /* MessageStyle.swift */,
+				92E14B46A8B7826A42D04494 /* Styles.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		92916088921848A4DB5927B7 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				785F1651D8F3519BC82E1633 /* AudioRecorder.swift */,
+				ABD27C8C744BE6B46B7C7021 /* Clipboard.swift */,
+				812D92D08B40A567DE6EFCCA /* CloudRewriter.swift */,
+				DE12F7C96E90499B802BB236 /* HistoryStore.swift */,
+				7AE85366883968FE4A173F12 /* KeyProvider.swift */,
+				3C1789D10FD9F4DAA416BBB9 /* Rewriter.swift */,
+				EB37FFC258E240612F29490F /* StyleStore.swift */,
+				42754655AC4AB3377B3FDE7D /* TranscriptionService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E3EA4BB757D5EFD0B007AAC0 /* InfoPlists */ = {
+			isa = PBXGroup;
+			children = (
+				F7F006F06790EC7AE64C846D /* Utterclip-Info.plist */,
+			);
+			path = InfoPlists;
+			sourceTree = "<group>";
+		};
+		EA3D7AE6697EA72F9BEB8A3E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				6BD7150D49FA9A45186D978E /* ContentView.swift */,
+				CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */,
+				D21D8DFF607B93A631014902 /* GlassBackground.swift */,
+				9F87071BCF63570CD4B59C66 /* HistoryView.swift */,
+				785D4834B39BC497D3590D82 /* MarkdownView.swift */,
+				71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */,
+				6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */,
+				4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C86FCA4A1EA4FF21F8EEE5EA /* Utterclip */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74D8393E147DE46C454044C5 /* Build configuration list for PBXNativeTarget "Utterclip" */;
+			buildPhases = (
+				1DC60B71998A6789A5647F4F /* Sources */,
+				41ECDA5CC9E8CB4E9C2EA6EB /* Resources */,
+				A6495B7147E42B0DC1004721 /* Frameworks */,
+				5D870CB08D6181BD61AFD7D2 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Utterclip;
+			packageProductDependencies = (
+				3A467D991973FAC86E183FB8 /* WhisperKit */,
+				C3BAFCC920439AB8767F1F7F /* HighlightedTextEditor */,
+			);
+			productName = Utterclip;
+			productReference = 73B5227055701E5621CDAD55 /* Utterclip.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BC4F54448471893DF3D49A16 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 4632B0DA8AC2F6B786805D4D /* Build configuration list for PBXProject "Utterclip" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1F9A3F51386BDEE3286F3481;
+			packageReferences = (
+				E0A5389493A27ABB6F9D32A3 /* XCRemoteSwiftPackageReference "WhisperKit" */,
+				B9DB6341BEB98B911AE58E8E /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */,
+			);
+			productRefGroup = 66D92E8D6F46BF1470C2CB3D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C86FCA4A1EA4FF21F8EEE5EA /* Utterclip */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		41ECDA5CC9E8CB4E9C2EA6EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1DC60B71998A6789A5647F4F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1DB7CABDCD93565DF8EF385 /* TuistAssets+Utterclip.swift in Sources */,
+				38221FAED67A250DFA1AEF01 /* TuistBundle+Utterclip.swift in Sources */,
+				824F27C834B8C22064DA1370 /* AppError.swift in Sources */,
+				22969BF549180094A90B47A8 /* HistoryEntry.swift in Sources */,
+				1C5C95B5099926C9F233220E /* MessageStyle.swift in Sources */,
+				5C1E4070F8ACBEDAA15A2B94 /* Styles.swift in Sources */,
+				3C2F9D8ADFF3F49325E5CA38 /* AudioRecorder.swift in Sources */,
+				1AD09BB1B648103668365B72 /* Clipboard.swift in Sources */,
+				03E32C8F4E2005C30BC108E8 /* CloudRewriter.swift in Sources */,
+				127882C11D135B7BDD265830 /* HistoryStore.swift in Sources */,
+				FE60F6536EC3EA8AAAD89793 /* KeyProvider.swift in Sources */,
+				D828EAAC68E1BA29BE79AA60 /* Rewriter.swift in Sources */,
+				A771A0FA5523CE89814B2536 /* StyleStore.swift in Sources */,
+				E48009CD0528910DE2A572E9 /* TranscriptionService.swift in Sources */,
+				8EFE7FE9E590E67A77A3BAE4 /* UtterclipApp.swift in Sources */,
+				C94FA24B183378189AFF75A3 /* RecorderViewModel.swift in Sources */,
+				DE96AF92B18D386A29F9317A /* ContentView.swift in Sources */,
+				4D8F7ABF6B558C8F20E79EEA /* EditorView.swift in Sources */,
+				B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */,
+				C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */,
+				2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */,
+				EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */,
+				1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */,
+				5CB3EE2E32D2FA0371B88F59 /* WaveformView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7F41BA7836AE576F41C968A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2F7QR8NL2D;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		86AF2E60D5F54EEA4DE58657 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = "Derived/InfoPlists/Utterclip-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-L$(DT_TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ralfchille.voicer;
+				PRODUCT_NAME = Utterclip;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					"$(inherited)",
+					DEBUG,
+				);
+				SWIFT_COMPILATION_MODE = singlefile;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C03DBED153E108BB0421F53C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2F7QR8NL2D;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		DDBB0A6F4BDD1E4EE366C11E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = "Derived/InfoPlists/Utterclip-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-L$(DT_TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ralfchille.voicer;
+				PRODUCT_NAME = Utterclip;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4632B0DA8AC2F6B786805D4D /* Build configuration list for PBXProject "Utterclip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C03DBED153E108BB0421F53C /* Debug */,
+				7F41BA7836AE576F41C968A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74D8393E147DE46C454044C5 /* Build configuration list for PBXNativeTarget "Utterclip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				86AF2E60D5F54EEA4DE58657 /* Debug */,
+				DDBB0A6F4BDD1E4EE366C11E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B9DB6341BEB98B911AE58E8E /* XCRemoteSwiftPackageReference "HighlightedTextEditor" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kyle-n/HighlightedTextEditor";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.2;
+			};
+		};
+		E0A5389493A27ABB6F9D32A3 /* XCRemoteSwiftPackageReference "WhisperKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/WhisperKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3A467D991973FAC86E183FB8 /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WhisperKit;
+		};
+		C3BAFCC920439AB8767F1F7F /* HighlightedTextEditor */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HighlightedTextEditor;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = BC4F54448471893DF3D49A16 /* Project object */;
+}

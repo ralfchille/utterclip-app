@@ -20,7 +20,7 @@ final class TranscriptionService {
 
     private(set) var state: State = .cold
     private var whisperKit: WhisperKit?
-    private let logger = Logger(subsystem: "com.babbellabs.voicer", category: "transcription")
+    private let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "transcription")
 
     private init() {}
 
