@@ -5,9 +5,11 @@ import os
 
 /// Warm-loaded WhisperKit singleton (plan Phase 3).
 ///
-/// The multilingual `small` model is downloaded from Hugging Face on first launch
-/// (delivery option A) and cached; on every launch it is loaded into memory exactly once
-/// via `warmUp()` and kept resident so recordings never pay a per-use load cost.
+/// The multilingual `small` model (Argmax's quantized `small_216MB` build, less than half
+/// the download of the full-precision one at near-identical accuracy) is downloaded from
+/// Hugging Face on first launch (delivery option A) and cached; on every launch it is loaded
+/// into memory exactly once via `warmUp()` and kept resident so recordings never pay a
+/// per-use load cost.
 @Observable
 @MainActor
 public final class TranscriptionService {
@@ -22,7 +24,32 @@ public final class TranscriptionService {
     private var whisperKit: WhisperKit?
     private let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "transcription")
 
+    /// The WhisperKit model variant in use; see `warmUp()`.
+    static let modelVariant = "small_216MB"
+
+    /// Model folders earlier builds downloaded and this one no longer uses. Deleted once the
+    /// current model is ready so an upgrade doesn't leave ~500 MB of dead weight in Documents.
+    private static let supersededModelVariants = ["openai_whisper-small"]
+
     private init() {}
+
+    /// Housekeeping once the model is ready: drop models from earlier builds, and keep the
+    /// cache out of iCloud/computer backups — it is ~220 MB of re-downloadable data.
+    private static func tidyModelStorage() {
+        // WhisperKit's default download base: Documents/huggingface/models/<repo>/<variant>.
+        var downloadBase = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appending(path: "huggingface")
+        let repoFolder = downloadBase.appending(path: "models/argmaxinc/whisperkit-coreml")
+        for variant in supersededModelVariants {
+            let folder = repoFolder.appending(path: variant)
+            guard FileManager.default.fileExists(atPath: folder.path) else { continue }
+            try? FileManager.default.removeItem(at: folder)
+        }
+        // The flag on the directory covers everything inside it.
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? downloadBase.setResourceValues(values)
+    }
 
     /// Idempotent: loads + compiles the model in a background task. Safe to call again
     /// after a failure to retry. Transient failures (e.g. the first-launch download
@@ -38,14 +65,16 @@ public final class TranscriptionService {
             for attempt in 1...3 {
                 do {
                     let start = ContinuousClock.now
-                    // "small" resolves to the multilingual openai_whisper-small variant;
-                    // language is auto-detected, so German and English both work untoggled.
-                    // prewarm forces CoreML/ANE specialization here at launch instead of
-                    // on the user's first recording.
-                    let config = WhisperKitConfig(model: "small", prewarm: true)
+                    // Resolves to the multilingual openai_whisper-small_216MB folder in the
+                    // whisperkit-coreml repo (the ".en" builds are English-only; the plain
+                    // "small" is the same model at ~500 MB). Language is auto-detected, so
+                    // German and English both work untoggled. prewarm forces CoreML/ANE
+                    // specialization here at launch instead of on the user's first recording.
+                    let config = WhisperKitConfig(model: Self.modelVariant, prewarm: true)
                     let kit = try await WhisperKit(config)
                     self.whisperKit = kit
                     self.state = .ready
+                    Self.tidyModelStorage()
                     logger.info("Whisper model ready in \(ContinuousClock.now - start, privacy: .public) (attempt \(attempt))")
                     return
                 } catch {
