@@ -25,9 +25,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/idle.png" width="300" alt="Utterclip ready to record: a single mic button">
+  <img src="docs/screenshots/idle.png" width="320" alt="Utterclip ready to record: a single mic button">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/result.png" width="300" alt="A dictation rewritten as a Slack message, already copied, with the raw transcript below and style pills to re-run it">
+  <img src="docs/screenshots/result.png" width="320" alt="A dictation rewritten as a Slack message, already copied, with the raw transcript below and style pills to re-run it">
 </p>
 
 ---
