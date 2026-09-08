@@ -61,7 +61,9 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
 
 **Dictation**
 - **On-device transcription** with [WhisperKit](https://github.com/argmaxinc/WhisperKit) and
-  OpenAI's multilingual Whisper `small` model. English and German are auto-detected, no toggle.
+  OpenAI's multilingual Whisper `small` model (Argmax's quantized 216 MB build). The language is
+  detected automatically from roughly 99 that Whisper knows; English and German are the two the
+  app is tested with. No toggle.
 - **Instant clipboard**: the raw transcript is pasteable before any rewrite starts.
 - **Hands-free stop**: once you have started talking, five seconds of silence ends the recording.
 - **Continue dictating**: append to what you just said; the rewrite re-runs on the whole text.
@@ -114,7 +116,7 @@ cents a month. The on-device engine costs nothing at all.
 | **On-device rewriting** | iOS 26 with Apple Intelligence enabled (iPhone 15 Pro or later) |
 | **Control Center control** | iOS 18 or later |
 | **Cloud rewriting** | An API key from Anthropic, OpenAI, Google Gemini, or Groq |
-| **First launch** | Internet access to download the Whisper model once (about 500 MB, Wi-Fi recommended) |
+| **First launch** | Internet access to download the Whisper model once (about 220 MB, Wi-Fi recommended) |
 
 ### First run
 
@@ -216,9 +218,7 @@ phone, and so that nothing else leaves it without your say-so.
 - **Network access** is used for exactly three things: the one-time Whisper model download from
   `huggingface.co`, the rewrite request to your chosen provider, and nothing else.
 
-<!-- TODO: App Store Connect needs a privacy policy URL. Suggest a PRIVACY.md in this repo
-     that expands on this section; link it here once it exists. -->
-_Full privacy policy: [PRIVACY.md](PRIVACY.md) [TBD]_
+The full privacy policy, written for the App Store listing, is in [PRIVACY.md](PRIVACY.md).
 
 ---
 
@@ -239,16 +239,18 @@ Recording and transcription do, once the model is downloaded. Cloud rewrites nee
 on-device rewrites do not.
 
 **Which languages?**
-Whisper `small` is multilingual and auto-detects the language. English and German are what the
-app is tested with; other languages Whisper supports will transcribe, and the rewrite is told to
-stay in the transcript's language.
+Whisper `small` is multilingual and detects the language automatically, so any of the roughly 99
+languages it knows will transcribe. English and German are what the app is tested with; quality
+drops for less common languages. Every rewrite engine is told to stay in the transcript's
+language. The on-device engine only supports the languages Apple Intelligence does, so for
+anything else use the cloud engine.
 
 **It said "Nothing heard".**
 The recording contained no speech (or only noise). Nothing was copied or logged. Tap the mic and
 try again, a little closer to the phone.
 
 **The model download failed.**
-Check the connection and retry from the card on the main screen. The download is about 500 MB and
+Check the connection and retry from the card on the main screen. The download is about 220 MB and
 happens once; Wi-Fi is recommended.
 
 **The on-device engine says it is unavailable.**
