@@ -155,7 +155,7 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.leading)
-                    Text("The model downloads once from huggingface.co on first launch — check your internet connection (Wi-Fi recommended, ~500 MB) and retry.")
+                    Text("The model downloads once from huggingface.co on first launch — check your internet connection (Wi-Fi recommended, ~220 MB) and retry.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
