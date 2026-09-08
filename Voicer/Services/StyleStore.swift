@@ -25,7 +25,7 @@ final class StyleStore {
         Styles.all.map { style in
             guard let custom = overrides[style.id] else { return style }
             return MessageStyle(
-                id: style.id, name: style.name, emoji: style.emoji, systemPrompt: custom)
+                id: style.id, name: style.name, systemPrompt: custom)
         }
     }
 

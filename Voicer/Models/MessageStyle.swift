@@ -4,6 +4,5 @@ import Foundation
 struct MessageStyle: Identifiable, Hashable {
     let id: String
     let name: String
-    let emoji: String
     let systemPrompt: String
 }

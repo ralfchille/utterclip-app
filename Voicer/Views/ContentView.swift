@@ -5,6 +5,14 @@ import SwiftUI
 struct ContentView: View {
     @State private var viewModel = RecorderViewModel()
     @State private var showSettings = false
+    @State private var showHistory = false
+    @State private var editTarget: EditTarget?
+
+    /// Which text the full-screen editor is currently editing.
+    private enum EditTarget: String, Identifiable {
+        case styled, raw
+        var id: String { rawValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -17,6 +25,7 @@ struct ContentView: View {
                     ) { style in
                         Task { await viewModel.rewrite(with: style) }
                     }
+                    .padding(.bottom, 10) // sit a touch higher above the record button
                 }
                 recordButton
                     .padding(.bottom, 24)
@@ -24,6 +33,14 @@ struct ContentView: View {
             .navigationTitle("Voicer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("History")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
@@ -36,34 +53,63 @@ struct ContentView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView(viewModel: viewModel)
             }
+            .sheet(isPresented: $showHistory) {
+                HistoryView(viewModel: viewModel)
+            }
+            .fullScreenCover(item: $editTarget) { target in
+                switch target {
+                case .styled:
+                    EditorView(
+                        title: "Edit \(viewModel.selectedStyle.name)",
+                        initialText: viewModel.styledText ?? ""
+                    ) { viewModel.applyStyledEdit($0) }
+                case .raw:
+                    EditorView(
+                        title: "Edit transcript",
+                        initialText: viewModel.rawTranscript ?? ""
+                    ) { viewModel.applyRawEdit($0) }
+                }
+            }
         }
         .tint(.primary)
     }
 
     // MARK: - Result area
 
+    /// Idle status sits just above the record button (the Figma idle frame anchors the
+    /// hint to the bottom, no icon); every other phase scrolls its content from the top.
     @ViewBuilder
     private var resultArea: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                switch viewModel.phase {
-                case .idle:
-                    statusHint
-                case .recording:
-                    recordingIndicator
-                case .transcribing:
-                    progressRow(viewModel.transcription.state == .ready
-                        ? "Transcribing…" : "Finishing model setup…")
-                case .rewriting, .done:
-                    transcriptSection
-                case .error(let message):
-                    errorSection(message)
-                }
+        if viewModel.phase == .idle {
+            VStack {
+                Spacer()
+                statusHint
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .padding(.bottom, 40) // + the 16pt stack spacing = 56pt to the record button
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    switch viewModel.phase {
+                    case .idle:
+                        EmptyView() // handled above
+                    case .recording:
+                        recordingIndicator
+                    case .transcribing:
+                        progressRow(viewModel.transcription.state == .ready
+                            ? "Transcribing…" : "Finishing model setup…")
+                    case .rewriting, .done:
+                        transcriptSection
+                    case .error(let message):
+                        errorSection(message)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: .infinity)
         }
-        .frame(maxHeight: .infinity)
     }
 
     @ViewBuilder
@@ -78,6 +124,7 @@ struct ContentView: View {
                     Text("Model loads in the background — you can record right away.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
                 }
                 .padding(.top, 12)
             case .failed(let message):
@@ -99,7 +146,6 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, 40)
             case .ready:
                 readyHint
             }
@@ -107,18 +153,14 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
     }
 
+    /// Text-only hint (the Figma idle frame drops the mic glyph); `resultArea` anchors it
+    /// above the record button, so no top padding here.
     private var readyHint: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "mic.circle")
-                .font(.system(size: 44, weight: .light))
-                .foregroundStyle(.secondary)
-            Text("Tap the mic, speak, tap again.\nYour words land on the clipboard.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 40)
+        Text("Tap the mic, speak, tap again.\nYour words land on the clipboard.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
@@ -134,6 +176,7 @@ struct ContentView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
+                    editButton("Edit formatted text") { editTarget = .styled }
                     markdownToggle
                 }
                 MarkdownView(markdown: styled)
@@ -163,6 +206,7 @@ struct ContentView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
+                    editButton("Edit raw transcript") { editTarget = .raw }
                     Button {
                         viewModel.copyRaw()
                     } label: {
@@ -176,6 +220,7 @@ struct ContentView: View {
                     .foregroundStyle(viewModel.styledText == nil ? .primary : .secondary)
                     .textSelection(.enabled)
             }
+            .padding(.horizontal) // align with the styled card's inner content
         }
     }
 
@@ -191,6 +236,7 @@ struct ContentView: View {
                     .font(.system(size: 64, weight: .light, design: .rounded))
                     .monospacedDigit()
             }
+            WaveformView(levels: viewModel.recorder.levels)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
@@ -202,7 +248,10 @@ struct ContentView: View {
         Button {
             viewModel.toggleMarkdownCopy()
         } label: {
-            Label("Markdown", systemImage: "number")
+            HStack(spacing: 2) { // half of Label's default icon–title gap
+                Image(systemName: "number")
+                Text("Markdown")
+            }
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
@@ -219,6 +268,15 @@ struct ContentView: View {
         .accessibilityLabel(viewModel.copyAsMarkdown
             ? "Markdown copy on — tap to copy plain text instead"
             : "Copy as markdown")
+    }
+
+    /// Compact monochrome "Edit" affordance opening the full-screen editor.
+    private func editButton(_ accessibilityLabel: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label("Edit", systemImage: "square.and.pencil")
+                .font(.caption.weight(.semibold))
+        }
+        .accessibilityLabel(accessibilityLabel)
     }
 
     private func progressRow(_ text: String) -> some View {
@@ -265,22 +323,74 @@ struct ContentView: View {
                 }
             }
         } label: {
-            Image(systemName: viewModel.recorder.isRecording ? "stop.fill" : "mic.fill")
-                .font(.system(size: 30, weight: .semibold))
-                .foregroundStyle(viewModel.recorder.isRecording ? Color(.systemBackground) : .primary)
-                .frame(width: 84, height: 84)
-                .background {
-                    if viewModel.recorder.isRecording {
-                        Circle().fill(.primary)
-                    }
-                }
-                .glassBackground(shape: Circle())
+            recordButtonLabel
         }
         .buttonStyle(.plain)
         .disabled(recordUnavailable)
         .opacity(recordUnavailable ? 0.4 : 1)
         .accessibilityLabel(viewModel.recorder.isRecording ? "Stop recording" : "Start recording")
+        .overlay(alignment: .leading) {
+            if viewModel.recorder.isRecording {
+                cancelButton
+                    .offset(x: -80)
+                    .transition(.opacity.combined(with: .scale))
+            }
+        }
+        .overlay(alignment: .trailing) {
+            if viewModel.phase == .done, viewModel.rawTranscript != nil {
+                continueButton
+                    .offset(x: 80)
+                    .transition(.opacity.combined(with: .scale))
+            }
+        }
         .animation(.snappy, value: viewModel.recorder.isRecording)
+        .animation(.snappy, value: viewModel.phase)
+    }
+
+    /// Stop state uses a solid fill without the glass layer — glass over the filled
+    /// circle frosts it and kills the contrast against the background.
+    @ViewBuilder
+    private var recordButtonLabel: some View {
+        let icon = Image(systemName: viewModel.recorder.isRecording ? "stop.fill" : "mic.fill")
+            .font(.system(size: 30, weight: .semibold))
+            .foregroundStyle(viewModel.recorder.isRecording ? Color(.systemBackground) : .primary)
+            .frame(width: 84, height: 84)
+        if viewModel.recorder.isRecording {
+            icon.background(Circle().fill(.primary))
+        } else {
+            icon.glassBackground(shape: Circle())
+        }
+    }
+
+    /// Discards the in-flight recording; only visible while recording.
+    private var cancelButton: some View {
+        Button {
+            Task { viewModel.cancelRecording() }
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 56, height: 56)
+                .glassBackground(shape: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Cancel recording")
+    }
+
+    /// Appends another dictation to the transcript on screen; only visible with a result.
+    private var continueButton: some View {
+        Button {
+            Task { await viewModel.continueRecording() }
+        } label: {
+            Image(systemName: "mic.badge.plus")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 56, height: 56)
+                .glassBackground(shape: Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isBusy)
+        .accessibilityLabel("Continue dictating")
     }
 }
 

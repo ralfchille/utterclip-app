@@ -6,6 +6,10 @@ let project = Project(
         .remote(
             url: "https://github.com/argmaxinc/WhisperKit",
             requirement: .upToNextMajor(from: "0.9.0")
+        ),
+        .remote(
+            url: "https://github.com/kyle-n/HighlightedTextEditor",
+            requirement: .upToNextMajor(from: "2.1.2")
         )
     ],
     settings: .settings(
@@ -36,7 +40,8 @@ let project = Project(
             sources: ["Voicer/**/*.swift"],
             resources: ["Voicer/Resources/**"],
             dependencies: [
-                .package(product: "WhisperKit")
+                .package(product: "WhisperKit"),
+                .package(product: "HighlightedTextEditor")
             ]
         )
     ]
