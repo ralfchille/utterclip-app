@@ -78,8 +78,9 @@ struct HistoryView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
-                if let styleID = entry.styleID {
-                    Text(StyleStore.shared.style(withID: styleID).name)
+                if let styleID = entry.styleID,
+                   let name = StyleStore.shared.styleIfPresent(withID: styleID)?.name {
+                    Text(name)
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)

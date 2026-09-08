@@ -23,7 +23,7 @@ enum AppError: LocalizedError {
         case .emptyTranscript:
             return "Nothing was transcribed — the recording may have been silent or too short."
         case .noApiKey:
-            return "No API key set. Add your Anthropic API key in Settings."
+            return "No working API key. Add one in Settings — Anthropic, OpenAI, Google Gemini or Groq."
         case .rewriteFailed(let message):
             return "Rewrite failed: \(message)"
         }

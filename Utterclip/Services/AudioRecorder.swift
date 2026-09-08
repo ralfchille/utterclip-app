@@ -23,6 +23,16 @@ final class AudioRecorder {
     private var sampleCount = 0
     private var meterTask: Task<Void, Never>?
 
+    /// Called once when the speaker has gone quiet for `silenceTimeout` — the owner
+    /// decides what to do (the view model stops and transcribes). Only fires after some
+    /// speech was heard, so someone gathering their thoughts isn't cut off before starting.
+    @ObservationIgnored var onSilence: (@MainActor () -> Void)?
+    private static let silenceTimeout: TimeInterval = 5
+    /// Average level (dBFS) above which a metering sample counts as speech. Quiet-room
+    /// noise on an iPhone sits around −50; normal speech peaks well above −30.
+    private static let speechThresholdDB: Float = -40
+    private var lastSpeechAt: Date?
+
     func start() async throws {
         guard await AVAudioApplication.requestRecordPermission() else {
             throw AppError.microphonePermissionDenied
@@ -84,6 +94,7 @@ final class AudioRecorder {
     private func startMetering() {
         levels = []
         sampleCount = 0
+        lastSpeechAt = nil
         meterTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self, self.isRecording else { break }
@@ -110,6 +121,20 @@ final class AudioRecorder {
         levels.append(LevelSample(id: sampleCount, value: shaped))
         if levels.count > Self.levelWindow {
             levels.removeFirst(levels.count - Self.levelWindow)
+        }
+        trackSilence(dB)
+    }
+
+    /// Auto-stop: any sample above the speech threshold restarts the 5 s clock; once it
+    /// runs out the handler fires a single time (clearing the mark prevents a repeat until
+    /// speech resumes).
+    private func trackSilence(_ dB: Float) {
+        let now = Date()
+        if dB > Self.speechThresholdDB {
+            lastSpeechAt = now
+        } else if let last = lastSpeechAt, now.timeIntervalSince(last) >= Self.silenceTimeout {
+            lastSpeechAt = nil
+            onSilence?()
         }
     }
 }

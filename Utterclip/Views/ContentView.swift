@@ -23,7 +23,7 @@ struct ContentView: View {
                         selected: viewModel.selectedStyle,
                         isDisabled: viewModel.isBusy
                     ) { style in
-                        Task { await viewModel.rewrite(with: style) }
+                        viewModel.rewrite(with: style)
                     }
                     .padding(.bottom, 10) // sit a touch higher above the record button
                 }
@@ -55,6 +55,11 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showHistory) {
                 HistoryView(viewModel: viewModel)
+            }
+            .onOpenURL { url in
+                // utterclip://record — from the Home Screen widget or the Control Center button.
+                guard url.host == "record", !viewModel.recorder.isRecording, !viewModel.isBusy else { return }
+                Task { await viewModel.record() }
             }
             .fullScreenCover(item: $editTarget) { target in
                 switch target {
@@ -214,13 +219,17 @@ struct ContentView: View {
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }
 
+        if viewModel.rewriteNeedsKey, viewModel.phase == .done {
+            apiKeyInfoCard
+        }
+
         if let rewriteError = viewModel.rewriteError {
             VStack(alignment: .leading, spacing: 6) {
                 Label(rewriteError, systemImage: "exclamationmark.triangle")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 Button("Retry rewrite") {
-                    Task { await viewModel.rewrite(with: viewModel.selectedStyle) }
+                    viewModel.rewrite(with: viewModel.selectedStyle)
                 }
                 .font(.footnote.weight(.semibold))
             }
@@ -249,6 +258,38 @@ struct ContentView: View {
             }
             .padding(.horizontal) // align with the styled card's inner content
         }
+    }
+
+    /// Takes the styled result's place when no working API key is stored: what's needed,
+    /// where to add it, and that the raw transcript is already copied.
+    private var apiKeyInfoCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Styled rewrites need an API key", systemImage: "key")
+                .font(.subheadline.weight(.semibold))
+            Text(viewModel.onDeviceAvailable
+                ? "Add an Anthropic, OpenAI, Google Gemini or Groq key in Settings — or rewrite on your iPhone with Apple Intelligence, where nothing leaves the device. Your raw transcript is already on the clipboard."
+                : "Add an Anthropic, OpenAI, Google Gemini or Groq key in Settings. Your raw transcript is already on the clipboard.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 16) {
+                Button("Open Settings") { showSettings = true }
+                if viewModel.onDeviceAvailable {
+                    Button("Use on-device model") {
+                        viewModel.switchToOnDeviceModel()
+                    }
+                }
+            }
+            .font(.footnote.weight(.semibold))
+            if !viewModel.onDeviceAvailable, let reason = viewModel.onDeviceUnavailabilityReason {
+                Text("On-device model: \(reason)")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
     }
 
     /// Big elapsed-time counter while recording, echoing the reference app's record screen.
@@ -342,12 +383,10 @@ struct ContentView: View {
 
     private var recordButton: some View {
         Button {
-            Task {
-                if viewModel.recorder.isRecording {
-                    await viewModel.stopAndProcess()
-                } else {
-                    await viewModel.record()
-                }
+            if viewModel.recorder.isRecording {
+                viewModel.stopAndProcess()
+            } else {
+                Task { await viewModel.record() }
             }
         } label: {
             recordButtonLabel
@@ -357,7 +396,7 @@ struct ContentView: View {
         .opacity(recordUnavailable ? 0.4 : 1)
         .accessibilityLabel(viewModel.recorder.isRecording ? "Stop recording" : "Start recording")
         .overlay(alignment: .leading) {
-            if viewModel.recorder.isRecording {
+            if viewModel.recorder.isRecording || viewModel.isBusy {
                 cancelButton
                     .offset(x: -80)
                     .transition(.opacity.combined(with: .scale))
@@ -389,10 +428,10 @@ struct ContentView: View {
         }
     }
 
-    /// Discards the in-flight recording; only visible while recording.
+    /// Abandons the recording, transcription or rewrite in progress; visible while any is.
     private var cancelButton: some View {
         Button {
-            Task { viewModel.cancelRecording() }
+            viewModel.cancel()
         } label: {
             Image(systemName: "xmark")
                 .font(.system(size: 20, weight: .semibold))
@@ -401,7 +440,7 @@ struct ContentView: View {
                 .glassBackground(shape: Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Cancel recording")
+        .accessibilityLabel(viewModel.recorder.isRecording ? "Cancel recording" : "Cancel")
     }
 
     /// Appends another dictation to the transcript on screen; only visible with a result.
