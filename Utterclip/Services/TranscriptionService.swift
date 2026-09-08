@@ -75,7 +75,10 @@ final class TranscriptionService {
         let start = ContinuousClock.now
         let results = try await kit.transcribe(audioPath: audioURL.path, decodeOptions: options)
         logger.info("Transcription took \(ContinuousClock.now - start, privacy: .public)")
+        // Whisper marks non-speech audio with tokens like "[BLANK_AUDIO]" or "[MUSIC]";
+        // they aren't dictation and must not reach the clipboard or history.
         let text = results.map(\.text).joined()
+            .replacing(#/\[[A-Z_ ]+\]/#, with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw AppError.emptyTranscript }
         return text

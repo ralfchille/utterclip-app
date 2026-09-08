@@ -81,13 +81,19 @@ struct ContentView: View {
     @ViewBuilder
     private var resultArea: some View {
         if viewModel.phase == .idle {
-            VStack {
+            // Three equal spacers land the loading indicator at the upper third while the
+            // hint stays anchored above the record button.
+            VStack(spacing: 0) {
+                Spacer()
+                modelLoadingIndicator
+                Spacer()
                 Spacer()
                 statusHint
             }
             .padding(.horizontal)
             .padding(.bottom, 40) // + the 16pt stack spacing = 56pt to the record button
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(.snappy, value: viewModel.transcription.state)
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -112,21 +118,29 @@ struct ContentView: View {
         }
     }
 
+    /// Spinner over centered text while the model is still loading; gone once it's ready.
+    @ViewBuilder
+    private var modelLoadingIndicator: some View {
+        switch viewModel.transcription.state {
+        case .cold, .warming:
+            VStack(spacing: 10) {
+                ProgressView()
+                Text("Model loads in the background — you can record right away.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
+            }
+            .frame(maxWidth: .infinity)
+        case .ready, .failed:
+            EmptyView()
+        }
+    }
+
     @ViewBuilder
     private var statusHint: some View {
         VStack(spacing: 8) {
             switch viewModel.transcription.state {
-            case .cold, .warming:
-                readyHint
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Model loads in the background — you can record right away.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
-                }
-                .padding(.top, 12)
             case .failed(let message):
                 VStack(spacing: 12) {
                     Label("Model failed to load", systemImage: "exclamationmark.triangle")
@@ -146,7 +160,8 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                 }
                 .frame(maxWidth: .infinity)
-            case .ready:
+            case .cold, .warming, .ready:
+                noticeRow
                 readyHint
             }
         }
@@ -163,8 +178,20 @@ struct ContentView: View {
             .frame(maxWidth: .infinity)
     }
 
+    /// Non-error status after a recording with no speech in it (Whisper's
+    /// "[BLANK_AUDIO]"); clears with the next recording.
+    @ViewBuilder
+    private var noticeRow: some View {
+        if let notice = viewModel.notice {
+            Label(notice, systemImage: "waveform.slash")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     @ViewBuilder
     private var transcriptSection: some View {
+        noticeRow
         if viewModel.phase == .rewriting {
             progressRow("Rewriting as \(viewModel.selectedStyle.name)…")
         }

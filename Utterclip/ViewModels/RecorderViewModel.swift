@@ -19,6 +19,9 @@ final class RecorderViewModel {
     private(set) var styledText: String?
     /// Non-fatal rewrite failure — raw transcript remains available and copied.
     private(set) var rewriteError: String?
+    /// Non-error status after a recording with no speech (Whisper's "[BLANK_AUDIO]");
+    /// nothing is copied or logged in that case. Cleared by the next recording.
+    private(set) var notice: String?
     private(set) var selectedStyle: MessageStyle
 
     let recorder = AudioRecorder()
@@ -39,8 +42,8 @@ final class RecorderViewModel {
     private static let defaultStyleKey = "defaultStyleID"
     private static let copyAsMarkdownKey = "copyAsMarkdown"
 
-    /// When on, copies put raw markdown on the clipboard instead of the rich
-    /// (HTML/RTF) representations. Persists across recordings and launches.
+    /// When on, copies put the raw markdown source on the clipboard instead of the
+    /// stripped plain text. Persists across recordings and launches.
     var copyAsMarkdown: Bool {
         didSet { UserDefaults.standard.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) }
     }
@@ -75,6 +78,7 @@ final class RecorderViewModel {
         rawTranscript = nil
         styledText = nil
         rewriteError = nil
+        notice = nil
         rewriteCache.removeAll()
         do {
             try await recorder.start()
@@ -92,6 +96,7 @@ final class RecorderViewModel {
         guard rawTranscript != nil else { return await record() }
         isContinuing = true
         rewriteError = nil
+        notice = nil
         do {
             try await recorder.start()
             phase = .recording
@@ -125,6 +130,10 @@ final class RecorderViewModel {
                 logDictation(chunk)
                 await rewrite(with: StyleStore.shared.style(withID: defaultStyleID))
             }
+        } catch AppError.emptyTranscript {
+            // Silence or non-speech only: keep what was on screen, copy and log nothing.
+            notice = "Nothing heard — tap the mic and try again."
+            phase = rawTranscript == nil ? .idle : .done
         } catch {
             phase = .error(error.localizedDescription)
         }
