@@ -9,6 +9,7 @@ struct KeyProvider {
 
     // Unchanged across the rename so the key saved before it stays readable.
     private let service = "com.babbellabs.voicer"
+    // Predates multi-provider support; kept so an already-stored key stays readable.
     private let account = "anthropic-api-key"
 
     func apiKey() -> String? {
@@ -23,6 +24,9 @@ struct KeyProvider {
     }
 
     var hasKey: Bool { apiKey()?.isEmpty == false }
+
+    /// Which provider the stored key routes to (see `AIProvider.detect`); nil if none or unknown.
+    var provider: AIProvider? { apiKey().flatMap(AIProvider.detect) }
 
     @discardableResult
     func setApiKey(_ key: String) -> Bool {

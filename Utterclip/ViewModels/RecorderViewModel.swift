@@ -19,6 +19,8 @@ final class RecorderViewModel {
     private(set) var styledText: String?
     /// Non-fatal rewrite failure — raw transcript remains available and copied.
     private(set) var rewriteError: String?
+    /// The rewrite couldn't run for lack of a working API key; the UI points to Settings.
+    private(set) var rewriteNeedsKey = false
     /// Non-error status after a recording with no speech (Whisper's "[BLANK_AUDIO]");
     /// nothing is copied or logged in that case. Cleared by the next recording.
     private(set) var notice: String?
@@ -26,7 +28,13 @@ final class RecorderViewModel {
 
     let recorder = AudioRecorder()
     let transcription = TranscriptionService.shared
-    private let rewriter: Rewriter
+    private let cloudRewriter: Rewriter
+    private let localRewriter: Rewriter = LocalRewriter()
+
+    /// The transcribe/rewrite job in flight, so the ✕ beside the mic can abandon it.
+    private var processingTask: Task<Void, Never>?
+    /// Pill highlighted before a rewrite started; restored if that rewrite is cancelled.
+    private var styleBeforeRewrite: MessageStyle?
 
     /// History entry the current dictation writes into; nil until a transcript exists.
     private var currentEntryID: UUID?
@@ -41,6 +49,8 @@ final class RecorderViewModel {
 
     private static let defaultStyleKey = "defaultStyleID"
     private static let copyAsMarkdownKey = "copyAsMarkdown"
+    private static let redactPersonalDataKey = "redactPersonalData"
+    private static let useOnDeviceModelKey = "useOnDeviceModel"
 
     /// When on, copies put the raw markdown source on the clipboard instead of the
     /// stripped plain text. Persists across recordings and launches.
@@ -48,25 +58,51 @@ final class RecorderViewModel {
         didSet { UserDefaults.standard.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) }
     }
 
+    /// Swap emails, phone numbers, links and addresses for placeholders before a rewrite
+    /// leaves the device, restoring them in the result (see `Redactor`). On by default.
+    var redactPersonalData: Bool {
+        didSet { UserDefaults.standard.set(redactPersonalData, forKey: Self.redactPersonalDataKey) }
+    }
+
+    /// Rewrite with Apple's on-device model (`LocalRewriter`) instead of the cloud provider.
+    /// The engines produce different text, so switching clears the per-style cache.
+    var useOnDeviceModel: Bool {
+        didSet {
+            UserDefaults.standard.set(useOnDeviceModel, forKey: Self.useOnDeviceModelKey)
+            rewriteCache.removeAll()
+        }
+    }
+
+    var onDeviceAvailable: Bool { LocalRewriter.isAvailable }
+    var onDeviceUnavailabilityReason: String? { LocalRewriter.unavailabilityReason }
+
     var defaultStyleID: String {
         get {
-            UserDefaults.standard.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
+            let stored = UserDefaults.standard.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
+            // A saved default may name a style that no longer exists (a removed built-in id,
+            // or a deleted user-added style) — fall back so the picker and the one-tap
+            // rewrite stay consistent.
+            if StyleStore.shared.styleIfPresent(withID: stored) != nil { return stored }
+            return StyleStore.shared.styles.first?.id ?? Styles.defaultStyle.id
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Self.defaultStyleKey)
         }
     }
 
-    init(rewriter: Rewriter = CloudRewriter(keyProvider: { KeyProvider.shared.apiKey() })) {
-        self.rewriter = rewriter
+    init(cloudRewriter: Rewriter = CloudRewriter(keyProvider: { KeyProvider.shared.apiKey() })) {
+        self.cloudRewriter = cloudRewriter
         self.copyAsMarkdown = UserDefaults.standard.bool(forKey: Self.copyAsMarkdownKey)
-        self.selectedStyle = Styles.defaultStyle
-        // A saved default may reference a removed style id (e.g. "structured") —
-        // fall back to the app default so the Settings picker stays consistent.
-        if !Styles.all.contains(where: { $0.id == defaultStyleID }) {
-            defaultStyleID = Styles.defaultStyle.id
-        }
+        self.redactPersonalData = UserDefaults.standard.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
+        self.useOnDeviceModel = UserDefaults.standard.bool(forKey: Self.useOnDeviceModelKey)
+        self.selectedStyle = Styles.defaultStyle // placeholder until `self` is fully initialized
         self.selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
+        // Hands-free finish: 5 s of silence after speech ends the recording as if the
+        // stop button had been tapped (same haptic, same transcribe → rewrite flow).
+        recorder.onSilence = { [weak self] in
+            guard let self, self.phase == .recording else { return }
+            self.stopAndProcess()
+        }
     }
 
     var isBusy: Bool {
@@ -78,6 +114,7 @@ final class RecorderViewModel {
         rawTranscript = nil
         styledText = nil
         rewriteError = nil
+        rewriteNeedsKey = false
         notice = nil
         rewriteCache.removeAll()
         do {
@@ -96,6 +133,7 @@ final class RecorderViewModel {
         guard rawTranscript != nil else { return await record() }
         isContinuing = true
         rewriteError = nil
+        rewriteNeedsKey = false
         notice = nil
         do {
             try await recorder.start()
@@ -107,15 +145,21 @@ final class RecorderViewModel {
         }
     }
 
-    func stopAndProcess() async {
+    /// Stops the recording and runs transcribe → copy → rewrite as one cancellable job.
+    func stopAndProcess() {
         haptic(.medium)
         let appending = isContinuing
         isContinuing = false
+        processingTask = Task { await performStopAndProcess(appending: appending) }
+    }
+
+    private func performStopAndProcess(appending: Bool) async {
         do {
             let audioURL = try recorder.stop()
+            defer { try? FileManager.default.removeItem(at: audioURL) }
             phase = .transcribing
             let chunk = try await transcription.transcribe(audioURL)
-            try? FileManager.default.removeItem(at: audioURL)
+            try Task.checkCancellation() // a late result must not overwrite a cancelled state
             rewriteCache.removeAll() // the transcript changes below either way
             if appending, let base = rawTranscript {
                 let combined = base + " " + chunk
@@ -123,13 +167,15 @@ final class RecorderViewModel {
                 styledText = nil // don't show the old rewrite against the longer transcript
                 Clipboard.copy(combined)
                 updateCurrentEntry { $0.rawTranscript = combined }
-                await rewrite(with: selectedStyle)
+                await performRewrite(with: selectedStyle)
             } else {
                 rawTranscript = chunk
                 Clipboard.copy(chunk) // fast path: raw text is pasteable before any network call
                 logDictation(chunk)
-                await rewrite(with: StyleStore.shared.style(withID: defaultStyleID))
+                await performRewrite(with: StyleStore.shared.style(withID: defaultStyleID))
             }
+        } catch is CancellationError {
+            // `cancel()` already restored the visible state.
         } catch AppError.emptyTranscript {
             // Silence or non-speech only: keep what was on screen, copy and log nothing.
             notice = "Nothing heard — tap the mic and try again."
@@ -139,15 +185,21 @@ final class RecorderViewModel {
         }
     }
 
-    /// Runs (or re-runs) the rewrite for a style and copies the result (plan Phase 6).
+    /// Runs (or re-runs) the rewrite for a style as a cancellable job (plan Phase 6).
     /// A style already rewritten for the current transcript is served from the cache —
     /// re-tapping a pill or switching back to one re-copies instantly, no network call.
-    func rewrite(with style: MessageStyle) async {
+    func rewrite(with style: MessageStyle) {
+        processingTask = Task { await performRewrite(with: style) }
+    }
+
+    private func performRewrite(with style: MessageStyle) async {
         guard let raw = rawTranscript else { return }
         // Re-fetch by id so a prompt edited in Settings applies to the next rewrite.
         let style = StyleStore.shared.style(withID: style.id)
+        styleBeforeRewrite = selectedStyle
         selectedStyle = style
         rewriteError = nil
+        rewriteNeedsKey = false
         if let cached = rewriteCache[style] {
             styledText = cached
             copyStyled(cached)
@@ -161,7 +213,14 @@ final class RecorderViewModel {
         }
         phase = .rewriting
         do {
-            let styled = try await rewriter.rewrite(raw, style: style)
+            // Cloud only: personal identifiers leave the device as placeholders and come back
+            // restored; the cache and history only ever hold the restored text. The on-device
+            // model needs no redaction — nothing leaves the phone.
+            let engine: Rewriter = useOnDeviceModel ? localRewriter : cloudRewriter
+            let redaction = (redactPersonalData && !useOnDeviceModel) ? Redactor.redact(raw) : nil
+            var styled = try await engine.rewrite(redaction?.text ?? raw, style: style)
+            try Task.checkCancellation() // a late result must not overwrite a cancelled state
+            if let redaction { styled = Redactor.restore(styled, redaction) }
             rewriteCache[style] = styled
             styledText = styled
             copyStyled(styled)
@@ -169,10 +228,20 @@ final class RecorderViewModel {
                 entry.styledText = styled
                 entry.styleID = style.id
             }
+        } catch is CancellationError {
+            return // `cancel()` already restored the visible state.
+        } catch AppError.noApiKey {
+            rewriteNeedsKey = true // the UI points to Settings instead of offering a retry
         } catch {
             rewriteError = error.localizedDescription
         }
         phase = .done
+    }
+
+    /// Chosen from the missing-key card: switch engines and rewrite the current transcript.
+    func switchToOnDeviceModel() {
+        useOnDeviceModel = true
+        rewrite(with: selectedStyle)
     }
 
     // MARK: - History
@@ -196,9 +265,11 @@ final class RecorderViewModel {
     /// current copy mode, so restoring behaves exactly like having just dictated it.
     func restore(_ entry: HistoryEntry) {
         recorder.cancel()
+        processingTask?.cancel()
         rawTranscript = entry.rawTranscript
         styledText = entry.styledText
         rewriteError = nil
+        rewriteNeedsKey = false
         currentEntryID = entry.id
         rewriteCache.removeAll()
         if let styleID = entry.styleID {
@@ -263,9 +334,21 @@ final class RecorderViewModel {
         haptic(.light)
     }
 
-    /// Discards the in-flight recording without transcribing or copying anything.
-    func cancelRecording() {
-        recorder.cancel()
+    /// The ✕ beside the mic: discards an in-flight recording, or abandons a transcription
+    /// or rewrite in progress and returns to what was on screen before it started.
+    func cancel() {
+        if recorder.isRecording {
+            recorder.cancel()
+        } else if isBusy {
+            processingTask?.cancel()
+            processingTask = nil
+            if phase == .rewriting, let previous = styleBeforeRewrite {
+                selectedStyle = previous // the result still on screen belongs to that pill
+            }
+            rewriteError = nil
+        } else {
+            return
+        }
         isContinuing = false // an abandoned continuation leaves the transcript untouched
         phase = rawTranscript == nil ? .idle : .done
         haptic(.light)
