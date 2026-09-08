@@ -16,7 +16,7 @@ struct SettingsView: View {
                 Section {
                     Picker("Default style", selection: defaultStyleBinding) {
                         ForEach(Styles.all) { style in
-                            Text("\(style.emoji) \(style.name)").tag(style.id)
+                            Text(style.name).tag(style.id)
                         }
                     }
                 } header: {
@@ -31,7 +31,7 @@ struct SettingsView: View {
                             StylePromptEditor(style: style)
                         } label: {
                             HStack {
-                                Text("\(style.emoji) \(style.name)")
+                                Text(style.name)
                                 Spacer()
                                 if StyleStore.shared.isCustomized(style.id) {
                                     Text("Edited")
@@ -135,7 +135,7 @@ struct StylePromptEditor: View {
                 }
             }
         }
-        .navigationTitle("\(style.emoji) \(style.name)")
+        .navigationTitle(style.name)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

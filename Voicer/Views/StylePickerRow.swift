@@ -14,20 +14,16 @@ struct StylePickerRow: View {
                     Button {
                         onSelect(style)
                     } label: {
-                        HStack(spacing: 4) {
-                            Text(style.emoji)
-                            Text(style.name)
-                                .font(.subheadline.weight(.medium))
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .foregroundStyle(style.id == selected.id ? Color(.systemBackground) : .primary)
-                        .background {
-                            if style.id == selected.id {
-                                Capsule().fill(.primary)
-                            }
-                        }
-                        .glassBackground()
+                        Text(style.name)
+                            .font(.subheadline.weight(.medium))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .foregroundStyle(style.id == selected.id ? Color(.systemBackground) : .primary)
+                            // Flat capsules per the Figma style picker: solid primary when selected,
+                            // systemGray6 otherwise — no glass layer, so no shadow and no washed-out black.
+                            .background(
+                                Capsule().fill(style.id == selected.id ? Color.primary : Color(.systemGray6))
+                            )
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Rewrite as \(style.name)")
