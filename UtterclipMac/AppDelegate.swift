@@ -41,9 +41,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Launched deliberately (Finder, Spotlight, login item): show the window once, so a
         // first launch isn't "nothing happened". Closing it returns the app to the icon.
-        // One turn later: the status item gets its screen position on the next run-loop pass,
-        // and the window should land under it.
-        DispatchQueue.main.async { self.showWindow() }
+        showWindowOnceAnchored()
+    }
+
+    /// The status item only gets its place in the menu bar a few run-loop turns after it is
+    /// created — until then its window reports a placeholder frame at the screen origin, and
+    /// anchoring to that would pin the app window to the bottom-left corner. Wait (up to
+    /// three seconds) for a frame that sits in a menu bar, then show the window under it.
+    private func showWindowOnceAnchored(attempt: Int = 0) {
+        if statusItemFrame != nil || attempt >= 60 {
+            showWindow()
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                self.showWindowOnceAnchored(attempt: attempt + 1)
+            }
+        }
     }
 
     /// Menu-bar apps keep running with no windows; that is the point.
@@ -86,9 +98,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// The status item's frame in screen coordinates (it has its own little window).
+    /// The status item's frame in screen coordinates (it has its own little window), or nil
+    /// until that frame actually sits in a screen's menu bar.
     private var statusItemFrame: NSRect? {
-        statusItem?.button?.window?.frame
+        guard let frame = statusItem?.button?.window?.frame, !frame.isEmpty,
+              NSScreen.screens.contains(where: { screen in
+                  screen.frame.intersects(frame) && frame.maxY > screen.frame.maxY - 40
+              })
+        else { return nil }
+        return frame
     }
 
     // MARK: - Status item

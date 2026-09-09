@@ -35,8 +35,9 @@ public enum Styles {
     /// All styles, in display order.
     public static let all: [MessageStyle] = [plain, slack, whatsapp, prompt, email]
 
-    /// The one-tap default for v1 (changeable in Settings).
-    public static let defaultStyle = slack
+    /// The style selected when the app is first opened (changeable in Settings). Plain: the
+    /// least opinionated rewrite, so a first dictation comes back as what was said, tidied.
+    public static let defaultStyle = plain
 
     public static func style(withID id: String) -> MessageStyle {
         all.first { $0.id == id } ?? defaultStyle
