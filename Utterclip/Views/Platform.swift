@@ -168,7 +168,7 @@ struct MacHeader<Actions: View>: View {
     @ViewBuilder var actions: Actions
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 2) { // the button style adds the breathing room
             if let back {
                 Button(action: back) {
                     Image(systemName: "chevron.left")
@@ -182,11 +182,24 @@ struct MacHeader<Actions: View>: View {
             actions
         }
         .font(.system(size: 17, weight: .medium))
-        .buttonStyle(.plain)
+        .buttonStyle(HeaderActionButtonStyle())
         .foregroundStyle(.primary)
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 4)
+        .padding(.leading, 20)
+        .padding(.trailing, 8) // the buttons carry 6 pt of their own; glyph edges stay ~20 pt in
+        .padding(.top, 6) // the 36 pt buttons give the row its height; keep the title where it was
+        .padding(.bottom, 0)
+    }
+}
+
+/// Header buttons are small glyphs; give each a comfortable 36-point target and a light
+/// pressed state, so a click a few points off the mark still lands.
+struct HeaderActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 6)
+            .frame(minWidth: 36, minHeight: 36)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.5 : 1)
     }
 }
 #endif
