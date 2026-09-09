@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import UtterclipCore
 
@@ -9,7 +10,7 @@ struct ContentView: View {
     @State private var showHistory = false
     @State private var editTarget: EditTarget?
 
-    /// Which text the full-screen editor is currently editing.
+    /// Which text the editor is currently editing.
     private enum EditTarget: String, Identifiable {
         case styled, raw
         var id: String { rawValue }
@@ -32,9 +33,9 @@ struct ContentView: View {
                     .padding(.bottom, 24)
             }
             .navigationTitle("Utterclip")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .barLeading) {
                     Button {
                         showHistory = true
                     } label: {
@@ -42,7 +43,7 @@ struct ContentView: View {
                     }
                     .accessibilityLabel("History")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .barTrailing) {
                     Button {
                         showSettings = true
                     } label: {
@@ -58,11 +59,26 @@ struct ContentView: View {
                 HistoryView(viewModel: viewModel)
             }
             .onOpenURL { url in
-                // utterclip://record — from the Home Screen widget or the Control Center button.
+                // utterclip://record — from the Home Screen widget, the Control Center button,
+                // or (on the Mac) any launcher that opens the URL.
                 guard url.host == "record", !viewModel.recorder.isRecording, !viewModel.isBusy else { return }
                 Task { await viewModel.record() }
             }
-            .fullScreenCover(item: $editTarget) { target in
+            // Menu items and keyboard shortcuts (macOS) drive the same actions as the buttons.
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipToggleRecording)) { _ in
+                toggleRecording()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipContinueRecording)) { _ in
+                guard viewModel.phase == .done, viewModel.rawTranscript != nil else { return }
+                Task { await viewModel.continueRecording() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipShowHistory)) { _ in
+                showHistory = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipShowSettings)) { _ in
+                showSettings = true
+            }
+            .editorPresentation(item: $editTarget) { target in
                 switch target {
                 case .styled:
                     EditorView(
@@ -177,7 +193,7 @@ struct ContentView: View {
     /// Text-only hint (the Figma idle frame drops the mic glyph); `resultArea` anchors it
     /// above the record button, so no top padding here.
     private var readyHint: some View {
-        Text("Tap the mic, speak, tap again.\nYour words land on the clipboard.")
+        Text(PlatformText.readyHint)
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
@@ -268,7 +284,7 @@ struct ContentView: View {
             Label("Styled rewrites need an API key", systemImage: "key")
                 .font(.subheadline.weight(.semibold))
             Text(viewModel.onDeviceAvailable
-                ? "Add an Anthropic, OpenAI, Google Gemini or Groq key in Settings — or rewrite on your iPhone with Apple Intelligence, where nothing leaves the device. Your raw transcript is already on the clipboard."
+                ? "Add an Anthropic, OpenAI, Google Gemini or Groq key in Settings — or rewrite on \(PlatformText.deviceName) with Apple Intelligence, where nothing leaves the device. Your raw transcript is already on the clipboard."
                 : "Add an Anthropic, OpenAI, Google Gemini or Groq key in Settings. Your raw transcript is already on the clipboard.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -327,7 +343,7 @@ struct ContentView: View {
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .foregroundStyle(viewModel.copyAsMarkdown ? Color(.systemBackground) : .secondary)
+                .foregroundStyle(viewModel.copyAsMarkdown ? Color.appBackground : .secondary)
                 .background {
                     if viewModel.copyAsMarkdown {
                         Capsule().fill(.primary)
@@ -385,13 +401,18 @@ struct ContentView: View {
         return viewModel.isBusy
     }
 
+    /// One action for the button, the ⌘R menu item and the URL scheme.
+    private func toggleRecording() {
+        if viewModel.recorder.isRecording {
+            viewModel.stopAndProcess()
+        } else if !recordUnavailable {
+            Task { await viewModel.record() }
+        }
+    }
+
     private var recordButton: some View {
         Button {
-            if viewModel.recorder.isRecording {
-                viewModel.stopAndProcess()
-            } else {
-                Task { await viewModel.record() }
-            }
+            toggleRecording()
         } label: {
             recordButtonLabel
         }
@@ -423,7 +444,7 @@ struct ContentView: View {
     private var recordButtonLabel: some View {
         let icon = Image(systemName: viewModel.recorder.isRecording ? "stop.fill" : "mic.fill")
             .font(.system(size: 30, weight: .semibold))
-            .foregroundStyle(viewModel.recorder.isRecording ? Color(.systemBackground) : .primary)
+            .foregroundStyle(viewModel.recorder.isRecording ? Color.appBackground : .primary)
             .frame(width: 84, height: 84)
         if viewModel.recorder.isRecording {
             icon.background(Circle().fill(.primary))

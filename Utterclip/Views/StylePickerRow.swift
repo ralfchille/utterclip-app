@@ -19,11 +19,11 @@ struct StylePickerRow: View {
                             .font(.subheadline.weight(.medium))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .foregroundStyle(style.id == selected.id ? Color(.systemBackground) : .primary)
+                            .foregroundStyle(style.id == selected.id ? Color.appBackground : .primary)
                             // Flat capsules per the Figma style picker: solid primary when selected,
                             // systemGray6 otherwise — no glass layer, so no shadow and no washed-out black.
                             .background(
-                                Capsule().fill(style.id == selected.id ? Color.primary : Color(.systemGray6))
+                                Capsule().fill(style.id == selected.id ? Color.primary : Color.pillFill)
                             )
                     }
                     .buttonStyle(.plain)

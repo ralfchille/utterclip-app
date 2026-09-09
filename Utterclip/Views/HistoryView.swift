@@ -2,7 +2,8 @@ import SwiftUI
 import UtterclipCore
 
 /// Browsable log of past dictations. Tapping an entry restores it as the current
-/// result on the main screen; rows can be swipe-deleted, and the whole log cleared.
+/// result on the main screen; rows can be deleted (swipe on iOS, context menu on both),
+/// and the whole log cleared.
 struct HistoryView: View {
     let viewModel: RecorderViewModel
 
@@ -24,9 +25,9 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .barLeading) {
                     if !store.entries.isEmpty {
                         Button("Clear", role: .destructive) {
                             confirmClear = true
@@ -43,7 +44,7 @@ struct HistoryView: View {
                         }
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .barTrailing) {
                     Button {
                         dismiss()
                     } label: {
@@ -54,6 +55,7 @@ struct HistoryView: View {
             }
         }
         .tint(.primary)
+        .sheetFrame(minWidth: 440, minHeight: 520)
     }
 
     private var entryList: some View {
@@ -66,10 +68,18 @@ struct HistoryView: View {
                     row(for: entry)
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button("Delete", role: .destructive) { delete(entry) }
+                }
             }
             .onDelete { store.delete(at: $0) }
         }
         .listStyle(.plain)
+    }
+
+    private func delete(_ entry: HistoryEntry) {
+        guard let index = store.entries.firstIndex(where: { $0.id == entry.id }) else { return }
+        store.delete(at: IndexSet(integer: index))
     }
 
     private func row(for entry: HistoryEntry) -> some View {

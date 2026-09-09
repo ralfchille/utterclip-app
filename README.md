@@ -7,7 +7,8 @@
 <p align="center">
   <strong>Dictate, and polished text lands on your clipboard.</strong><br>
   Tap the mic, speak, tap again. Your words are transcribed on your iPhone and rewritten as the
-  message you were about to type — a Slack update, a WhatsApp reply, an email, a prompt.
+  message you were about to type — a Slack update, a WhatsApp reply, an email, a prompt.<br>
+  Also on the Mac: the same app in a small window that floats above whatever you are writing in.
 </p>
 
 <p align="center">
@@ -264,8 +265,49 @@ If a freshly installed build does not show up in the gallery, restart the phone;
 gallery per app version.
 
 **Can I use it on iPad or Mac?**
-Not yet. The app is iPhone-only today. <!-- TODO: confirm roadmap wording --> _[TBD: the core
-is being split into a shared framework so a macOS companion can follow; say so here if that is the plan.]_
+Mac, yes: the repository builds a native macOS app from the same code (see
+[Utterclip for Mac](#utterclip-for-mac)); it is not on the Mac App Store yet and is installed by
+building it. iPad is not supported; the iPhone app is portrait-only.
+
+---
+
+## Utterclip for Mac
+
+The same app, on the Mac: one compact window (420 × 720 by default, resizable) that **floats
+above other applications**, so it can sit next to Slack, Mail or a browser while you dictate
+into them. Same features, same engines, same API calls, same monochrome look; the views are
+literally the same SwiftUI files as the iPhone app.
+
+What is different, and only because the platform is:
+
+| iPhone | Mac |
+|---|---|
+| Home Screen / Lock Screen widget, Control Center control | **Dictation** menu: Start / Stop Dictation **⌘R**, Continue Dictating **⇧⌘R**, History **⌘Y**; Settings **⌘,** |
+| Full-screen editor | Editor in a sheet |
+| Always fills the screen | **Window ▸ Float on Top** (**⌥⌘T**) toggles the always-on-top behaviour; on by default. The window follows you across Spaces and stays visible over full-screen apps. |
+| `utterclip://record` from the widget | Same URL scheme; works from any launcher or automation |
+| On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
+
+Requirements: macOS 14 or later; Apple Intelligence needs macOS 26 on an Apple silicon Mac.
+The Whisper model is downloaded once (about 220 MB), into the app's own container.
+
+### Build it
+
+Same repository, same steps as [Option A](#option-a-build-it-yourself-with-xcode), then pick the
+**UtterclipMac** scheme and **My Mac** as the destination, or from the terminal:
+
+```sh
+xcodebuild -workspace Utterclip.xcworkspace -scheme UtterclipMac -destination 'platform=macOS' -configuration Release build
+```
+
+The app lands in Xcode's DerivedData folder; drag it into `/Applications`. The Mac app is
+sandboxed with exactly two permissions, microphone and outgoing network, and asks for the
+microphone the first time you record.
+
+Note on locally built copies: a build signed without a provisioning profile stores the API key
+in the login keychain rather than the per-app data-protection keychain, so macOS may ask once
+per rebuild whether Utterclip may use the saved key. Choose **Always Allow**. Signed
+distributions do not have this prompt.
 
 ---
 
@@ -277,8 +319,9 @@ MIT license.
 ### Build
 
 See [Option A](#option-a-build-it-yourself-with-xcode) above. Requirements: Xcode 26, mise,
-an iPhone or simulator on iOS 17+. The simulator works for everything except the on-device
-rewrite engine and the Control Center control.
+an iPhone or simulator on iOS 17+, or a Mac on macOS 14+ for the **UtterclipMac** scheme. The
+simulator works for everything except the on-device rewrite engine and the Control Center
+control.
 
 ### Architecture
 
@@ -303,8 +346,11 @@ UtterclipCore/                     # framework, iOS + macOS: everything below th
 Utterclip/                         # the iPhone app
 ├─ UtterclipApp.swift              # @main; warms the Whisper model at launch
 └─ Views/                          # ContentView, StylePickerRow, HistoryView, SettingsView,
-                                   # EditorView, WaveformView, MarkdownView, GlassBackground
+                                   # EditorView, WaveformView, MarkdownView, GlassBackground;
+                                   # Platform.swift holds every iOS/macOS difference
 
+UtterclipMac/                      # the Mac app: entry point, window level, menu commands;
+                                   # compiles the same Utterclip/Views/ files
 UtterclipWidgets/                  # widget extension: Home/Lock Screen widget + Control
 ```
 
