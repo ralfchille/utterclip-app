@@ -87,6 +87,34 @@ struct HistoryView: View {
     }
 
     private var entryList: some View {
+        #if os(macOS)
+        // A plain scroll view rather than List: the Mac List sits on a table view that
+        // estimates row heights, and multi-line rows growing after the first layout left
+        // the top entry scrolled half out of view. Same rows, same hairlines, no surprises.
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(store.entries) { entry in
+                    Button {
+                        viewModel.restore(entry)
+                        dismiss()
+                    } label: {
+                        row(for: entry)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button("Delete", role: .destructive) { store.delete(id: entry.id) }
+                    }
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.08))
+                        .frame(height: 1)
+                        .padding(.leading, 20)
+                }
+            }
+            .padding(.top, 4)
+        }
+        #else
         List {
             ForEach(store.entries) { entry in
                 Button {
@@ -96,7 +124,6 @@ struct HistoryView: View {
                     row(for: entry)
                 }
                 .buttonStyle(.plain)
-                .headerAlignedRow()
                 .contextMenu {
                     Button("Delete", role: .destructive) { store.delete(id: entry.id) }
                 }
@@ -104,7 +131,7 @@ struct HistoryView: View {
             .onDelete { store.delete(at: $0) }
         }
         .listStyle(.plain)
-        .subtleSeparators()
+        #endif
     }
 
     private func row(for entry: HistoryEntry) -> some View {
