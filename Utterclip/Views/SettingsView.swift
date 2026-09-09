@@ -16,7 +16,7 @@ struct SettingsView: View {
     @State private var keyError: String?
 
     var body: some View {
-        NavigationStack {
+        SheetNavigation {
             VStack(spacing: 0) {
             #if os(macOS)
             MacHeader(title: "Settings") {
@@ -138,13 +138,13 @@ struct SettingsView: View {
             .groupedFormStyle()
             .subtleSeparators()
             }
+            .ignoreHiddenTitleBar()
             .barChrome(title: "Settings") {
                 ToolbarItem(placement: .sheetCancel) {
                     Button("Done") { dismiss() }
                 }
             }
         }
-        .sheetFrame(minWidth: 480, minHeight: 600)
     }
 
     /// Validates and stores the key; every failure is shown, including a Keychain refusal.
@@ -285,6 +285,7 @@ struct StylePromptEditor: View {
         .groupedFormStyle()
         .subtleSeparators()
         }
+        .ignoreHiddenTitleBar()
         .barTitle(editedStyle?.name ?? "New rewrite prompt")
     }
 
