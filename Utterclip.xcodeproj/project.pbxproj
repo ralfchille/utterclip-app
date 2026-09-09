@@ -30,6 +30,7 @@
 		4C7F2C7284C1D5DE36A260CB /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 1C8F61B05683C77B25B40782 /* HighlightedTextEditor */; };
 		4D8F7ABF6B558C8F20E79EEA /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */; };
 		4E74951E6813606D46ED8B59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
+		4F6AA1DFE6C103006FE847B1 /* SyncPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */; };
 		5AD10B680721814DF3311E1C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09681937E4E4FE184312126B /* Platform.swift */; };
 		5CB3EE2E32D2FA0371B88F59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
 		5E0F5480E1CEADA3D83FC904 /* KeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */; };
@@ -40,6 +41,7 @@
 		7A904563AEC74247A278502F /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 28BA344A91D20285EA0C68BD /* WhisperKit */; };
 		7CEE152E4AA4D07266F89C9F /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */; };
 		7D12D45E622EC7096A6B47AC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B590ECC24C31E97E4D7E1421 /* Assets.xcassets */; };
+		8459CA4C54484367CEC8B378 /* Dictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C093652C348BB70958F729A4 /* Dictation.swift */; };
 		8EFE7FE9E590E67A77A3BAE4 /* UtterclipApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362ACD5073A9A097201D6FBD /* UtterclipApp.swift */; };
 		924585F04823E691BFBB67B7 /* UtterclipWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6C63B96BDE6B1413255AC07A /* UtterclipWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		95705DE3FF34F661315EF837 /* CloudRewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53BA8DC76FB99AEEAC98B7A7 /* CloudRewriter.swift */; };
@@ -160,6 +162,7 @@
 		0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderViewModel.swift; sourceTree = "<group>"; };
 		108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipMacApp.swift; sourceTree = "<group>"; };
 		10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UtterclipCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPreference.swift; sourceTree = "<group>"; };
 		148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipWidgets.swift"; sourceTree = "<group>"; };
 		266C41CDA52548681C16CF3E /* UtterclipMac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipMac-Info.plist"; sourceTree = "<group>"; };
@@ -202,6 +205,7 @@
 		B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B590ECC24C31E97E4D7E1421 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipWidgets.swift"; sourceTree = "<group>"; };
+		C093652C348BB70958F729A4 /* Dictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dictation.swift; sourceTree = "<group>"; };
 		CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipMac.swift"; sourceTree = "<group>"; };
 		CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		CED60BD402FCD9AC33ADBAFF /* UtterclipMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UtterclipMac.entitlements; sourceTree = "<group>"; };
@@ -345,6 +349,7 @@
 				5549F4613006277DBA3D15C3 /* RewritePrompt.swift */,
 				7D2590D1835ECF00E098B159 /* Rewriter.swift */,
 				319D09EB2560270E662093E7 /* StyleStore.swift */,
+				1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */,
 				53061E11287017DB6ABBF28A /* TranscriptionService.swift */,
 			);
 			path = Services;
@@ -403,6 +408,7 @@
 			isa = PBXGroup;
 			children = (
 				669869C3385DA0D2ACBDDEFC /* AppError.swift */,
+				C093652C348BB70958F729A4 /* Dictation.swift */,
 				DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */,
 				AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */,
 				E02D86E45BCDAFCC58CF7667 /* Styles.swift */,
@@ -678,6 +684,7 @@
 			files = (
 				1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */,
 				F6243ED762A77340D76022DF /* AppError.swift in Sources */,
+				8459CA4C54484367CEC8B378 /* Dictation.swift in Sources */,
 				1A6FE8E17BD232B472E22A6F /* HistoryEntry.swift in Sources */,
 				480626F9116B78E1BE4E5610 /* MessageStyle.swift in Sources */,
 				43BFF92680ADB6A92A6B9977 /* Styles.swift in Sources */,
@@ -692,6 +699,7 @@
 				35EC8A69FCF46B31D13DBAD0 /* RewritePrompt.swift in Sources */,
 				1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */,
 				CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */,
+				4F6AA1DFE6C103006FE847B1 /* SyncPreference.swift in Sources */,
 				1C17B05A6E14698115D4A786 /* TranscriptionService.swift in Sources */,
 				EC091E3637A1401CF24A5AC5 /* RecorderViewModel.swift in Sources */,
 			);
