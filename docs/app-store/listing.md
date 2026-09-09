@@ -48,7 +48,7 @@ DICTATION
 REWRITING
 • Five built-in styles: Plain, Slack, WhatsApp, Prompt, Email.
 • Edit any prompt, rename or delete the defaults, add your own — up to seven.
-• Pick the one-tap default; re-run with another style any time.
+• Pick the style before you record, or re-run with another one after.
 • The app rewrites. It never answers. A question stays a question.
 • Same language in, same language out.
 

@@ -27,7 +27,7 @@ struct SettingsView: View {
                 } header: {
                     Text("One-tap rewrite")
                 } footer: {
-                    Text("Used automatically after every recording. You can always re-run with another style.")
+                    Text("The style selected when the app opens. The pills above the mic pick the style for the next recording; tap one after a result to re-run it.")
                 }
 
                 Section {
