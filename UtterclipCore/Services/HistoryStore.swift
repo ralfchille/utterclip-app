@@ -54,6 +54,11 @@ public final class HistoryStore {
         save()
     }
 
+    public func delete(id: UUID) {
+        entries.removeAll { $0.id == id }
+        save()
+    }
+
     public func clear() {
         entries.removeAll()
         save()

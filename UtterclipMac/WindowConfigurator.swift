@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import os
 
 /// Reaches the `NSWindow` behind the SwiftUI scene to set what SwiftUI has no modifier
 /// for: the window level. `.floating` keeps the window above other apps' windows even
@@ -9,25 +8,38 @@ import os
 struct WindowConfigurator: NSViewRepresentable {
     var floatOnTop: Bool
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { apply(to: view.window) }
+    func makeNSView(context: Context) -> WindowObservingView {
+        let view = WindowObservingView()
+        view.onWindow = { Self.apply(floatOnTop: floatOnTop, to: $0) }
         return view
     }
 
-    func updateNSView(_ view: NSView, context: Context) {
-        DispatchQueue.main.async { apply(to: view.window) }
+    func updateNSView(_ view: WindowObservingView, context: Context) {
+        view.onWindow = { Self.apply(floatOnTop: floatOnTop, to: $0) }
+        if let window = view.window { Self.apply(floatOnTop: floatOnTop, to: window) }
     }
 
-    private func apply(to window: NSWindow?) {
-        guard let window else { return }
+    private static func apply(floatOnTop: Bool, to window: NSWindow) {
         window.level = floatOnTop ? .floating : .normal
-        // Follow the user to other Spaces and stay visible over full-screen apps, like
-        // a utility panel; without this a floating window is left behind on its Space.
-        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+        // A floating utility follows the user to other Spaces and stays visible over
+        // full-screen apps; a normal window behaves like any other document window.
+        let utilityBehavior: NSWindow.CollectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        if floatOnTop {
+            window.collectionBehavior.insert(utilityBehavior)
+        } else {
+            window.collectionBehavior.remove(utilityBehavior)
+        }
         window.isMovableByWindowBackground = true
-        Self.logger.info("window configured: level=\(window.level.rawValue, privacy: .public) frame=\(NSStringFromRect(window.frame), privacy: .public) visible=\(window.isVisible, privacy: .public)")
     }
+}
 
-    private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "window")
+/// Invisible view that reports when it lands in a window — the only reliable moment to
+/// configure that window (during `makeNSView` there is none yet).
+final class WindowObservingView: NSView {
+    var onWindow: ((NSWindow) -> Void)?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let window { onWindow?(window) }
+    }
 }

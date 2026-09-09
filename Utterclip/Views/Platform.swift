@@ -1,4 +1,5 @@
 import SwiftUI
+import UtterclipCore
 
 // The views are shared by the iPhone app and the Mac app. Everything that differs
 // between the two platforms is funneled through this file, so the views themselves
@@ -40,6 +41,32 @@ extension ToolbarItemPlacement {
         .primaryAction
         #else
         .topBarTrailing
+        #endif
+    }
+
+    /// Buttons in a sheet's bar. On macOS the semantic placements put them where a sheet
+    /// expects them and wire Return (confirm) and Escape (cancel) for free.
+    static var sheetConfirm: ToolbarItemPlacement {
+        #if os(macOS)
+        .confirmationAction
+        #else
+        .topBarTrailing
+        #endif
+    }
+
+    static var sheetCancel: ToolbarItemPlacement {
+        #if os(macOS)
+        .cancellationAction
+        #else
+        .topBarTrailing
+        #endif
+    }
+
+    static var sheetDestructive: ToolbarItemPlacement {
+        #if os(macOS)
+        .destructiveAction
+        #else
+        .topBarLeading
         #endif
     }
 }
@@ -120,6 +147,16 @@ enum PlatformText {
         "Tap the mic, speak, tap again.\nYour words land on the clipboard."
         #endif
     }
+
+    /// Settings footer under the style list; there is no swipe on a Mac.
+    static var stylesFooter: String {
+        #if os(macOS)
+        "Click a style to edit its name and instructions, or delete it from its editor. Deleted defaults can be restored. Up to \(maxStyles) styles."
+        #else
+        "Tap a style to edit its name and instructions; swipe to delete. Deleted defaults can be restored. Up to \(maxStyles) styles."
+        #endif
+    }
+    private static let maxStyles = StyleStore.maxStyles
 
     /// "…on your iPhone" / "…on this Mac" for the Apple Intelligence hints.
     static var deviceName: String {

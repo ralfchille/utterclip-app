@@ -27,7 +27,7 @@ struct HistoryView: View {
             .navigationTitle("History")
             .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .barLeading) {
+                ToolbarItem(placement: .sheetDestructive) {
                     if !store.entries.isEmpty {
                         Button("Clear", role: .destructive) {
                             confirmClear = true
@@ -44,11 +44,15 @@ struct HistoryView: View {
                         }
                     }
                 }
-                ToolbarItem(placement: .barTrailing) {
+                ToolbarItem(placement: .sheetCancel) {
                     Button {
                         dismiss()
                     } label: {
+                        #if os(macOS)
+                        Text("Close") // a bordered sheet button reads better with a word
+                        #else
                         Image(systemName: "xmark")
+                        #endif
                     }
                     .accessibilityLabel("Close")
                 }
@@ -69,17 +73,12 @@ struct HistoryView: View {
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
-                    Button("Delete", role: .destructive) { delete(entry) }
+                    Button("Delete", role: .destructive) { store.delete(id: entry.id) }
                 }
             }
             .onDelete { store.delete(at: $0) }
         }
         .listStyle(.plain)
-    }
-
-    private func delete(_ entry: HistoryEntry) {
-        guard let index = store.entries.firstIndex(where: { $0.id == entry.id }) else { return }
-        store.delete(at: IndexSet(integer: index))
     }
 
     private func row(for entry: HistoryEntry) -> some View {

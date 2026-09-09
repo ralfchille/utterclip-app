@@ -62,7 +62,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Rewrite prompts")
                 } footer: {
-                    Text("Tap a style to edit its name and instructions; swipe to delete. Deleted defaults can be restored. Up to \(StyleStore.maxStyles) styles.")
+                    Text(PlatformText.stylesFooter)
                 }
 
                 Section {
@@ -76,6 +76,7 @@ struct SettingsView: View {
                     )
                     .autocapitalizationNever()
                     .autocorrectionDisabled()
+                    .onSubmit(saveKey) // Return saves the key (and does not close the sheet)
 
                     if let keyError {
                         Text(keyError)
@@ -83,20 +84,8 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Button(keySaved ? "Saved ✓" : "Save key") {
-                        guard AIProvider.detect(apiKeyInput) != nil else {
-                            keyError = "Unrecognized key. Supported: Anthropic (sk-ant-…), OpenAI (sk-…), Google Gemini (AIza…), Groq (gsk_…)."
-                            return
-                        }
-                        keyError = nil
-                        if KeyProvider.shared.setApiKey(apiKeyInput) {
-                            apiKeyInput = ""
-                            hasStoredKey = KeyProvider.shared.hasKey
-                            storedProvider = KeyProvider.shared.provider?.displayName
-                            keySaved = true
-                        }
-                    }
-                    .disabled(apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button(keySaved ? "Saved ✓" : "Save key", action: saveKey)
+                        .disabled(apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                     if hasStoredKey {
                         Button("Remove key", role: .destructive) {
@@ -142,12 +131,34 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .barTrailing) {
+                // Escape closes (cancel placement on macOS). Deliberately not the confirm
+                // placement: that owns the Return key, and Return inside the key or name
+                // fields must never dismiss the sheet with unsaved input.
+                ToolbarItem(placement: .sheetCancel) {
                     Button("Done") { dismiss() }
                 }
             }
         }
         .sheetFrame(minWidth: 480, minHeight: 600)
+    }
+
+    /// Validates and stores the key; every failure is shown, including a Keychain refusal.
+    private func saveKey() {
+        let key = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else { return }
+        guard AIProvider.detect(key) != nil else {
+            keyError = "Unrecognized key. Supported: Anthropic (sk-ant-…), OpenAI (sk-…), Google Gemini (AIza…), Groq (gsk_…)."
+            return
+        }
+        guard KeyProvider.shared.setApiKey(key) else {
+            keyError = "The key could not be saved to the Keychain. Try again; if it keeps failing, restart the app."
+            return
+        }
+        keyError = nil
+        apiKeyInput = ""
+        hasStoredKey = KeyProvider.shared.hasKey
+        storedProvider = KeyProvider.shared.provider?.displayName
+        keySaved = true
     }
 
     /// The store refuses to delete the last style; the view model's default-style getter
