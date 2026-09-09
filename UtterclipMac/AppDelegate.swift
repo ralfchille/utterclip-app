@@ -1,9 +1,12 @@
 import AppKit
 import SwiftUI
 
-/// Menu bar presence and the one window. Left-click on the status item toggles the window;
-/// right-click shows a menu with the same commands the keyboard shortcuts offer, plus
-/// Float on Top and Quit (the only way to quit an app without a Dock tile).
+/// Menu bar presence and the one window. Left-click on the status item is the whole
+/// workflow: window hidden → it drops down under the icon and a dictation starts;
+/// recording → it stops and the rewrite runs; window open and idle → it hides again.
+/// Right-click shows a menu with the same commands the keyboard shortcuts offer, plus
+/// Show/Hide, Float on Top and Quit (the only way to quit an app without a Dock tile).
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static private(set) weak var shared: AppDelegate?
 
@@ -29,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
             button.image = NSImage(named: "MenuBarIcon") // template: follows the menu bar's light/dark
-            button.toolTip = "Utterclip — click to open, right-click for commands"
+            button.toolTip = "Utterclip — click to dictate, right-click for commands"
             button.target = self
             button.action = #selector(statusItemClicked(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -38,7 +41,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Launched deliberately (Finder, Spotlight, login item): show the window once, so a
         // first launch isn't "nothing happened". Closing it returns the app to the icon.
-        showWindow()
+        // One turn later: the status item gets its screen position on the next run-loop pass,
+        // and the window should land under it.
+        DispatchQueue.main.async { self.showWindow() }
     }
 
     /// Menu-bar apps keep running with no windows; that is the point.
@@ -60,6 +65,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 #if DEBUG
                 DebugSnapshot.handle(url)
                 #endif
+            case "show":
+                #if DEBUG
+                showWindow() // the status-item click without the recording part
+                #endif
             default:
                 break
             }
@@ -68,8 +77,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Window
 
+    /// Brings the window forward; when the status item is on screen, right under its icon.
     func showWindow() {
-        windowController?.show()
+        if let anchor = statusItemFrame {
+            windowController?.show(under: anchor)
+        } else {
+            windowController?.show()
+        }
+    }
+
+    /// The status item's frame in screen coordinates (it has its own little window).
+    private var statusItemFrame: NSRect? {
+        statusItem?.button?.window?.frame
     }
 
     // MARK: - Status item
@@ -78,7 +97,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if NSApp.currentEvent?.type == .rightMouseUp {
             showStatusMenu()
         } else {
-            windowController?.toggle()
+            statusItemPrimaryAction()
+        }
+    }
+
+    /// Recording → stop it (the rewrite follows). Window open, nothing running → hide it.
+    /// Window hidden → show it under the icon and start recording.
+    private func statusItemPrimaryAction() {
+        guard let controller = windowController else { return }
+        if RecordingState.isRecording {
+            NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
+        } else if controller.isShowing {
+            controller.hide()
+        } else {
+            showWindow()
+            NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
         }
     }
 
@@ -137,11 +170,20 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     init(rootView: some View) {
         let hosting = NSHostingController(rootView: rootView)
-        // Let the SwiftUI toolbar (History, Settings) and navigation title drive the window.
-        hosting.sceneBridgingOptions = [.toolbars, .title]
+        // The view draws its own header (title left, History/Settings right); no AppKit
+        // toolbar or title bar chrome.
+        hosting.sceneBridgingOptions = []
         let window = NSWindow(contentViewController: hosting)
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.toolbarStyle = .unifiedCompact
+        window.title = "Utterclip" // for the window list / accessibility; not drawn
+        // Titled (so ⌘W and edge-resizing keep working) but with the bar invisible: no
+        // traffic lights, no separator line, content running to the top edge.
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+            window.standardWindowButton(button)?.isHidden = true
+        }
         window.setContentSize(NSSize(width: 420, height: 720))
         window.contentMinSize = NSSize(width: 380, height: 600)
         window.isReleasedWhenClosed = false // hide on close; keep the view tree alive
@@ -159,6 +201,22 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     func show() {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+    }
+
+    /// Shows the window centred under a menu bar item, kept within that screen. The size is
+    /// whatever the user last resized it to; only the position moves.
+    func show(under anchor: NSRect) {
+        if let window,
+           let screen = NSScreen.screens.first(where: { $0.frame.intersects(anchor) }) ?? NSScreen.main {
+            let visible = screen.visibleFrame
+            var frame = window.frame
+            frame.origin.x = anchor.midX - frame.width / 2
+            frame.origin.y = anchor.minY - frame.height - 6 // just below the menu bar
+            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+            frame.origin.y = max(frame.origin.y, visible.minY)
+            window.setFrame(frame, display: false)
+        }
+        show()
     }
 
     func hide() {

@@ -8,8 +8,24 @@ struct StylePickerRow: View {
     let isDisabled: Bool
     let onSelect: (MessageStyle) -> Void
 
+    /// Pill height plus a little air, so the GeometryReader has a definite height.
+    private static let rowHeight: CGFloat = 40
+
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        // The row is at least as wide as its container, so a set of pills that fits sits
+        // centred; a wider set grows past the container and scrolls, starting at the left.
+        GeometryReader { geometry in
+            ScrollView(.horizontal, showsIndicators: false) {
+                pills
+                    .padding(.horizontal)
+                    .frame(minWidth: geometry.size.width, minHeight: Self.rowHeight)
+            }
+        }
+        .frame(height: Self.rowHeight)
+        .disabled(isDisabled)
+    }
+
+    private var pills: some View {
             HStack(spacing: 8) {
                 ForEach(StyleStore.shared.styles) { style in
                     Button {
@@ -30,8 +46,5 @@ struct StylePickerRow: View {
                     .accessibilityLabel("Rewrite as \(style.name)")
                 }
             }
-            .padding(.horizontal)
-        }
-        .disabled(isDisabled)
     }
 }

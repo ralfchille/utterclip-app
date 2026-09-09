@@ -42,6 +42,7 @@ struct UtterclipMacApp: App {
 enum AppCommand {
     case toggleRecording, startRecording, continueRecording, showHistory, showSettings
 
+    @MainActor
     func perform() {
         AppDelegate.shared?.showWindow()
         let name: Notification.Name = switch self {
