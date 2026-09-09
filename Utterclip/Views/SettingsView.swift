@@ -17,6 +17,14 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+            #if os(macOS)
+            MacHeader(title: "Settings") {
+                Button("Done") { dismiss() }
+                    .font(.body.weight(.semibold))
+                    .keyboardShortcut(.cancelAction) // Escape closes; Return stays with the fields
+            }
+            #endif
             Form {
                 Section {
                     Picker("Default style", selection: defaultStyleBinding) {
@@ -128,12 +136,9 @@ struct SettingsView: View {
                 }
             }
             .groupedFormStyle()
-            .navigationTitle("Settings")
-            .inlineNavigationTitle()
-            .toolbar {
-                // Escape closes (cancel placement on macOS). Deliberately not the confirm
-                // placement: that owns the Return key, and Return inside the key or name
-                // fields must never dismiss the sheet with unsaved input.
+            .subtleSeparators()
+            }
+            .barChrome(title: "Settings") {
                 ToolbarItem(placement: .sheetCancel) {
                     Button("Done") { dismiss() }
                 }
@@ -227,6 +232,10 @@ struct StylePromptEditor: View {
     }
 
     var body: some View {
+        VStack(spacing: 0) {
+        #if os(macOS)
+        MacHeader(title: editedStyle?.name ?? "New rewrite prompt", back: { dismiss() }) { EmptyView() }
+        #endif
         Form {
             Section {
                 TextField("Name", text: $name)
@@ -274,8 +283,9 @@ struct StylePromptEditor: View {
             }
         }
         .groupedFormStyle()
-        .navigationTitle(editedStyle?.name ?? "New rewrite prompt")
-        .inlineNavigationTitle()
+        .subtleSeparators()
+        }
+        .barTitle(editedStyle?.name ?? "New rewrite prompt")
     }
 
     /// Monochrome primary action, matching the app's black-filled controls: `.primary`

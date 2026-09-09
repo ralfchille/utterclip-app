@@ -24,27 +24,39 @@ struct EditorView: View {
 
     var body: some View {
         NavigationStack {
-            HighlightedTextEditor(text: $text, highlightRules: .markdown)
-                .padding(.horizontal, 12) // breathing room so text isn't flush to the edges
-                .editorTopInset()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.appBackground)
-                .navigationTitle(title)
-                .inlineNavigationTitle()
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") {
-                            onSave(text.trimmingCharacters(in: .whitespacesAndNewlines))
-                            dismiss()
-                        }
-                        .fontWeight(.semibold)
-                    }
+            VStack(spacing: 0) {
+                #if os(macOS)
+                MacHeader(title: title) {
+                    Button("Cancel") { dismiss() }
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .keyboardShortcut(.cancelAction)
+                    Button("Done") { save() }
+                        .font(.body.weight(.semibold))
                 }
+                #endif
+                HighlightedTextEditor(text: $text, highlightRules: .markdown)
+                    .padding(.horizontal, 12) // breathing room so text isn't flush to the edges
+                    .editorTopInset()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .background(Color.appBackground)
+            .barChrome(title: title) {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { save() }
+                        .fontWeight(.semibold)
+                }
+            }
         }
         .tint(.primary)
         .sheetFrame(minWidth: 520, minHeight: 420)
+    }
+
+    private func save() {
+        onSave(text.trimmingCharacters(in: .whitespacesAndNewlines))
+        dismiss()
     }
 }
