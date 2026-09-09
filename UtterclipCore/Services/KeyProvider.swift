@@ -71,6 +71,16 @@ public struct KeyProvider {
     /// Where the key lives: on this device only, or in iCloud Keychain.
     public var isSynchronized: Bool { Self.syncs && storedItemIsSynchronizable() == true }
 
+    /// The sync switch changed: re-store the key with the matching synchronizable flag now,
+    /// rather than at the next launch (history and settings wait for the relaunch; the
+    /// key does not have to).
+    public func applySyncPreference() {
+        Self.migrateOnce(self)
+        guard let current = readValue(itemQuery),
+              let synced = storedItemIsSynchronizable(), synced != Self.syncs else { return }
+        setApiKeyWithoutMigration(current)
+    }
+
     // MARK: - Queries
 
     /// The item's home: our service/account in the shared access group (when usable), matching

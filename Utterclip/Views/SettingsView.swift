@@ -14,6 +14,10 @@ struct SettingsView: View {
     @State private var keySaved = false
     @State private var storedProvider = KeyProvider.shared.provider?.displayName
     @State private var keyError: String?
+    @State private var syncEnabled = SyncPreference.isEnabled
+    @State private var syncStatus = SyncStatus.shared
+    /// The switch was flipped this session: history and settings pick it up after a relaunch.
+    @State private var syncChangePending = false
 
     var body: some View {
         SheetNavigation {
@@ -106,7 +110,7 @@ struct SettingsView: View {
                 } header: {
                     Text("AI provider API key")
                 } footer: {
-                    Text("Stored only in the device Keychain. The provider is detected from the key. Needed for style rewrites; transcription works without it.")
+                    Text("Kept in the Keychain — and, with iCloud sync on, in your iCloud Keychain so your other devices have it too. The provider is detected from the key. Needed for style rewrites; transcription works without it.")
                 }
 
                 // Only on devices that can run Apple's model at all (iOS 26, Apple
@@ -123,6 +127,29 @@ struct SettingsView: View {
                             Text("Unavailable — \(reason)")
                         } else {
                             Text("Apple's on-device model rewrites without an API key and nothing leaves the device. Quality is a notch below the cloud models — best for Plain and light restyling. Off: rewrites use the API key above.")
+                        }
+                    }
+                }
+
+                Section {
+                    Toggle("Sync with iCloud", isOn: $syncEnabled)
+                        .onChange(of: syncEnabled) { _, on in
+                            SyncPreference.isEnabled = on
+                            KeyProvider.shared.applySyncPreference()
+                            syncChangePending = true
+                        }
+                } header: {
+                    Text("iCloud")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("History, rewrite styles, settings and the API key follow you to your other devices, inside your own iCloud account and encrypted by Apple. Nothing passes through anyone else. Off: everything stays on this device.")
+                        if syncStatus.accountAvailable == false {
+                            Text("Not signed in to iCloud on this device — everything stays here until you are.")
+                                .foregroundStyle(.secondary)
+                        }
+                        if syncChangePending {
+                            Text("History and styles switch over the next time you open Utterclip; the API key already has.")
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
