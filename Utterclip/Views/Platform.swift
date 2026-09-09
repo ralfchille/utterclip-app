@@ -159,6 +159,85 @@ extension View {
     }
 }
 
+#if os(macOS)
+/// The Mac's replacement for a navigation bar, used by the main window and every sheet:
+/// title flush with the content margin on the left, actions on the right, no lines.
+struct MacHeader<Actions: View>: View {
+    let title: String
+    var back: (() -> Void)? = nil
+    @ViewBuilder var actions: Actions
+
+    var body: some View {
+        HStack(spacing: 14) {
+            if let back {
+                Button(action: back) {
+                    Image(systemName: "chevron.left")
+                }
+                .accessibilityLabel("Back")
+                .keyboardShortcut(.cancelAction)
+            }
+            Text(title)
+                .font(.headline)
+            Spacer()
+            actions
+        }
+        .font(.system(size: 17, weight: .medium))
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+        .padding(.bottom, 4)
+    }
+}
+#endif
+
+extension View {
+    /// iOS: inline navigation title plus the bar items. macOS: no system bar at all — the
+    /// view draws a `MacHeader` instead — so the window toolbar is hidden.
+    @ViewBuilder
+    func barChrome<T: ToolbarContent>(title: String, @ToolbarContentBuilder toolbar: () -> T) -> some View {
+        #if os(macOS)
+        self.toolbar(.hidden, for: .windowToolbar)
+        #else
+        navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(content: toolbar)
+        #endif
+    }
+
+    /// Same as `barChrome(title:toolbar:)` for a page with no bar items of its own.
+    @ViewBuilder
+    func barTitle(_ title: String) -> some View {
+        #if os(macOS)
+        self.toolbar(.hidden, for: .windowToolbar)
+        #else
+        navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
+    }
+
+    /// Mac list rows line up with the `MacHeader` margin; iOS keeps the system insets.
+    @ViewBuilder
+    func headerAlignedRow() -> some View {
+        #if os(macOS)
+        listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)) // + the list's own 8 pt = the 20 pt header margin
+        #else
+        self
+        #endif
+    }
+
+    /// Hairline row separators on macOS, where the default ones read heavy against the
+    /// otherwise monochrome sheets. iOS keeps the system look.
+    @ViewBuilder
+    func subtleSeparators() -> some View {
+        #if os(macOS)
+        listRowSeparatorTint(Color.primary.opacity(0.08))
+        #else
+        self
+        #endif
+    }
+}
+
 /// Wording that names the input device.
 enum PlatformText {
     /// The idle-screen hint.

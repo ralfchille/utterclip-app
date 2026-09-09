@@ -20,7 +20,21 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 #if os(macOS)
-                macHeader // the Mac window has no title bar; this row is its header
+                // The Mac window has no title bar; this row is its header.
+                MacHeader(title: "Utterclip") {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("History")
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                }
                 #endif
                 resultArea
                 // Always present: before a recording the highlighted pill is the style the
@@ -36,9 +50,7 @@ struct ContentView: View {
                     .padding(.bottom, 24)
             }
             .ignoreHiddenTitleBar()
-            .navigationTitle("Utterclip")
-            .inlineNavigationTitle()
-            .toolbar {
+            .barChrome(title: "Utterclip") {
                 ToolbarItem(placement: .barLeading) {
                     Button {
                         showHistory = true
@@ -106,35 +118,6 @@ struct ContentView: View {
         }
         .tint(.primary)
     }
-
-    #if os(macOS)
-    /// Title on the left, History and Settings on the right — the same two actions the iOS
-    /// navigation bar carries, drawn in the view because the Mac window hides its title bar.
-    private var macHeader: some View {
-        HStack(spacing: 14) {
-            Text("Utterclip")
-                .font(.headline)
-            Spacer()
-            Button {
-                showHistory = true
-            } label: {
-                Image(systemName: "clock.arrow.circlepath")
-            }
-            .accessibilityLabel("History")
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape")
-            }
-            .accessibilityLabel("Settings")
-        }
-        .font(.system(size: 17, weight: .medium))
-        .buttonStyle(.plain)
-        .foregroundStyle(.primary)
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-    }
-    #endif
 
     // MARK: - Result area
 

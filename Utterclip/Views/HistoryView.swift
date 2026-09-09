@@ -13,23 +13,29 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if store.entries.isEmpty {
-                    ContentUnavailableView(
-                        "No dictations yet",
-                        systemImage: "clock.arrow.circlepath",
-                        description: Text("Finished dictations show up here so you can go back to them.")
-                    )
-                    // Fill the sheet: sized to its content, the placeholder would leave the
-                    // navigation bar floating in a tall empty band above it on macOS.
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    entryList
+            VStack(spacing: 0) {
+                #if os(macOS)
+                MacHeader(title: "History") {
+                    if !store.entries.isEmpty {
+                        Button("Clear") { confirmClear = true }
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .confirmationDialog("Delete all dictations?", isPresented: $confirmClear, titleVisibility: .visible) {
+                                Button("Delete All", role: .destructive) { store.clear() }
+                            }
+                    }
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("Close")
+                    .keyboardShortcut(.cancelAction)
                 }
+                #endif
+                content
             }
-            .navigationTitle("History")
-            .inlineNavigationTitle()
-            .toolbar {
+            .barChrome(title: "History") {
                 ToolbarItem(placement: .sheetDestructive) {
                     if !store.entries.isEmpty {
                         Button("Clear", role: .destructive) {
@@ -51,11 +57,7 @@ struct HistoryView: View {
                     Button {
                         dismiss()
                     } label: {
-                        #if os(macOS)
-                        Text("Close") // a bordered sheet button reads better with a word
-                        #else
                         Image(systemName: "xmark")
-                        #endif
                     }
                     .accessibilityLabel("Close")
                 }
@@ -63,6 +65,24 @@ struct HistoryView: View {
         }
         .tint(.primary)
         .sheetFrame(minWidth: 440, minHeight: 520)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        Group {
+                if store.entries.isEmpty {
+                    ContentUnavailableView(
+                        "No dictations yet",
+                        systemImage: "clock.arrow.circlepath",
+                        description: Text("Finished dictations show up here so you can go back to them.")
+                    )
+                    // Fill the sheet: sized to its content, the placeholder would leave the
+                    // navigation bar floating in a tall empty band above it on macOS.
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    entryList
+                }
+        }
     }
 
     private var entryList: some View {
@@ -75,6 +95,7 @@ struct HistoryView: View {
                     row(for: entry)
                 }
                 .buttonStyle(.plain)
+                .headerAlignedRow()
                 .contextMenu {
                     Button("Delete", role: .destructive) { store.delete(id: entry.id) }
                 }
@@ -82,10 +103,11 @@ struct HistoryView: View {
             .onDelete { store.delete(at: $0) }
         }
         .listStyle(.plain)
+        .subtleSeparators()
     }
 
     private func row(for entry: HistoryEntry) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) { // air between the date/style line and the text
             HStack {
                 Text(entry.date, format: .relative(presentation: .named))
                     .font(.caption.weight(.semibold))
