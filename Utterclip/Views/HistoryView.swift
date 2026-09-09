@@ -20,6 +20,9 @@ struct HistoryView: View {
                         systemImage: "clock.arrow.circlepath",
                         description: Text("Finished dictations show up here so you can go back to them.")
                     )
+                    // Fill the sheet: sized to its content, the placeholder would leave the
+                    // navigation bar floating in a tall empty band above it on macOS.
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     entryList
                 }

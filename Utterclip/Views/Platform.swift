@@ -123,6 +123,17 @@ extension View {
         #endif
     }
 
+    /// The Mac window hides its title bar but SwiftUI still reserves its height as a safe
+    /// area; the header row takes that space instead. No-op on iOS.
+    @ViewBuilder
+    func ignoreHiddenTitleBar() -> some View {
+        #if os(macOS)
+        ignoresSafeArea(.container, edges: .top)
+        #else
+        self
+        #endif
+    }
+
     /// Breathing room between a sheet's title bar and the editor text on macOS, where no
     /// navigation bar separates them; iOS already has that gap.
     @ViewBuilder
@@ -177,6 +188,12 @@ enum PlatformText {
         "your iPhone"
         #endif
     }
+}
+
+/// What the AppKit side (status item) needs to know about the recorder without owning the
+/// view model: is a recording running right now. `ContentView` keeps it current.
+enum RecordingState {
+    @MainActor static var isRecording = false
 }
 
 /// App-level commands (menu items and keyboard shortcuts on macOS) reach the main view

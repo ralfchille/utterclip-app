@@ -7,6 +7,7 @@ import SwiftUI
 /// (or a CI job). `?show=settings|history` opens that sheet first. Caveat: the offline render
 /// cannot draw compositor-only content — Liquid Glass views and animated indicators come out
 /// blank — so treat it as a layout check, not a pixel-true screenshot. Compiled out of Release.
+@MainActor
 enum DebugSnapshot {
     static func handle(_ url: URL) {
         AppDelegate.shared?.showWindow()
