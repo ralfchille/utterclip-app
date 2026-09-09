@@ -325,15 +325,24 @@ public final class RecorderViewModel {
         successHaptic()
     }
 
-    /// Applies a user-edited raw transcript and copies it as plain text.
+    /// Applies a user-edited raw transcript the same way a fresh recording lands: the
+    /// plain text is copied right away, then the current style re-runs on it so the styled
+    /// result (and its history entry) never lags behind the transcript. Saving the text
+    /// unchanged leaves everything — including the clipboard — as it was.
     public func applyRawEdit(_ edited: String) {
         let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        guard trimmed != rawTranscript else { successHaptic(); return }
         rawTranscript = trimmed
-        Clipboard.copy(trimmed)
+        styledText = nil // the old rewrite no longer matches; the re-run below replaces it
+        Clipboard.copy(trimmed) // fast path, pasteable before the rewrite finishes
         rewriteCache.removeAll() // styled versions no longer match the transcript
-        updateCurrentEntry { $0.rawTranscript = trimmed }
+        updateCurrentEntry { entry in
+            entry.rawTranscript = trimmed
+            entry.styledText = nil // don't keep a rewrite of text that no longer exists
+        }
         successHaptic()
+        rewrite(with: selectedStyle)
     }
 
     /// Recovers the raw transcript onto the clipboard in case the rewrite isn't wanted.
