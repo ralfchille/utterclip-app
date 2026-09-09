@@ -65,6 +65,7 @@ struct HistoryView: View {
         }
         .tint(.primary)
         .sheetFrame(minWidth: 440, minHeight: 520)
+        .onAppear { store.reload() } // a CloudKit import may have landed since the last look
     }
 
     @ViewBuilder

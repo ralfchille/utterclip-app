@@ -87,6 +87,12 @@ public final class HistoryStore {
         refresh()
     }
 
+    /// Re-reads the store. The remote-change observer covers CloudKit imports; the History
+    /// screen also calls this when it opens, so it never shows a stale list.
+    public func reload() {
+        refresh()
+    }
+
     // MARK: - Store
 
     /// Everything, newest first, after housekeeping: duplicates by id (the same entry
