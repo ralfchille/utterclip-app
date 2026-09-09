@@ -3,7 +3,8 @@ import Observation
 
 /// The rewrite styles the app offers: the built-ins from `Styles` (with any user-edited
 /// prompts applied as overrides, so a reset always recovers the original) plus styles the
-/// user added, up to `maxStyles` in total. Everything persists in UserDefaults.
+/// user added, up to `maxStyles` in total. Everything persists in UserDefaults and, through
+/// `SyncedDefaults`, follows the user to their other devices.
 @Observable
 @MainActor
 public final class StyleStore {
@@ -18,35 +19,53 @@ public final class StyleStore {
     private static let hiddenBuiltInsKey = "hiddenBuiltInStyles"
 
     /// built-in style id → custom system prompt
-    private var overrides: [String: String] {
-        didSet { UserDefaults.standard.set(overrides, forKey: Self.overridesKey) }
+    private var overrides: [String: String] = [:] {
+        didSet { if !isReloading { defaults.set(overrides, forKey: Self.overridesKey) } }
     }
 
     /// built-in style id → custom display name
-    private var nameOverrides: [String: String] {
-        didSet { UserDefaults.standard.set(nameOverrides, forKey: Self.nameOverridesKey) }
+    private var nameOverrides: [String: String] = [:] {
+        didSet { if !isReloading { defaults.set(nameOverrides, forKey: Self.nameOverridesKey) } }
     }
 
     /// User-added styles, in creation order.
-    private var customStyles: [MessageStyle] {
+    private var customStyles: [MessageStyle] = [] {
         didSet {
-            UserDefaults.standard.set(try? JSONEncoder().encode(customStyles), forKey: Self.customStylesKey)
+            if !isReloading {
+                defaults.set(try? JSONEncoder().encode(customStyles), forKey: Self.customStylesKey)
+            }
         }
     }
 
     /// Built-ins the user deleted; `restoreDeletedDefaults()` brings them back.
-    private var hiddenBuiltIns: Set<String> {
-        didSet { UserDefaults.standard.set(Array(hiddenBuiltIns), forKey: Self.hiddenBuiltInsKey) }
+    private var hiddenBuiltIns: Set<String> = [] {
+        didSet { if !isReloading { defaults.set(Array(hiddenBuiltIns), forKey: Self.hiddenBuiltInsKey) } }
     }
 
+    private let defaults = SyncedDefaults.shared
+    /// Set while values are copied in from disk, so the `didSet`s don't echo them back out.
+    private var isReloading = false
+    private var remoteChangeObserver: NSObjectProtocol?
+
     private init() {
-        overrides = UserDefaults.standard
-            .dictionary(forKey: Self.overridesKey) as? [String: String] ?? [:]
-        nameOverrides = UserDefaults.standard
-            .dictionary(forKey: Self.nameOverridesKey) as? [String: String] ?? [:]
-        customStyles = UserDefaults.standard.data(forKey: Self.customStylesKey)
+        reload()
+        remoteChangeObserver = NotificationCenter.default.addObserver(
+            forName: SyncedDefaults.didChangeRemotely, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.reload() }
+        }
+    }
+
+    /// Reads everything from `UserDefaults` — at launch, and again after another device's
+    /// changes were copied in.
+    private func reload() {
+        isReloading = true
+        defer { isReloading = false }
+        overrides = defaults.dictionary(forKey: Self.overridesKey) as? [String: String] ?? [:]
+        nameOverrides = defaults.dictionary(forKey: Self.nameOverridesKey) as? [String: String] ?? [:]
+        customStyles = defaults.data(forKey: Self.customStylesKey)
             .flatMap { try? JSONDecoder().decode([MessageStyle].self, from: $0) } ?? []
-        hiddenBuiltIns = Set(UserDefaults.standard.stringArray(forKey: Self.hiddenBuiltInsKey) ?? [])
+        hiddenBuiltIns = Set(defaults.stringArray(forKey: Self.hiddenBuiltInsKey) ?? [])
     }
 
     /// All visible styles in display order: built-ins that weren't deleted (with custom

@@ -49,6 +49,7 @@
 		A40747530FA740BB5EE2839C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09681937E4E4FE184312126B /* Platform.swift */; };
 		A59A946C1605D7F9AA4FCD96 /* UtterclipCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; };
 		A996E9C6CE54CD86A8FCE291 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F371DCE7FFFF2BF874588E3C /* Clipboard.swift */; };
+		AB5FA10D4793DADBDC680876 /* SyncedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */; };
 		ACC4FC8670FAA7F631A6F72C /* TuistBundle+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B90F7198CD313B27B6305C /* TuistBundle+UtterclipMac.swift */; };
 		ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
 		B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
@@ -213,6 +214,7 @@
 		DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
 		E02D86E45BCDAFCC58CF7667 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		F371DCE7FFFF2BF874588E3C /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
+		F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncedDefaults.swift; sourceTree = "<group>"; };
 		F7F006F06790EC7AE64C846D /* Utterclip-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Utterclip-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -349,6 +351,7 @@
 				5549F4613006277DBA3D15C3 /* RewritePrompt.swift */,
 				7D2590D1835ECF00E098B159 /* Rewriter.swift */,
 				319D09EB2560270E662093E7 /* StyleStore.swift */,
+				F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */,
 				1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */,
 				53061E11287017DB6ABBF28A /* TranscriptionService.swift */,
 			);
@@ -700,6 +703,7 @@
 				1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */,
 				CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */,
 				4F6AA1DFE6C103006FE847B1 /* SyncPreference.swift in Sources */,
+				AB5FA10D4793DADBDC680876 /* SyncedDefaults.swift in Sources */,
 				1C17B05A6E14698115D4A786 /* TranscriptionService.swift in Sources */,
 				EC091E3637A1401CF24A5AC5 /* RecorderViewModel.swift in Sources */,
 			);
