@@ -40,8 +40,12 @@ public final class RecorderViewModel {
     /// Pill highlighted before a rewrite started; restored if that rewrite is cancelled.
     private var styleBeforeRewrite: MessageStyle?
 
-    /// History entry the current dictation writes into; nil until a transcript exists.
-    private var currentEntryID: UUID?
+    /// The dictation on screen as it will be (or is) stored. Created when a transcript
+    /// arrives, written to the store once the dictation has settled — rewrite finished,
+    /// failed or abandoned — so other devices sync one finished entry instead of every
+    /// intermediate state. Later edits update the stored entry directly.
+    private var currentEntry: HistoryEntry?
+    private var currentEntryIsStored = false
 
     /// Set while a recording should be appended to the transcript on screen instead of
     /// replacing it (see `continueRecording`).
@@ -217,6 +221,9 @@ public final class RecorderViewModel {
 
     private func performRewrite(with style: MessageStyle) async {
         guard let raw = rawTranscript else { return }
+        // Whatever happens below — result, missing key, error, cancellation — the dictation
+        // has settled once this attempt is over; that is when it goes into History.
+        defer { commitCurrentEntry() }
         // Re-fetch by id so a prompt edited in Settings applies to the next rewrite.
         let style = StyleStore.shared.style(withID: style.id)
         styleBeforeRewrite = selectedStyle
@@ -273,19 +280,31 @@ public final class RecorderViewModel {
 
     // MARK: - History
 
-    /// Starts a history entry for a finished dictation. Blank transcripts are not logged.
+    /// Starts the history entry for a finished dictation (in memory until it settles).
+    /// Blank transcripts are not logged.
     private func logDictation(_ raw: String) {
-        currentEntryID = nil
+        currentEntry = nil
+        currentEntryIsStored = false
         guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        let entry = HistoryEntry(
+        currentEntry = HistoryEntry(
             id: UUID(), date: .now, rawTranscript: raw, styledText: nil, styleID: nil)
-        HistoryStore.shared.add(entry)
-        currentEntryID = entry.id
     }
 
     private func updateCurrentEntry(_ mutate: (inout HistoryEntry) -> Void) {
-        guard let id = currentEntryID else { return }
-        HistoryStore.shared.update(id, mutate)
+        guard var entry = currentEntry else { return }
+        mutate(&entry)
+        currentEntry = entry
+        if currentEntryIsStored {
+            HistoryStore.shared.update(entry.id) { $0 = entry }
+        }
+    }
+
+    /// Writes the pending entry to the store, once. Called when a rewrite attempt ends,
+    /// whatever its outcome; a no-op for entries that are already stored.
+    private func commitCurrentEntry() {
+        guard let entry = currentEntry, !currentEntryIsStored else { return }
+        HistoryStore.shared.add(entry)
+        currentEntryIsStored = true
     }
 
     /// Brings a past dictation back as the current result and re-copies it in the
@@ -297,7 +316,8 @@ public final class RecorderViewModel {
         styledText = entry.styledText
         rewriteError = nil
         rewriteNeedsKey = false
-        currentEntryID = entry.id
+        currentEntry = entry
+        currentEntryIsStored = true
         rewriteCache.removeAll()
         if let styleID = entry.styleID {
             selectedStyle = StyleStore.shared.style(withID: styleID)
