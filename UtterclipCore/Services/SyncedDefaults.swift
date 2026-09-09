@@ -82,7 +82,10 @@ public final class SyncedDefaults {
                     local.set(remote, forKey: key)
                     changed = true
                 }
-            } else if let mine = local.object(forKey: key) {
+            } else if let mine = local.object(forKey: key), !Self.isDefaultValue(mine, forKey: key) {
+                // Seed only real choices. A device whose value is still the default (no custom
+                // styles, no overrides, Plain) must not claim the key first and then win the
+                // newest-record merge against a device that actually has data.
                 store.context.insert(SyncedSetting(key: key, value: Self.encode(mine)))
                 seeded = true
             }
@@ -109,6 +112,27 @@ public final class SyncedDefaults {
         }
         if pruned { store.save() }
         return byKey
+    }
+
+    /// The value a fresh install has for `key`: nothing worth publishing to other devices.
+    private static func isDefaultValue(_ value: Any, forKey key: String) -> Bool {
+        switch key {
+        case "customStyles":
+            guard let data = value as? Data else { return false }
+            return (try? JSONDecoder().decode([MessageStyle].self, from: data))?.isEmpty ?? false
+        case "stylePromptOverrides", "styleNameOverrides":
+            return (value as? [String: Any])?.isEmpty ?? false
+        case "hiddenBuiltInStyles":
+            return (value as? [String])?.isEmpty ?? false
+        case "defaultStyleID":
+            return (value as? String) == Styles.defaultStyle.id
+        case "copyAsMarkdown":
+            return (value as? Bool) == false
+        case "redactPersonalData":
+            return (value as? Bool) == true
+        default:
+            return false
+        }
     }
 
     // MARK: - Encoding
