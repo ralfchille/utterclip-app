@@ -77,6 +77,46 @@ let project = Project(
             // Only the app has an icon; the widget extension's catalog holds just the mark.
             settings: .settings(base: ["ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon"])
         ),
+        // The Mac app: the same views and the same core in one compact window that floats
+        // above other apps. No widget extension — ⌘R, the Dictation menu and the
+        // utterclip://record URL take the place of the iOS widget and control.
+        .target(
+            name: "UtterclipMac",
+            destinations: [.mac],
+            product: .app,
+            productName: "Utterclip",
+            bundleId: "com.ralfchille.voicer.mac",
+            deploymentTargets: .macOS("14.0"),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Utterclip",
+                "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
+                "NSHumanReadableCopyright": "© 2026 Ralf Chille",
+                "LSApplicationCategoryType": "public.app-category.productivity",
+                "ITSAppUsesNonExemptEncryption": false,
+                "CFBundleURLTypes": [
+                    ["CFBundleURLName": "com.ralfchille.voicer.mac", "CFBundleURLSchemes": ["utterclip"]],
+                ],
+            ]),
+            sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift"],
+            resources: ["UtterclipMac/Resources/**"],
+            // Sandboxed like a store app: microphone for recording, outbound network for the
+            // one-time model download and the optional cloud rewrite. Nothing else.
+            entitlements: .dictionary([
+                "com.apple.security.app-sandbox": true,
+                "com.apple.security.device.audio-input": true,
+                "com.apple.security.network.client": true,
+            ]),
+            dependencies: [
+                .target(name: "UtterclipCore"),
+                .package(product: "HighlightedTextEditor"),
+            ],
+            settings: .settings(base: [
+                "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+                "MACOSX_DEPLOYMENT_TARGET": "14.0",
+                // The iPhone-only family setting from the project base does not apply here.
+                "TARGETED_DEVICE_FAMILY": "",
+            ])
+        ),
         // Home Screen / Lock Screen widget and the Control Center "Dictate" button.
         // Controls need iOS 18, hence the higher deployment target than the app.
         .target(

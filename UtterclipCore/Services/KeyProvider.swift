@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import os
 
 /// Keychain-backed API key storage (plan §5a). The key is entered once via the Settings
 /// screen and lives only in the device Keychain — never in the repo, never logged.
@@ -43,8 +44,11 @@ public struct KeyProvider {
         if status == errSecItemNotFound {
             query[kSecValueData as String] = data
             query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
+            let added = SecItemAdd(query as CFDictionary, nil)
+            if added != errSecSuccess { Self.logger.error("Keychain add failed: \(added, privacy: .public)") }
+            return added == errSecSuccess
         }
+        if status != errSecSuccess { Self.logger.error("Keychain update failed: \(status, privacy: .public)") }
         return status == errSecSuccess
     }
 
@@ -59,10 +63,42 @@ public struct KeyProvider {
             kSecAttrAccount as String: account,
         ]
         #if os(macOS)
-        // The iOS-style data-protection keychain instead of the legacy login keychain,
-        // which would prompt for access on every read. iOS only has the former.
-        query[kSecUseDataProtectionKeychain as String] = true
+        // Prefer the iOS-style data-protection keychain: no access prompts, per-app
+        // isolation. iOS only has that one; macOS also has the legacy login keychain.
+        if Self.usesDataProtectionKeychain {
+            query[kSecUseDataProtectionKeychain as String] = true
+        }
         #endif
         return query
     }
+
+    #if os(macOS)
+    /// The data-protection keychain is only open to processes with an application
+    /// identifier, i.e. builds signed with a team and a provisioning profile (App Store,
+    /// Developer ID, TestFlight). A locally built or ad-hoc-signed copy gets
+    /// `errSecMissingEntitlement` from every call, so it falls back to the login keychain —
+    /// which works, at the price of a one-time "allow access" prompt after each rebuild.
+    /// Probed once per launch with a throwaway write (reads can succeed where writes are
+    /// refused), which is removed again immediately.
+    private static let usesDataProtectionKeychain: Bool = {
+        var probe: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.ralfchille.utterclip.keychain-probe",
+            kSecAttrAccount as String: "probe",
+            kSecUseDataProtectionKeychain as String: true,
+        ]
+        SecItemDelete(probe as CFDictionary) // a leftover from a crashed launch
+        probe[kSecValueData as String] = Data("probe".utf8)
+        let status = SecItemAdd(probe as CFDictionary, nil)
+        probe.removeValue(forKey: kSecValueData as String)
+        SecItemDelete(probe as CFDictionary)
+        if status == errSecMissingEntitlement {
+            logger.notice("No application identifier: API key goes to the login keychain.")
+            return false
+        }
+        return true
+    }()
+    #endif
+
+    private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "keychain")
 }

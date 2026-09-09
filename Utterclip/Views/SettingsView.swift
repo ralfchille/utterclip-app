@@ -74,7 +74,7 @@ struct SettingsView: View {
                         hasStoredKey ? "••••••••  (stored in Keychain)" : "Anthropic, OpenAI, Gemini or Groq key",
                         text: $apiKeyInput
                     )
-                    .textInputAutocapitalization(.never)
+                    .autocapitalizationNever()
                     .autocorrectionDisabled()
 
                     if let keyError {
@@ -125,7 +125,7 @@ struct SettingsView: View {
                         if let reason = viewModel.onDeviceUnavailabilityReason {
                             Text("Unavailable — \(reason)")
                         } else {
-                            Text("Apple's on-device model rewrites without an API key and nothing leaves the phone. Quality is a notch below the cloud models — best for Plain and light restyling. Off: rewrites use the API key above.")
+                            Text("Apple's on-device model rewrites without an API key and nothing leaves the device. Quality is a notch below the cloud models — best for Plain and light restyling. Off: rewrites use the API key above.")
                         }
                     }
                 }
@@ -138,14 +138,16 @@ struct SettingsView: View {
                     Text("Emails, phone numbers, links and addresses are swapped for placeholders before the transcript is sent to the AI provider, and put back in the result. Names stay as they are — detecting them is unreliable and they matter for tone. Audio never leaves the device.")
                 }
             }
+            .groupedFormStyle()
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .barTrailing) {
                     Button("Done") { dismiss() }
                 }
             }
         }
+        .sheetFrame(minWidth: 480, minHeight: 600)
     }
 
     /// The store refuses to delete the last style; the view model's default-style getter
@@ -217,7 +219,7 @@ struct StylePromptEditor: View {
         Form {
             Section {
                 TextField("Name", text: $name)
-                    .textInputAutocapitalization(.words)
+                    .autocapitalizationWords()
             } header: {
                 Text("Name")
             } footer: {
@@ -260,8 +262,9 @@ struct StylePromptEditor: View {
                 }
             }
         }
+        .groupedFormStyle()
         .navigationTitle(editedStyle?.name ?? "New rewrite prompt")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
     }
 
     /// Monochrome primary action, matching the app's black-filled controls: `.primary`
@@ -273,7 +276,7 @@ struct StylePromptEditor: View {
         } label: {
             Text("Save")
                 .font(.headline)
-                .foregroundStyle(Color(.systemBackground))
+                .foregroundStyle(Color.appBackground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(Capsule().fill(.primary))
