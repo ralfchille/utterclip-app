@@ -145,12 +145,12 @@ extension View {
         #endif
     }
 
-    /// History and Settings: a sheet on iOS. On macOS they are popovers hanging off the
-    /// header buttons instead (see `ContentView`), so this is a no-op there.
+    /// History and Settings: a sheet on iOS; on the Mac they open in place, pushed inside the
+    /// window's navigation stack, so the compact window never spawns a second one.
     @ViewBuilder
-    func iOSSheet<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+    func panel<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
         #if os(macOS)
-        self
+        navigationDestination(isPresented: isPresented, destination: content)
         #else
         sheet(isPresented: isPresented, content: content)
         #endif
@@ -258,6 +258,21 @@ extension View {
         listRowSeparatorTint(Color.primary.opacity(0.08))
         #else
         self
+        #endif
+    }
+}
+
+/// The root of History and Settings. iOS presents them as sheets, each with its own
+/// navigation stack; on the Mac they are pushed inside the window's stack and must not nest
+/// another one (their NavigationLinks push onto the window's stack instead).
+struct SheetNavigation<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        #if os(macOS)
+        content
+        #else
+        NavigationStack { content }
         #endif
     }
 }

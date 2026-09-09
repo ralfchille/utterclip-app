@@ -12,7 +12,7 @@ struct HistoryView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        SheetNavigation {
             VStack(spacing: 0) {
                 #if os(macOS)
                 MacHeader(title: "History") {
@@ -35,6 +35,7 @@ struct HistoryView: View {
                 #endif
                 content
             }
+            .ignoreHiddenTitleBar()
             .barChrome(title: "History") {
                 ToolbarItem(placement: .sheetDestructive) {
                     if !store.entries.isEmpty {
@@ -64,7 +65,6 @@ struct HistoryView: View {
             }
         }
         .tint(.primary)
-        .sheetFrame(minWidth: 440, minHeight: 520)
         .onAppear { store.reload() } // a CloudKit import may have landed since the last look
     }
 
