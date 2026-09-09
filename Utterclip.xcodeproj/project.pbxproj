@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B337B9FA74802B4BBC86A4B /* UtterclipCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; };
+		14E3AC7AAC9D96319A616985 /* Utterclip.icon in Resources */ = {isa = PBXBuildFile; fileRef = 6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */; };
 		1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */; };
 		1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2590D1835ECF00E098B159 /* Rewriter.swift */; };
 		1A6FE8E17BD232B472E22A6F /* HistoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */; };
@@ -64,6 +65,7 @@
 		E1EFB99FFE667063120F3E97 /* DebugSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C3F87BED6C2BC519B414B3 /* DebugSnapshot.swift */; };
 		EC091E3637A1401CF24A5AC5 /* RecorderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */; };
 		EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
+		EF0D73EA9FF8E12D40DFBA81 /* Utterclip.icon in Resources */ = {isa = PBXBuildFile; fileRef = AFE4D57BC27671C755D9C083 /* Utterclip.icon */; };
 		F05FBD5E47E6F28B67C6A6C5 /* UtterclipCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F0D25DF95C58334F3ED3CD2F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */; };
 		F33BCA87B0DFFD068C9E5E5A /* StylePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */; };
@@ -174,6 +176,7 @@
 		5549F4613006277DBA3D15C3 /* RewritePrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewritePrompt.swift; sourceTree = "<group>"; };
 		669869C3385DA0D2ACBDDEFC /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		69B26581CC6B790DA328B331 /* UtterclipWidgets-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipWidgets-Info.plist"; sourceTree = "<group>"; };
+		6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */ = {isa = PBXFileReference; path = Utterclip.icon; sourceTree = "<group>"; };
 		6BD7150D49FA9A45186D978E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		6C63B96BDE6B1413255AC07A /* UtterclipWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UtterclipWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerRow.swift; sourceTree = "<group>"; };
@@ -194,6 +197,7 @@
 		A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		A87D9C7543EC8DFB48425596 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
 		AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStyle.swift; sourceTree = "<group>"; };
+		AFE4D57BC27671C755D9C083 /* Utterclip.icon */ = {isa = PBXFileReference; path = Utterclip.icon; sourceTree = "<group>"; };
 		B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B590ECC24C31E97E4D7E1421 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipWidgets.swift"; sourceTree = "<group>"; };
@@ -249,6 +253,7 @@
 			children = (
 				B590ECC24C31E97E4D7E1421 /* Assets.xcassets */,
 				148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */,
+				AFE4D57BC27671C755D9C083 /* Utterclip.icon */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -266,6 +271,7 @@
 			children = (
 				7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */,
 				378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */,
+				6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -589,6 +595,7 @@
 			files = (
 				4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */,
 				F0D25DF95C58334F3ED3CD2F /* PrivacyInfo.xcprivacy in Resources */,
+				14E3AC7AAC9D96319A616985 /* Utterclip.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -598,6 +605,7 @@
 			files = (
 				7D12D45E622EC7096A6B47AC /* Assets.xcassets in Resources */,
 				B4267352E2341CDDF8DABECE /* PrivacyInfo.xcprivacy in Resources */,
+				EF0D73EA9FF8E12D40DFBA81 /* Utterclip.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -783,7 +791,7 @@
 		4A89DB98045A8F512F6DC001 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Utterclip;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/UtterclipMac.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -877,7 +885,7 @@
 		86AF2E60D5F54EEA4DE58657 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Utterclip;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
@@ -910,7 +918,7 @@
 		8B54046ABC0CA2C76B1C4B0B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Utterclip;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/UtterclipMac.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -1045,7 +1053,7 @@
 		DDBB0A6F4BDD1E4EE366C11E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Utterclip;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
