@@ -74,8 +74,10 @@ let project = Project(
                 .package(product: "HighlightedTextEditor"),
                 .target(name: "UtterclipWidgets"),
             ],
-            // Only the app has an icon; the widget extension's catalog holds just the mark.
-            settings: .settings(base: ["ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon"])
+            // Icon Composer document (Utterclip/Resources/Utterclip.icon), shared with the Mac
+            // app: iOS 26 renders it as a Liquid Glass icon, Xcode derives the classic icon for
+            // iOS 17–25. The widget extension's catalog holds just the mark.
+            settings: .settings(base: ["ASSETCATALOG_COMPILER_APPICON_NAME": "Utterclip"])
         ),
         // The Mac app: the same views and the same core in one compact window that floats
         // above other apps. No widget extension — ⌘R, the Dictation menu and the
@@ -113,7 +115,10 @@ let project = Project(
                 .package(product: "HighlightedTextEditor"),
             ],
             settings: .settings(base: [
-                "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+                // The same Icon Composer document as the iPhone app (UtterclipMac/Resources/
+                // Utterclip.icon): macOS 26 renders it as a Liquid Glass icon, Xcode derives
+                // the classic icon for macOS 14/15.
+                "ASSETCATALOG_COMPILER_APPICON_NAME": "Utterclip",
                 "MACOSX_DEPLOYMENT_TARGET": "14.0",
                 // The iPhone-only family setting from the project base does not apply here.
                 "TARGETED_DEVICE_FAMILY": "",
