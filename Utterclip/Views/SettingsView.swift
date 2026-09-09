@@ -196,6 +196,8 @@ struct StylePromptEditor: View {
     @State private var name: String
     @State private var prompt: String
     @State private var store = StyleStore.shared
+    /// Set by Delete so leaving the page afterwards doesn't re-create the style.
+    @State private var deleted = false
     @Environment(\.dismiss) private var dismiss
 
     init(mode: Mode) {
@@ -257,26 +259,25 @@ struct StylePromptEditor: View {
                 Text("Tip: keep “Preserve the original language.” and “Output only the message.” at the end for clean, language-correct results.")
             }
 
-            Section {
-                saveButton
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-            }
-
             if let style = editedStyle, showsReset || showsDelete {
                 Section {
                     if showsReset {
-                        Button("Reset to default", role: .destructive) {
+                        Button(role: .destructive) {
                             store.resetToDefault(for: style.id)
                             let original = Styles.style(withID: style.id)
                             name = original.name
                             prompt = original.systemPrompt
+                        } label: {
+                            Text("Reset to default").frame(maxWidth: .infinity)
                         }
                     }
                     if showsDelete {
-                        Button("Delete prompt", role: .destructive) {
+                        Button(role: .destructive) {
+                            deleted = true
                             store.removeStyle(id: style.id)
                             dismiss()
+                        } label: {
+                            Text("Delete prompt").frame(maxWidth: .infinity)
                         }
                     }
                 }
@@ -287,25 +288,12 @@ struct StylePromptEditor: View {
         }
         .ignoreHiddenTitleBar()
         .barTitle(editedStyle?.name ?? "New rewrite prompt")
-    }
-
-    /// Monochrome primary action, matching the app's black-filled controls: `.primary`
-    /// fill with an inverted label, so it stays legible in dark mode too.
-    private var saveButton: some View {
-        Button {
+        // No Save button: like the rest of Settings, edits apply when you leave the page —
+        // back arrow, Done, or the sheet closing. Empty fields are ignored rather than saved.
+        .onDisappear {
+            guard !deleted, canSave else { return }
             save()
-            dismiss()
-        } label: {
-            Text("Save")
-                .font(.headline)
-                .foregroundStyle(Color.appBackground)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Capsule().fill(.primary))
         }
-        .buttonStyle(.plain)
-        .disabled(!canSave)
-        .opacity(canSave ? 1 : 0.4)
     }
 
     private func save() {
