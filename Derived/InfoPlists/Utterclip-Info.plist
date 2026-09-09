@@ -58,5 +58,7 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>UtterclipAppIdentifierPrefix</key>
+	<string>$(AppIdentifierPrefix)</string>
 </dict>
 </plist>
