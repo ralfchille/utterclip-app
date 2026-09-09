@@ -72,6 +72,8 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Utterclip",
+                // Read at runtime to name the shared keychain access group ("<TeamID>.…").
+                "UtterclipAppIdentifierPrefix": "$(AppIdentifierPrefix)",
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
                 "UILaunchScreen": [:],
                 // CloudKit wakes the app with a silent push when another device changed history.
@@ -111,6 +113,7 @@ let project = Project(
             deploymentTargets: .macOS("14.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Utterclip",
+                "UtterclipAppIdentifierPrefix": "$(AppIdentifierPrefix)",
                 // Menu bar app: no Dock tile, no app-switcher entry; the status item is the app.
                 "LSUIElement": true,
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",

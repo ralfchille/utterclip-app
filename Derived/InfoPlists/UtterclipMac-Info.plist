@@ -49,5 +49,7 @@
 	<string>Used to record your voice for transcription.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>UtterclipAppIdentifierPrefix</key>
+	<string>$(AppIdentifierPrefix)</string>
 </dict>
 </plist>
