@@ -164,6 +164,7 @@
 		1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipWidgets.swift"; sourceTree = "<group>"; };
 		266C41CDA52548681C16CF3E /* UtterclipMac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipMac-Info.plist"; sourceTree = "<group>"; };
 		28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Utterclip.swift"; sourceTree = "<group>"; };
+		3123A0639BF8CDA10A1480DE /* Utterclip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Utterclip.entitlements; sourceTree = "<group>"; };
 		319D09EB2560270E662093E7 /* StyleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleStore.swift; sourceTree = "<group>"; };
 		362ACD5073A9A097201D6FBD /* UtterclipApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipApp.swift; sourceTree = "<group>"; };
 		378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -261,6 +262,7 @@
 		110A6E37E56F2FB18614F67F /* Entitlements */ = {
 			isa = PBXGroup;
 			children = (
+				3123A0639BF8CDA10A1480DE /* Utterclip.entitlements */,
 				CED60BD402FCD9AC33ADBAFF /* UtterclipMac.entitlements */,
 			);
 			path = Entitlements;
@@ -887,6 +889,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Utterclip;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/Utterclip.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Derived/InfoPlists/Utterclip-Info.plist";
@@ -1055,6 +1058,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Utterclip;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/Utterclip.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Derived/InfoPlists/Utterclip-Info.plist";

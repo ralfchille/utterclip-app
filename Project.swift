@@ -1,5 +1,17 @@
 import ProjectDescription
 
+/// Shared by the iPhone and Mac apps so they meet in the same iCloud container, the same
+/// key-value store and the same keychain access group. The widget extension needs none of it.
+let iCloudEntitlements: [String: Plist.Value] = [
+    "com.apple.developer.icloud-container-identifiers": ["iCloud.com.ralfchille.voicer"],
+    "com.apple.developer.icloud-services": ["CloudKit"],
+    "com.apple.developer.ubiquity-kvstore-identifier": "$(TeamIdentifierPrefix)com.ralfchille.voicer",
+    "keychain-access-groups": ["$(AppIdentifierPrefix)com.ralfchille.voicer.shared"],
+    // CloudKit delivers change notifications over push; Xcode flips this to "production"
+    // for App Store / TestFlight exports.
+    "aps-environment": "development",
+]
+
 let project = Project(
     name: "Utterclip",
     packages: [
@@ -69,6 +81,10 @@ let project = Project(
             ]),
             sources: ["Utterclip/**/*.swift"],
             resources: ["Utterclip/Resources/**"],
+            // iCloud sync (plan/1.1-icloud-sync.md): one CloudKit container and one key-value
+            // store shared with the Mac app, a keychain access group both apps can see so the
+            // API key syncs through iCloud Keychain, and push so CloudKit can signal changes.
+            entitlements: .dictionary(iCloudEntitlements),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
@@ -109,7 +125,7 @@ let project = Project(
                 "com.apple.security.app-sandbox": true,
                 "com.apple.security.device.audio-input": true,
                 "com.apple.security.network.client": true,
-            ]),
+            ].merging(iCloudEntitlements) { current, _ in current }),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
