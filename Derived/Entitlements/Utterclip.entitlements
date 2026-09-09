@@ -14,12 +14,6 @@
 	</array>
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)com.ralfchille.voicer</string>
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
-	<key>com.apple.security.device.audio-input</key>
-	<true/>
-	<key>com.apple.security.network.client</key>
-	<true/>
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)com.ralfchille.voicer.shared</string>
