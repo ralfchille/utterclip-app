@@ -88,7 +88,8 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
 - **Privacy redaction** (cloud engine, on by default): emails, phone numbers, links and addresses
   are swapped for placeholders before the text is sent, and restored in the result.
 - **History** of past dictations with one-tap restore and re-copy.
-- **Editor** for quick fixes to the transcript or the result; saving re-copies.
+- **Editor** for quick fixes. Fix the result and it is re-copied; fix the transcript and the
+  rewrite re-runs on the corrected text.
 - **Markdown or plain text** copy mode, sticky until you switch it back.
 - **Widget and Control**: a Home Screen widget, a circular Lock Screen widget, and an iOS 18
   Control Center control (also assignable to the Action button) that open the app straight into
