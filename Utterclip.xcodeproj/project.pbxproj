@@ -29,7 +29,6 @@
 		4C7F2C7284C1D5DE36A260CB /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 1C8F61B05683C77B25B40782 /* HighlightedTextEditor */; };
 		4D8F7ABF6B558C8F20E79EEA /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */; };
 		4E74951E6813606D46ED8B59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
-		582EF6CD630CDC33304C993C /* WindowConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48B9509E278F59BF683FF445 /* WindowConfigurator.swift */; };
 		5AD10B680721814DF3311E1C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09681937E4E4FE184312126B /* Platform.swift */; };
 		5CB3EE2E32D2FA0371B88F59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
 		5E0F5480E1CEADA3D83FC904 /* KeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */; };
@@ -53,6 +52,7 @@
 		B4267352E2341CDDF8DABECE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */; };
 		B5B49810AA6AFC7BE9C30C2C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 753112FFBC0496CDE6B924D2 /* PrivacyInfo.xcprivacy */; };
 		BA543133A438725F553F01E1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */; };
+		BBDF502CD8914F2939B1B24C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */; };
 		BF6A9F57B3FCB0191257D6A4 /* UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */; };
 		C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
 		CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319D09EB2560270E662093E7 /* StyleStore.swift */; };
@@ -166,7 +166,6 @@
 		362ACD5073A9A097201D6FBD /* UtterclipApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipApp.swift; sourceTree = "<group>"; };
 		378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		42C3F87BED6C2BC519B414B3 /* DebugSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSnapshot.swift; sourceTree = "<group>"; };
-		48B9509E278F59BF683FF445 /* WindowConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowConfigurator.swift; sourceTree = "<group>"; };
 		4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
 		51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyProvider.swift; sourceTree = "<group>"; };
 		522F02B53CA00542B940B288 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -195,6 +194,7 @@
 		A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		A87D9C7543EC8DFB48425596 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
 		AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStyle.swift; sourceTree = "<group>"; };
+		B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B590ECC24C31E97E4D7E1421 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipWidgets.swift"; sourceTree = "<group>"; };
 		CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipMac.swift"; sourceTree = "<group>"; };
@@ -406,9 +406,9 @@
 			isa = PBXGroup;
 			children = (
 				064C9059947CEE2880D59BE8 /* Resources */,
+				B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */,
 				42C3F87BED6C2BC519B414B3 /* DebugSnapshot.swift */,
 				108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */,
-				48B9509E278F59BF683FF445 /* WindowConfigurator.swift */,
 			);
 			path = UtterclipMac;
 			sourceTree = "<group>";
@@ -646,9 +646,9 @@
 				D2E079B1639B91C06EF6BDD6 /* SettingsView.swift in Sources */,
 				F33BCA87B0DFFD068C9E5E5A /* StylePickerRow.swift in Sources */,
 				4E74951E6813606D46ED8B59 /* WaveformView.swift in Sources */,
+				BBDF502CD8914F2939B1B24C /* AppDelegate.swift in Sources */,
 				E1EFB99FFE667063120F3E97 /* DebugSnapshot.swift in Sources */,
 				2B95AEDE3EBA7BDD6C635A6F /* UtterclipMacApp.swift in Sources */,
-				582EF6CD630CDC33304C993C /* WindowConfigurator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -786,7 +786,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/UtterclipMac.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Derived/InfoPlists/UtterclipMac-Info.plist";
@@ -913,7 +913,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/UtterclipMac.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Derived/InfoPlists/UtterclipMac-Info.plist";

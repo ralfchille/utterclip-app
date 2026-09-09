@@ -1,71 +1,56 @@
 import SwiftUI
 import UtterclipCore
 
-/// The Mac app: the same `ContentView` as the iPhone app in one compact window that
-/// floats above other apps, so it can sit next to whatever you are writing in.
+/// The Mac app lives in the menu bar (`LSUIElement`, no Dock tile): a status item opens
+/// one compact window with the same `ContentView` as the iPhone app; closing that window
+/// only hides it. `AppDelegate` owns the status item and the window.
 @main
 struct UtterclipMacApp: App {
-    /// Window level preference; on by default because the whole point of the Mac
-    /// version is to dictate into another app without hunting for this window.
-    @AppStorage("floatOnTop") private var floatOnTop = true
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     init() {
         // Always-warm, exactly like the iPhone app: load Whisper once at launch.
         TranscriptionService.shared.warmUp()
     }
 
-    /// Debug builds answer `utterclip://snapshot` with a PNG of the window (see `DebugSnapshot`).
-    private var root: some View {
-        #if DEBUG
-        ContentView().debugSnapshot()
-        #else
-        ContentView()
-        #endif
-    }
-
     var body: some Scene {
-        // A single window (no File ▸ New): closing it and clicking the Dock icon brings
-        // the same one back.
-        Window("Utterclip", id: "main") {
-            root
-                .frame(minWidth: 380, minHeight: 600)
-                .background(WindowConfigurator(floatOnTop: floatOnTop))
+        // An agent app needs a scene but not a visible one; the window is AppKit-managed so
+        // it can survive "close" (see MainWindowController). ⌘, is re-routed below.
+        Settings { EmptyView() }
+            .commands {
+                // Key equivalents while the window is key; the status-bar menu lists the same.
+                CommandMenu("Dictation") {
+                    Button("Start / Stop Dictation") { AppCommand.toggleRecording.perform() }
+                        .keyboardShortcut("r", modifiers: .command)
+                    Button("Continue Dictating") { AppCommand.continueRecording.perform() }
+                        .keyboardShortcut("r", modifiers: [.command, .shift])
+                    Divider()
+                    Button("History…") { AppCommand.showHistory.perform() }
+                        .keyboardShortcut("y", modifiers: .command)
+                }
+                CommandGroup(replacing: .appSettings) {
+                    Button("Settings…") { AppCommand.showSettings.perform() }
+                        .keyboardShortcut(",", modifiers: .command)
+                }
+            }
+    }
+}
+
+/// Everything a menu item, shortcut or URL can ask the app to do. Each command brings the
+/// window forward (a hidden window is where the action would otherwise happen unseen) and
+/// posts the notification `ContentView` listens for.
+enum AppCommand {
+    case toggleRecording, startRecording, continueRecording, showHistory, showSettings
+
+    func perform() {
+        AppDelegate.shared?.showWindow()
+        let name: Notification.Name = switch self {
+        case .toggleRecording: .utterclipToggleRecording
+        case .startRecording: .utterclipStartRecording
+        case .continueRecording: .utterclipContinueRecording
+        case .showHistory: .utterclipShowHistory
+        case .showSettings: .utterclipShowSettings
         }
-        .defaultSize(width: 420, height: 720)
-        .windowResizability(.contentMinSize)
-        .windowToolbarStyle(.unifiedCompact)
-        .commands {
-            CommandMenu("Dictation") {
-                Button("Start / Stop Dictation") {
-                    NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
-                }
-                .keyboardShortcut("r", modifiers: .command)
-
-                Button("Continue Dictating") {
-                    NotificationCenter.default.post(name: .utterclipContinueRecording, object: nil)
-                }
-                .keyboardShortcut("r", modifiers: [.command, .shift])
-
-                Divider()
-
-                Button("History…") {
-                    NotificationCenter.default.post(name: .utterclipShowHistory, object: nil)
-                }
-                .keyboardShortcut("y", modifiers: .command)
-            }
-
-            // Standard ⌘, opens the same Settings sheet the iPhone app has.
-            CommandGroup(replacing: .appSettings) {
-                Button("Settings…") {
-                    NotificationCenter.default.post(name: .utterclipShowSettings, object: nil)
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
-
-            CommandGroup(after: .windowArrangement) {
-                Toggle("Float on Top", isOn: $floatOnTop)
-                    .keyboardShortcut("t", modifiers: [.command, .option])
-            }
-        }
+        NotificationCenter.default.post(name: name, object: nil)
     }
 }
