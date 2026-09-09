@@ -89,6 +89,8 @@ let project = Project(
             deploymentTargets: .macOS("14.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Utterclip",
+                // Menu bar app: no Dock tile, no app-switcher entry; the status item is the app.
+                "LSUIElement": true,
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
                 "NSHumanReadableCopyright": "© 2026 Ralf Chille",
                 "LSApplicationCategoryType": "public.app-category.productivity",
@@ -115,6 +117,11 @@ let project = Project(
                 "MACOSX_DEPLOYMENT_TARGET": "14.0",
                 // The iPhone-only family setting from the project base does not apply here.
                 "TARGETED_DEVICE_FAMILY": "",
+                // Xcode's macOS default is "-" (sign to run locally): an ad-hoc signature
+                // that changes with every build, so macOS treats each build as a new app —
+                // microphone permission and keychain access get asked for again and again.
+                // The team's development certificate gives the app one stable identity.
+                "CODE_SIGN_IDENTITY": "Apple Development",
             ])
         ),
         // Home Screen / Lock Screen widget and the Control Center "Dictate" button.
