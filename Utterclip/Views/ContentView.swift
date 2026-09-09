@@ -22,18 +22,26 @@ struct ContentView: View {
                 #if os(macOS)
                 // The Mac window has no title bar; this row is its header.
                 MacHeader(title: "Utterclip") {
+                    // Popovers rather than sheets: they close on a click anywhere else in the
+                    // window (or Escape), which is how a menu bar utility should feel.
                     Button {
                         showHistory = true
                     } label: {
                         Image(systemName: "clock.arrow.circlepath")
                     }
                     .accessibilityLabel("History")
+                    .popover(isPresented: $showHistory, arrowEdge: .bottom) {
+                        HistoryView(viewModel: viewModel)
+                    }
                     Button {
                         showSettings = true
                     } label: {
                         Image(systemName: "gearshape")
                     }
                     .accessibilityLabel("Settings")
+                    .popover(isPresented: $showSettings, arrowEdge: .bottom) {
+                        SettingsView(viewModel: viewModel)
+                    }
                 }
                 #endif
                 resultArea
@@ -68,10 +76,10 @@ struct ContentView: View {
                     .accessibilityLabel("Settings")
                 }
             }
-            .sheet(isPresented: $showSettings) {
+            .iOSSheet(isPresented: $showSettings) {
                 SettingsView(viewModel: viewModel)
             }
-            .sheet(isPresented: $showHistory) {
+            .iOSSheet(isPresented: $showHistory) {
                 HistoryView(viewModel: viewModel)
             }
             .onOpenURL { url in
