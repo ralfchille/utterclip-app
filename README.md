@@ -6,31 +6,34 @@
 
 <p align="center">
   <strong>Dictate, and polished text lands on your clipboard.</strong><br>
-  Tap the mic, speak, tap again. Your words are transcribed on your iPhone and rewritten as the
-  message you were about to type — a Slack update, a WhatsApp reply, an email, a prompt.<br>
-  Also on the Mac: the same app in the menu bar, one small window floating above whatever you write in
-  (<a href="#utterclip-for-mac">screenshots below</a>).
+  <strong>For iPhone and Mac.</strong> Tap the mic, speak, tap again. Your words are transcribed on the
+  device and rewritten as the message you were about to type — a Slack update, a WhatsApp reply,
+  an email, a prompt. On the Mac it lives in the menu bar, in one small window that floats above
+  whatever you are writing in.
 </p>
 
 <p align="center">
   <a href="https://apps.apple.com/app/id6809807393"><strong>Download on the App Store</strong></a> ·
   <a href="#install-without-the-app-store">Install without the App Store</a> ·
+  <a href="#utterclip-for-mac">Utterclip for Mac</a> ·
   <a href="#privacy">Privacy</a> ·
   <a href="#faq">FAQ</a>
 </p>
 
 <p align="center">
   <img alt="iOS 17+" src="https://img.shields.io/badge/iOS-17%2B-black">
+  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-black">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5.10-black">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-black">
   <img alt="Transcription on device" src="https://img.shields.io/badge/transcription-on--device-black">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/idle.png" width="320" alt="Utterclip ready to record: a single mic button">
+  <img src="docs/screenshots/result.png" width="300" alt="iPhone: a dictation rewritten as a Slack message, already copied, with the raw transcript below and style pills to re-run it">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/result.png" width="320" alt="A dictation rewritten as a Slack message, already copied, with the raw transcript below and style pills to re-run it">
+  <img src="docs/screenshots/mac-result.png" width="340" alt="Mac: the same dictation in the menu bar app's window, floating above other apps">
 </p>
+<p align="center"><sub>Left: iPhone. Right: the Mac app, one window that floats above whatever you write in.</sub></p>
 
 ---
 
