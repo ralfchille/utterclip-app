@@ -145,6 +145,17 @@ extension View {
         #endif
     }
 
+    /// History and Settings: a sheet on iOS. On macOS they are popovers hanging off the
+    /// header buttons instead (see `ContentView`), so this is a no-op there.
+    @ViewBuilder
+    func iOSSheet<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+        #if os(macOS)
+        self
+        #else
+        sheet(isPresented: isPresented, content: content)
+        #endif
+    }
+
     /// The text editor takes the whole screen on iOS; on macOS it is a sheet.
     @ViewBuilder
     func editorPresentation<Item: Identifiable, Content: View>(
