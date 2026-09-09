@@ -60,6 +60,7 @@
 		BA543133A438725F553F01E1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */; };
 		BBDF502CD8914F2939B1B24C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */; };
 		BF6A9F57B3FCB0191257D6A4 /* UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */; };
+		C1A4EBD08E645E3E27EAA8AA /* SyncStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */; };
 		C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
 		CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319D09EB2560270E662093E7 /* StyleStore.swift */; };
 		D2E079B1639B91C06EF6BDD6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
@@ -217,6 +218,7 @@
 		D21D8DFF607B93A631014902 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 		DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
 		E02D86E45BCDAFCC58CF7667 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
+		E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatus.swift; sourceTree = "<group>"; };
 		F371DCE7FFFF2BF874588E3C /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncedDefaults.swift; sourceTree = "<group>"; };
 		F7F006F06790EC7AE64C846D /* Utterclip-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Utterclip-Info.plist"; sourceTree = "<group>"; };
@@ -358,6 +360,7 @@
 				319D09EB2560270E662093E7 /* StyleStore.swift */,
 				F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */,
 				1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */,
+				E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */,
 				53061E11287017DB6ABBF28A /* TranscriptionService.swift */,
 			);
 			path = Services;
@@ -711,6 +714,7 @@
 				1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */,
 				CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */,
 				4F6AA1DFE6C103006FE847B1 /* SyncPreference.swift in Sources */,
+				C1A4EBD08E645E3E27EAA8AA /* SyncStatus.swift in Sources */,
 				AB5FA10D4793DADBDC680876 /* SyncedDefaults.swift in Sources */,
 				1C17B05A6E14698115D4A786 /* TranscriptionService.swift in Sources */,
 				EC091E3637A1401CF24A5AC5 /* RecorderViewModel.swift in Sources */,
