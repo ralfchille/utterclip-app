@@ -74,6 +74,8 @@ let project = Project(
                 "CFBundleDisplayName": "Utterclip",
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
                 "UILaunchScreen": [:],
+                // CloudKit wakes the app with a silent push when another device changed history.
+                "UIBackgroundModes": ["remote-notification"],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "ITSAppUsesNonExemptEncryption": false,
                 // utterclip://record — the widget and control open the app into a recording.
