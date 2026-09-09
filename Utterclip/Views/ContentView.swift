@@ -61,7 +61,7 @@ struct ContentView: View {
             .onOpenURL { url in
                 // utterclip://record — from the Home Screen widget, the Control Center button,
                 // or (on the Mac) any launcher that opens the URL.
-                guard url.host == "record", !viewModel.recorder.isRecording, !viewModel.isBusy else { return }
+                guard url.host == "record", !viewModel.recorder.isRecording, !recordUnavailable else { return }
                 Task { await viewModel.record() }
             }
             // Menu items and keyboard shortcuts (macOS) drive the same actions as the buttons.

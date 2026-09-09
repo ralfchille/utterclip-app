@@ -11,19 +11,32 @@ struct DebugSnapshot: ViewModifier {
     func body(content: Content) -> some View {
         content.onOpenURL { url in
             guard url.host == "snapshot" else { return }
-            // Let the window settle (sheet animations, layout) before drawing.
             NSApp.activate(ignoringOtherApps: true) // render as the active window
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { Self.write() }
+            // utterclip://snapshot?show=settings|history opens that sheet first, so the
+            // sheets can be checked the same way as the main window.
+            let show = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "show" })?.value
+            switch show {
+            case "settings": NotificationCenter.default.post(name: .utterclipShowSettings, object: nil)
+            case "history": NotificationCenter.default.post(name: .utterclipShowHistory, object: nil)
+            default: break
+            }
+            // Let the window settle (sheet animations, layout) before drawing.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { Self.write() }
         }
     }
 
     private static func write() {
-        guard let window = NSApp.windows.first(where: { $0.isVisible && $0.title == "Utterclip" }) ?? NSApp.keyWindow,
+        // Remove last time's image first, so a failed render can't pass for a fresh one.
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("snapshot.png")
+        try? FileManager.default.removeItem(at: url)
+        // A presented sheet wins; otherwise the main window.
+        let visible = NSApp.windows.filter(\.isVisible)
+        guard let window = visible.first(where: \.isSheet) ?? visible.first(where: { $0.title == "Utterclip" }),
               let view = window.contentView?.superview ?? window.contentView, // frame view: title bar included
               let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
         view.cacheDisplay(in: view.bounds, to: rep)
         guard let png = rep.representation(using: .png, properties: [:]) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("snapshot.png")
         try? png.write(to: url, options: .atomic)
 
     }
