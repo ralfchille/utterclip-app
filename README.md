@@ -8,7 +8,8 @@
   <strong>Dictate, and polished text lands on your clipboard.</strong><br>
   Tap the mic, speak, tap again. Your words are transcribed on your iPhone and rewritten as the
   message you were about to type — a Slack update, a WhatsApp reply, an email, a prompt.<br>
-  Also on the Mac: the same app in the menu bar, one small window floating above whatever you write in.
+  Also on the Mac: the same app in the menu bar, one small window floating above whatever you write in
+  (<a href="#utterclip-for-mac">screenshots below</a>).
 </p>
 
 <p align="center">
@@ -128,7 +129,7 @@ cents a month. The on-device engine costs nothing at all.
 2. **Choose a rewrite engine** in Settings (the gear icon). Either paste an API key under
    **AI provider API key**, or turn on **Rewrite engine → Rewrite on device (Apple Intelligence)**.
    Without either you still get the raw transcript on the clipboard after every recording.
-3. **Pick your starting style** under **One-tap rewrite**. Slack is the default; the pills above
+3. **Pick your starting style** under **One-tap rewrite**. Plain is the default; the pills above
    the mic change it for any recording.
 4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, or the **Dictate**
    control to Control Center or the Action button (iOS 18).
@@ -292,6 +293,12 @@ What is different, and only because the platform is:
 | Always fills the screen | **Float on Top** (right-click menu, or **⌥⌘T**) keeps the window above other apps, on every Space and over full-screen apps; on by default |
 | Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
+
+<p align="center">
+  <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window: title, History and Settings in its own header, style pills and the mic at the bottom">
+  &nbsp;
+  <img src="docs/screenshots/mac-result.png" width="360" alt="A dictation rewritten as a Slack message in the Mac window, raw transcript below, continue-dictating button beside the mic">
+</p>
 
 Requirements: macOS 14 or later; Apple Intelligence needs macOS 26 on an Apple silicon Mac.
 The Whisper model is downloaded once (about 220 MB), into the app's own container.

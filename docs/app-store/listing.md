@@ -115,7 +115,7 @@ HOW TO TEST
 1. On first launch the app downloads a ~220 MB speech-recognition model from Hugging Face. Please allow a minute on Wi-Fi. A spinner and "Model loads in the background" shows meanwhile; you can already record.
 2. Allow microphone access when asked.
 3. Tap the mic, speak a sentence, tap again. The transcript appears and is copied to the clipboard (transcription is fully on-device, using OpenAI's Whisper model via the open-source WhisperKit library).
-4. The styled rewrite ("Slack" by default) needs a rewrite engine. Either:
+4. The styled rewrite ("Plain" by default; Slack, WhatsApp, Prompt and Email are the other pills) needs a rewrite engine. Either:
    a) On an iPhone with Apple Intelligence enabled (iOS 26): Settings (gear) → Rewrite engine → turn on "Rewrite on device". No key needed, nothing leaves the device.
    b) Paste this test API key in Settings → AI provider API key:  <<< PASTE A LOW-LIMIT TEST KEY HERE, REVOKE AFTER REVIEW >>>
       The provider is detected from the key prefix. The key is stored in the Keychain and sent only to that provider.
