@@ -63,23 +63,31 @@ public final class RecorderViewModel {
     /// When on, copies put the raw markdown source on the clipboard instead of the
     /// stripped plain text. Persists across recordings and launches.
     public var copyAsMarkdown: Bool {
-        didSet { UserDefaults.standard.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) }
+        didSet { if !isApplyingRemoteSettings { defaults.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) } }
     }
 
     /// Swap emails, phone numbers, links and addresses for placeholders before a rewrite
     /// leaves the device, restoring them in the result (see `Redactor`). On by default.
     public var redactPersonalData: Bool {
-        didSet { UserDefaults.standard.set(redactPersonalData, forKey: Self.redactPersonalDataKey) }
+        didSet { if !isApplyingRemoteSettings { defaults.set(redactPersonalData, forKey: Self.redactPersonalDataKey) } }
     }
 
     /// Rewrite with Apple's on-device model (`LocalRewriter`) instead of the cloud provider.
     /// The engines produce different text, so switching clears the per-style cache.
     public var useOnDeviceModel: Bool {
         didSet {
+            // Deliberately per device (not synced): whether Apple's model is available differs
+            // between a Mac and an iPhone, and between iPhones.
             UserDefaults.standard.set(useOnDeviceModel, forKey: Self.useOnDeviceModelKey)
             rewriteCache.removeAll()
         }
     }
+
+    /// Settings and styles that follow the user through iCloud (see `SyncedDefaults`).
+    private let defaults = SyncedDefaults.shared
+    /// Set while another device's values are copied in, so the `didSet`s don't write them back.
+    private var isApplyingRemoteSettings = false
+    private var remoteSettingsObserver: NSObjectProtocol?
 
     /// The device could run Apple's model (right OS, eligible hardware) — gates whether the
     /// on-device option appears at all. See `onDeviceAvailable` for "ready right now".
@@ -89,7 +97,7 @@ public final class RecorderViewModel {
 
     public var defaultStyleID: String {
         get {
-            let stored = UserDefaults.standard.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
+            let stored = defaults.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
             // A saved default may name a style that no longer exists (a removed built-in id,
             // or a deleted user-added style) — fall back so the picker and the one-tap
             // rewrite stay consistent.
@@ -97,7 +105,7 @@ public final class RecorderViewModel {
             return StyleStore.shared.styles.first?.id ?? Styles.defaultStyle.id
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Self.defaultStyleKey)
+            defaults.set(newValue, forKey: Self.defaultStyleKey)
             // With nothing on screen the pills show the upcoming style; keep them in step with
             // the new default. A shown result keeps its own pill — the text belongs to it.
             if rawTranscript == nil {
@@ -108,8 +116,8 @@ public final class RecorderViewModel {
 
     public init(cloudRewriter: Rewriter = CloudRewriter(keyProvider: { KeyProvider.shared.apiKey() })) {
         self.cloudRewriter = cloudRewriter
-        self.copyAsMarkdown = UserDefaults.standard.bool(forKey: Self.copyAsMarkdownKey)
-        self.redactPersonalData = UserDefaults.standard.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
+        self.copyAsMarkdown = SyncedDefaults.shared.bool(forKey: Self.copyAsMarkdownKey)
+        self.redactPersonalData = SyncedDefaults.shared.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
         self.useOnDeviceModel = UserDefaults.standard.bool(forKey: Self.useOnDeviceModelKey)
         self.selectedStyle = Styles.defaultStyle // placeholder until `self` is fully initialized
         self.selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
@@ -118,6 +126,25 @@ public final class RecorderViewModel {
         recorder.onSilence = { [weak self] in
             guard let self, self.phase == .recording else { return }
             self.stopAndProcess()
+        }
+        remoteSettingsObserver = NotificationCenter.default.addObserver(
+            forName: SyncedDefaults.didChangeRemotely, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.applyRemoteSettings() }
+        }
+    }
+
+    /// Another device changed a synced setting: take the new values without echoing them
+    /// back, and keep the pill in step with the default while nothing is on screen.
+    private func applyRemoteSettings() {
+        isApplyingRemoteSettings = true
+        defer { isApplyingRemoteSettings = false }
+        copyAsMarkdown = defaults.bool(forKey: Self.copyAsMarkdownKey)
+        redactPersonalData = defaults.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
+        if rawTranscript == nil {
+            selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
+        } else if StyleStore.shared.styleIfPresent(withID: selectedStyle.id) == nil {
+            selectedStyle = StyleStore.shared.style(withID: defaultStyleID) // the pill was deleted elsewhere
         }
     }
 
