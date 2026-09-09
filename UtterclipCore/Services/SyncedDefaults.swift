@@ -1,10 +1,14 @@
 import Foundation
+import SwiftData
 import os
 
-/// Preferences that follow the user through iCloud: the style edits and the few settings in
-/// `StyleStore` and `RecorderViewModel`. `UserDefaults` stays the source every read uses;
-/// this wrapper mirrors writes into the iCloud key-value store and copies remote changes
-/// back into `UserDefaults`, then tells the stores to reload.
+/// Preferences that follow the user: the style edits and the few settings in `StyleStore`
+/// and `RecorderViewModel`. `UserDefaults` stays the source every read uses; this wrapper
+/// mirrors writes into `SyncedSetting` records in the CloudKit-backed store and copies
+/// remote changes back into `UserDefaults`, then tells the stores to reload.
+///
+/// Why CloudKit rather than the iCloud key-value store: the key-value store rides on iCloud
+/// Drive, which a managed Mac can have switched off by policy; CloudKit does not.
 ///
 /// Not synced on purpose: the on-device-model toggle (a per-device capability), the Mac's
 /// window preferences, and the sync switch itself.
@@ -21,29 +25,20 @@ public final class SyncedDefaults {
         "defaultStyleID", "copyAsMarkdown", "redactPersonalData",
     ]
 
-    /// Sync is on and this process can reach the key-value store (entitlement + account).
-    public private(set) var isActive = false
+    /// Sync is on and the store is attached to CloudKit.
+    public var isActive: Bool { store.isSyncing }
 
     private let local = UserDefaults.standard
-    private let cloud = NSUbiquitousKeyValueStore.default
+    private let store = CloudStore.shared
     private var observer: NSObjectProtocol?
     private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "settings-sync")
 
     private init() {
-        guard SyncPreference.isEnabled, SyncPreference.hasICloudAccount else { return }
-        // No entitlement → the store logs and ignores writes; `synchronize()` then returns
-        // false, which is our signal to stay local.
-        guard cloud.synchronize() else {
-            Self.logger.notice("iCloud key-value store unavailable; settings stay on this device.")
-            return
-        }
-        isActive = true
-        reconcileAtLaunch()
+        reconcile(postIfChanged: false)
         observer = NotificationCenter.default.addObserver(
-            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: cloud, queue: .main
-        ) { [weak self] note in
-            Task { @MainActor [weak self] in self?.applyRemoteChange(note) }
+            forName: CloudStore.didChange, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.reconcile(postIfChanged: true) }
         }
     }
 
@@ -58,50 +53,76 @@ public final class SyncedDefaults {
 
     public func set(_ value: Any?, forKey key: String) {
         local.set(value, forKey: key)
-        guard isActive, Self.syncedKeys.contains(key) else { return }
-        if let value {
-            cloud.set(value, forKey: key)
+        guard Self.syncedKeys.contains(key) else { return }
+        let encoded = Self.encode(value)
+        if let record = records()[key] {
+            guard record.value != encoded else { return }
+            record.value = encoded
+            record.updatedAt = .now
         } else {
-            cloud.removeObject(forKey: key)
+            store.context.insert(SyncedSetting(key: key, value: encoded))
         }
-        cloud.synchronize()
+        store.save()
     }
 
     // MARK: - Reconciliation
 
-    /// First launch with sync: the cloud wins where it has a value (another device already
-    /// synced), local values fill the gaps and go up.
-    private func reconcileAtLaunch() {
-        var pulled = 0, pushed = 0
+    /// Brings `UserDefaults` and the store in step. A record wins over the local value (it is
+    /// what the other devices agreed on); keys with no record yet are seeded from local so the
+    /// other devices get them. Duplicated records for one key (both devices created it before
+    /// their first sync) collapse to the newest.
+    private func reconcile(postIfChanged: Bool) {
+        let all = records()
+        var changed = false
+        var seeded = false
         for key in Self.syncedKeys {
-            if let remote = cloud.object(forKey: key) {
+            if let record = all[key] {
+                let remote = Self.decode(record.value)
                 if !Self.equal(remote, local.object(forKey: key)) {
-                    local.set(remote, forKey: key); pulled += 1
+                    local.set(remote, forKey: key)
+                    changed = true
                 }
             } else if let mine = local.object(forKey: key) {
-                cloud.set(mine, forKey: key); pushed += 1
+                store.context.insert(SyncedSetting(key: key, value: Self.encode(mine)))
+                seeded = true
             }
         }
-        if pushed > 0 { cloud.synchronize() }
-        if pulled > 0 {
-            Self.logger.notice("Settings reconciled from iCloud: \(pulled, privacy: .public) pulled, \(pushed, privacy: .public) pushed.")
+        if seeded { store.save() }
+        if changed && postIfChanged {
             NotificationCenter.default.post(name: Self.didChangeRemotely, object: nil)
         }
     }
 
-    private func applyRemoteChange(_ note: Notification) {
-        let reason = note.userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int
-        if reason == NSUbiquitousKeyValueStoreQuotaViolationChange {
-            Self.logger.error("iCloud key-value store quota exceeded; settings no longer sync.")
-            return
+    /// The current record per key, newest first; older duplicates are deleted on the way.
+    private func records() -> [String: SyncedSetting] {
+        let descriptor = FetchDescriptor<SyncedSetting>(sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
+        guard let fetched = try? store.context.fetch(descriptor) else { return [:] }
+        var byKey: [String: SyncedSetting] = [:]
+        var pruned = false
+        for record in fetched {
+            if byKey[record.key] == nil {
+                byKey[record.key] = record
+            } else {
+                store.context.delete(record)
+                pruned = true
+            }
         }
-        let changed = (note.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] ?? [])
-            .filter(Self.syncedKeys.contains)
-        guard !changed.isEmpty else { return }
-        for key in changed {
-            local.set(cloud.object(forKey: key), forKey: key) // nil removes
-        }
-        NotificationCenter.default.post(name: Self.didChangeRemotely, object: nil)
+        if pruned { store.save() }
+        return byKey
+    }
+
+    // MARK: - Encoding
+
+    private static func encode(_ value: Any?) -> Data? {
+        guard let value else { return nil }
+        return try? PropertyListSerialization.data(fromPropertyList: ["v": value], format: .binary, options: 0)
+    }
+
+    private static func decode(_ data: Data?) -> Any? {
+        guard let data,
+              let wrapped = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+        else { return nil }
+        return wrapped["v"]
     }
 
     private static func equal(_ a: Any?, _ b: Any?) -> Bool {

@@ -1,11 +1,11 @@
 import ProjectDescription
 
-/// Shared by the iPhone and Mac apps so they meet in the same iCloud container, the same
-/// key-value store and the same keychain access group. The widget extension needs none of it.
+/// Shared by the iPhone and Mac apps so they meet in the same CloudKit container and the same
+/// keychain access group. The widget extension needs none of it. (No key-value store: it rides
+/// on iCloud Drive, which managed Macs can have switched off; settings use CloudKit instead.)
 let iCloudEntitlements: [String: Plist.Value] = [
     "com.apple.developer.icloud-container-identifiers": ["iCloud.com.ralfchille.voicer"],
     "com.apple.developer.icloud-services": ["CloudKit"],
-    "com.apple.developer.ubiquity-kvstore-identifier": "$(TeamIdentifierPrefix)com.ralfchille.voicer",
     "keychain-access-groups": ["$(AppIdentifierPrefix)com.ralfchille.voicer.shared"],
 ]
 

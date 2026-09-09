@@ -1,4 +1,3 @@
-import CoreData
 import Foundation
 import Observation
 import SwiftData
@@ -24,21 +23,17 @@ public final class HistoryStore {
     private static let migratedKey = "historyMigratedToSwiftData"
     private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "history")
 
-    private let container: ModelContainer
-    private var context: ModelContext { container.mainContext }
-    private var remoteChangeObserver: NSObjectProtocol?
+    private let store = CloudStore.shared
+    private var context: ModelContext { store.context }
+    private var changeObserver: NSObjectProtocol?
 
     private init() {
-        let directory = Self.storeDirectory()
-        let (container, syncing) = Self.makeContainer(in: directory, sync: SyncPreference.isEnabled)
-        self.container = container
-        self.isSyncing = syncing
-        migrateLegacyFileIfNeeded(in: directory)
+        isSyncing = store.isSyncing
+        migrateLegacyFileIfNeeded(in: CloudStore.directory())
         refresh()
-        // CloudKit imports land in the persistent store on a background context; this is the
-        // signal to re-read. Debounced by the run loop: several imports in a row coalesce.
-        remoteChangeObserver = NotificationCenter.default.addObserver(
-            forName: .NSPersistentStoreRemoteChange, object: nil, queue: .main
+        // CloudKit imports land on a background context; the store relays them as `didChange`.
+        changeObserver = NotificationCenter.default.addObserver(
+            forName: CloudStore.didChange, object: nil, queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in self?.refresh() }
         }
@@ -131,47 +126,7 @@ public final class HistoryStore {
         return try? context.fetch(descriptor).first
     }
 
-    private func save() {
-        do {
-            try context.save()
-        } catch {
-            Self.logger.error("History save failed: \(error, privacy: .public)")
-        }
-    }
-
-    /// Application Support: iOS hands out a per-app container; macOS shares
-    /// ~/Library/Application Support, so the files get their own folder there.
-    private static func storeDirectory() -> URL {
-        var support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        #if os(macOS)
-        support.appendPathComponent(Bundle.main.bundleIdentifier ?? "Utterclip")
-        #endif
-        try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
-        return support
-    }
-
-    /// The CloudKit-backed store when sync is on, else a local one. A failure to open the
-    /// synced store (no account setup, entitlement mismatch in an unsigned build) degrades
-    /// to local; a failure to open any store on disk degrades to memory so the app still runs.
-    private static func makeContainer(in directory: URL, sync: Bool) -> (ModelContainer, Bool) {
-        let schema = Schema([Dictation.self])
-        let url = directory.appendingPathComponent("Utterclip.store")
-        if sync {
-            let cloud = ModelConfiguration("Utterclip", schema: schema, url: url,
-                                           cloudKitDatabase: .private(SyncPreference.containerIdentifier))
-            if let container = try? ModelContainer(for: schema, configurations: [cloud]) {
-                return (container, true)
-            }
-            logger.error("CloudKit-backed history store unavailable; continuing local-only.")
-        }
-        let local = ModelConfiguration("Utterclip", schema: schema, url: url, cloudKitDatabase: .none)
-        if let container = try? ModelContainer(for: schema, configurations: [local]) {
-            return (container, false)
-        }
-        logger.fault("History store on disk unavailable; using an in-memory store.")
-        let memory = ModelConfiguration("Utterclip", schema: schema, isStoredInMemoryOnly: true)
-        return (try! ModelContainer(for: schema, configurations: [memory]), false)
-    }
+    private func save() { store.save() }
 
     // MARK: - Migration from history.json (1.0)
 
