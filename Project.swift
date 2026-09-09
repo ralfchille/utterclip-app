@@ -7,10 +7,12 @@ let iCloudEntitlements: [String: Plist.Value] = [
     "com.apple.developer.icloud-services": ["CloudKit"],
     "com.apple.developer.ubiquity-kvstore-identifier": "$(TeamIdentifierPrefix)com.ralfchille.voicer",
     "keychain-access-groups": ["$(AppIdentifierPrefix)com.ralfchille.voicer.shared"],
-    // CloudKit delivers change notifications over push; Xcode flips this to "production"
-    // for App Store / TestFlight exports.
-    "aps-environment": "development",
 ]
+
+/// CloudKit delivers change notifications over push. The key differs per platform; Xcode
+/// flips the value to "production" for App Store / TestFlight exports.
+let iOSPushEntitlement: [String: Plist.Value] = ["aps-environment": "development"]
+let macPushEntitlement: [String: Plist.Value] = ["com.apple.developer.aps-environment": "development"]
 
 let project = Project(
     name: "Utterclip",
@@ -84,7 +86,7 @@ let project = Project(
             // iCloud sync (plan/1.1-icloud-sync.md): one CloudKit container and one key-value
             // store shared with the Mac app, a keychain access group both apps can see so the
             // API key syncs through iCloud Keychain, and push so CloudKit can signal changes.
-            entitlements: .dictionary(iCloudEntitlements),
+            entitlements: .dictionary(iCloudEntitlements.merging(iOSPushEntitlement) { current, _ in current }),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
@@ -125,7 +127,8 @@ let project = Project(
                 "com.apple.security.app-sandbox": true,
                 "com.apple.security.device.audio-input": true,
                 "com.apple.security.network.client": true,
-            ].merging(iCloudEntitlements) { current, _ in current }),
+            ].merging(iCloudEntitlements) { current, _ in current }
+             .merging(macPushEntitlement) { current, _ in current }),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
