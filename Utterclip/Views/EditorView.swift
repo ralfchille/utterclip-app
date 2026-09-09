@@ -26,6 +26,7 @@ struct EditorView: View {
         NavigationStack {
             HighlightedTextEditor(text: $text, highlightRules: .markdown)
                 .padding(.horizontal, 12) // breathing room so text isn't flush to the edges
+                .editorTopInset()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.appBackground)
                 .navigationTitle(title)

@@ -20,15 +20,15 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 resultArea
-                if viewModel.rawTranscript != nil {
-                    StylePickerRow(
-                        selected: viewModel.selectedStyle,
-                        isDisabled: viewModel.isBusy
-                    ) { style in
-                        viewModel.rewrite(with: style)
-                    }
-                    .padding(.bottom, 10) // sit a touch higher above the record button
+                // Always present: before a recording the highlighted pill is the style the
+                // recording will be rewritten in; afterwards tapping one re-runs the rewrite.
+                StylePickerRow(
+                    selected: viewModel.selectedStyle,
+                    isDisabled: viewModel.isBusy
+                ) { style in
+                    viewModel.select(style)
                 }
+                .padding(.bottom, 10) // sit a touch higher above the record button
                 recordButton
                     .padding(.bottom, 24)
             }
@@ -59,14 +59,18 @@ struct ContentView: View {
                 HistoryView(viewModel: viewModel)
             }
             .onOpenURL { url in
-                // utterclip://record — from the Home Screen widget, the Control Center button,
-                // or (on the Mac) any launcher that opens the URL.
+                // utterclip://record — from the Home Screen widget or the Control Center button.
+                // (The Mac app receives URLs in its AppDelegate and posts the notification above.)
                 guard url.host == "record", !viewModel.recorder.isRecording, !recordUnavailable else { return }
                 Task { await viewModel.record() }
             }
             // Menu items and keyboard shortcuts (macOS) drive the same actions as the buttons.
             .onReceive(NotificationCenter.default.publisher(for: .utterclipToggleRecording)) { _ in
                 toggleRecording()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipStartRecording)) { _ in
+                guard !viewModel.recorder.isRecording, !recordUnavailable else { return }
+                Task { await viewModel.record() }
             }
             .onReceive(NotificationCenter.default.publisher(for: .utterclipContinueRecording)) { _ in
                 guard viewModel.phase == .done, viewModel.rawTranscript != nil else { return }
@@ -113,7 +117,7 @@ struct ContentView: View {
                 statusHint
             }
             .padding(.horizontal)
-            .padding(.bottom, 40) // + the 16pt stack spacing = 56pt to the record button
+            .padding(.bottom, 8) // the style pills sit between the hint and the record button
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(.snappy, value: viewModel.transcription.state)
         } else {
@@ -351,6 +355,7 @@ struct ContentView: View {
                         Capsule().strokeBorder(.tertiary)
                     }
                 }
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(viewModel.copyAsMarkdown
@@ -446,10 +451,12 @@ struct ContentView: View {
             .font(.system(size: 30, weight: .semibold))
             .foregroundStyle(viewModel.recorder.isRecording ? Color.appBackground : .primary)
             .frame(width: 84, height: 84)
+        // Explicit hit shape: on macOS the glass/background layers don't count as content,
+        // so without it only the glyph's own pixels would take the click.
         if viewModel.recorder.isRecording {
-            icon.background(Circle().fill(.primary))
+            icon.background(Circle().fill(.primary)).contentShape(Circle())
         } else {
-            icon.glassBackground(shape: Circle())
+            icon.glassBackground(shape: Circle()).contentShape(Circle())
         }
     }
 
@@ -463,6 +470,7 @@ struct ContentView: View {
                 .foregroundStyle(.primary)
                 .frame(width: 56, height: 56)
                 .glassBackground(shape: Circle())
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(viewModel.recorder.isRecording ? "Cancel recording" : "Cancel")
@@ -478,6 +486,7 @@ struct ContentView: View {
                 .foregroundStyle(.primary)
                 .frame(width: 56, height: 56)
                 .glassBackground(shape: Circle())
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .disabled(viewModel.isBusy)

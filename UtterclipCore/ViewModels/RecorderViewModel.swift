@@ -26,6 +26,8 @@ public final class RecorderViewModel {
     /// Non-error status after a recording with no speech (Whisper's "[BLANK_AUDIO]");
     /// nothing is copied or logged in that case. Cleared by the next recording.
     public private(set) var notice: String?
+    /// The highlighted pill: the style the current result was rewritten in, and the one the
+    /// next recording will be rewritten in. Starts at the Settings default on launch.
     public private(set) var selectedStyle: MessageStyle
 
     public let recorder = AudioRecorder()
@@ -92,6 +94,11 @@ public final class RecorderViewModel {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Self.defaultStyleKey)
+            // With nothing on screen the pills show the upcoming style; keep them in step with
+            // the new default. A shown result keeps its own pill — the text belongs to it.
+            if rawTranscript == nil {
+                selectedStyle = StyleStore.shared.style(withID: newValue)
+            }
         }
     }
 
@@ -177,7 +184,7 @@ public final class RecorderViewModel {
                 rawTranscript = chunk
                 Clipboard.copy(chunk) // fast path: raw text is pasteable before any network call
                 logDictation(chunk)
-                await performRewrite(with: StyleStore.shared.style(withID: defaultStyleID))
+                await performRewrite(with: selectedStyle) // the pill chosen before recording
             }
         } catch is CancellationError {
             // `cancel()` already restored the visible state.
@@ -187,6 +194,17 @@ public final class RecorderViewModel {
             phase = rawTranscript == nil ? .idle : .done
         } catch {
             phase = .error(error.localizedDescription)
+        }
+    }
+
+    /// A pill was tapped. With a transcript on screen that re-runs the rewrite; before any
+    /// recording it just picks the style the upcoming recording will be rewritten in.
+    public func select(_ style: MessageStyle) {
+        if rawTranscript != nil {
+            rewrite(with: style)
+        } else {
+            selectedStyle = StyleStore.shared.style(withID: style.id)
+            haptic(.light)
         }
     }
 

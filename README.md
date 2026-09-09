@@ -8,7 +8,7 @@
   <strong>Dictate, and polished text lands on your clipboard.</strong><br>
   Tap the mic, speak, tap again. Your words are transcribed on your iPhone and rewritten as the
   message you were about to type — a Slack update, a WhatsApp reply, an email, a prompt.<br>
-  Also on the Mac: the same app in a small window that floats above whatever you are writing in.
+  Also on the Mac: the same app in the menu bar, one small window floating above whatever you write in.
 </p>
 
 <p align="center">
@@ -73,7 +73,8 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
 - **Five built-in styles**: Plain (fix grammar and filler only, keep your wording), Slack,
   WhatsApp, Prompt (structured as *The job / The why / The guardrails / Done means*), Email.
 - **Make them yours**: edit any prompt, rename or delete the defaults (restorable), add your own.
-  Up to seven styles. Pick the one-tap default in Settings.
+  Up to seven styles. The pills above the mic pick the style for the next recording; the
+  Settings default is just the starting selection.
 - **Two engines**, your choice:
   - **Cloud**, with your own API key. Paste one key and the provider is detected from it:
     Anthropic, OpenAI, Google Gemini, or Groq. Fast, inexpensive models are used for each.
@@ -127,7 +128,8 @@ cents a month. The on-device engine costs nothing at all.
 2. **Choose a rewrite engine** in Settings (the gear icon). Either paste an API key under
    **AI provider API key**, or turn on **Rewrite engine → Rewrite on device (Apple Intelligence)**.
    Without either you still get the raw transcript on the clipboard after every recording.
-3. **Pick your one-tap style** under **One-tap rewrite**. Slack is the default.
+3. **Pick your starting style** under **One-tap rewrite**. Slack is the default; the pills above
+   the mic change it for any recording.
 4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, or the **Dictate**
    control to Control Center or the Action button (iOS 18).
 
@@ -273,19 +275,22 @@ building it. iPad is not supported; the iPhone app is portrait-only.
 
 ## Utterclip for Mac
 
-The same app, on the Mac: one compact window (420 × 720 by default, resizable) that **floats
-above other applications**, so it can sit next to Slack, Mail or a browser while you dictate
-into them. Same features, same engines, same API calls, same monochrome look; the views are
+The same app, living in the **menu bar**: a small Utterclip mark at the top right of the screen.
+Click it and one compact window opens (420 × 720 by default, resizable) that **floats above other
+applications**, so it can sit next to Slack, Mail or a browser while you dictate into them.
+Close the window and the app is back to just the icon; there is no Dock tile and no entry in the
+app switcher. Same features, same engines, same API calls, same monochrome look; the views are
 literally the same SwiftUI files as the iPhone app.
 
 What is different, and only because the platform is:
 
 | iPhone | Mac |
 |---|---|
-| Home Screen / Lock Screen widget, Control Center control | **Dictation** menu: Start / Stop Dictation **⌘R**, Continue Dictating **⇧⌘R**, History **⌘Y**; Settings **⌘,** |
+| App icon on the Home Screen | Icon in the menu bar. **Click** toggles the window; **right-click** opens a menu: Start / Stop Dictation, Continue Dictating, Show/Hide, History, Settings, Float on Top, Quit |
+| Home Screen / Lock Screen widget, Control Center control | Keyboard shortcuts while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
 | Full-screen editor | Editor in a sheet |
-| Always fills the screen | **Window ▸ Float on Top** (**⌥⌘T**) toggles the always-on-top behaviour; on by default. The window follows you across Spaces and stays visible over full-screen apps. |
-| `utterclip://record` from the widget | Same URL scheme; works from any launcher or automation |
+| Always fills the screen | **Float on Top** (right-click menu, or **⌥⌘T**) keeps the window above other apps, on every Space and over full-screen apps; on by default |
+| Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
 
 Requirements: macOS 14 or later; Apple Intelligence needs macOS 26 on an Apple silicon Mac.
@@ -304,10 +309,10 @@ The app lands in Xcode's DerivedData folder; drag it into `/Applications`. The M
 sandboxed with exactly two permissions, microphone and outgoing network, and asks for the
 microphone the first time you record.
 
-Note on locally built copies: a build signed without a provisioning profile stores the API key
-in the login keychain rather than the per-app data-protection keychain, so macOS may ask once
-per rebuild whether Utterclip may use the saved key. Choose **Always Allow**. Signed
-distributions do not have this prompt.
+Note on locally built copies: the build is signed with your development certificate, so
+microphone permission and keychain access survive rebuilds. Without a provisioning profile the
+API key lives in the login keychain rather than the per-app data-protection keychain; macOS may
+ask once whether Utterclip may use it. Choose **Always Allow**.
 
 ---
 
@@ -349,8 +354,8 @@ Utterclip/                         # the iPhone app
                                    # EditorView, WaveformView, MarkdownView, GlassBackground;
                                    # Platform.swift holds every iOS/macOS difference
 
-UtterclipMac/                      # the Mac app: entry point, window level, menu commands;
-                                   # compiles the same Utterclip/Views/ files
+UtterclipMac/                      # the Mac app: menu bar status item, the one hide-on-close
+                                   # window, menu commands; compiles the same Utterclip/Views/
 UtterclipWidgets/                  # widget extension: Home/Lock Screen widget + Control
 ```
 

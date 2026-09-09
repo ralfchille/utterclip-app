@@ -123,6 +123,17 @@ extension View {
         #endif
     }
 
+    /// Breathing room between a sheet's title bar and the editor text on macOS, where no
+    /// navigation bar separates them; iOS already has that gap.
+    @ViewBuilder
+    func editorTopInset() -> some View {
+        #if os(macOS)
+        padding(.top, 14)
+        #else
+        self
+        #endif
+    }
+
     /// The text editor takes the whole screen on iOS; on macOS it is a sheet.
     @ViewBuilder
     func editorPresentation<Item: Identifiable, Content: View>(
@@ -172,6 +183,8 @@ enum PlatformText {
 /// through notifications, so the view owns the view model and the scene owns the menus.
 extension Notification.Name {
     static let utterclipToggleRecording = Notification.Name("utterclip.toggleRecording")
+    /// Start only (never stop): the URL scheme's meaning on both platforms.
+    static let utterclipStartRecording = Notification.Name("utterclip.startRecording")
     static let utterclipContinueRecording = Notification.Name("utterclip.continueRecording")
     static let utterclipShowHistory = Notification.Name("utterclip.showHistory")
     static let utterclipShowSettings = Notification.Name("utterclip.showSettings")
