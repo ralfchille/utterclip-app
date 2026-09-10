@@ -119,14 +119,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Recording → stop it (the rewrite follows). Window open, nothing running → hide it.
-    /// Window hidden → show it under the icon and start recording.
+    /// Recording → stop it (the rewrite follows). Window in front, nothing running → hide it.
+    /// Window visible but buried behind other apps (only possible with Float on Top off) →
+    /// bring it forward. Window hidden → show it under the icon and start recording.
     private func statusItemPrimaryAction() {
         guard let controller = windowController else { return }
         if RecordingState.isRecording {
             NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
-        } else if controller.isShowing {
+        } else if controller.isInFront {
             controller.hide()
+        } else if controller.isShowing {
+            controller.show()
         } else {
             showWindow()
             NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
@@ -185,6 +188,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     var isShowing: Bool { window?.isVisible == true }
+
+    /// Visible *and* actually in front of the user: a floating window always is; a normal
+    /// one only while it is the key window of the active app.
+    var isInFront: Bool {
+        guard let window, window.isVisible else { return false }
+        return floatOnTop || (NSApp.isActive && window.isKeyWindow)
+    }
 
     init(rootView: some View) {
         let hosting = NSHostingController(rootView: rootView)
