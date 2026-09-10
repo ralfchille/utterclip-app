@@ -298,9 +298,11 @@ struct ContentView: View {
                     .foregroundStyle(viewModel.styledText == nil ? .primary : .secondary)
             }
             .padding(.horizontal) // align with the styled card's inner content
-            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 8)) {
+            .padding(.vertical, 10) // air inside the hover tint …
+            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 12)) {
                 editTarget = .raw
             }
+            .padding(.vertical, -10) // … without moving the block in the layout
         }
     }
 
