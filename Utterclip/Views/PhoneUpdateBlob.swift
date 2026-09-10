@@ -1,10 +1,12 @@
 import SwiftUI
 import UtterclipCore
 
-/// The small capsule that says the phone has something: "iPhone · Recording…" with a pulsing
-/// dot while it works, "New from iPhone" plus the first words once the result is here. A tap
-/// pulls the dictation into this window; before that a tap only wobbles. Mac only in practice
-/// (the phone never watches other devices).
+/// The small capsule that says the phone has something. Two states, deliberately different:
+/// - in progress ("iPhone · Recording…"): quiet, secondary text on a faint fill, a pulsing dot,
+///   not interactive — pure information;
+/// - landed ("New from iPhone" + first words): solid label-primary capsule with inverted text,
+///   a spring in, one bounce, and a click pulls the dictation into this window.
+/// A stale in-progress capsule (the phone stopped syncing) shows a ✕ and clears on click.
 struct PhoneUpdateBlob: View {
     let update: RecorderViewModel.PhoneUpdate
     let claim: () -> Void
@@ -12,62 +14,25 @@ struct PhoneUpdateBlob: View {
 
     @State private var pulsing = false
     @State private var bounce = false
-    @State private var wobble = 0.0
-    @State private var hovering = false
 
     var body: some View {
-        Button {
+        Group {
             if update.isReady {
-                claim()
-            } else if update.isStale {
-                dismiss() // nothing is coming; a click clears it
-            } else {
-                withAnimation(.spring(duration: 0.3, bounce: 0.6)) { wobble = wobble == 0 ? 1 : 0 }
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(update.isReady ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
-                    .frame(width: 8, height: 8)
-                    .opacity(update.isReady ? 1 : (pulsing ? 0.25 : 1))
-                Text(update.title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                if let preview = update.preview {
-                    Text(preview)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                if hovering {
-                    // Mac: hover reveals the way out.
-                    Button(action: dismiss) {
-                        Image(systemName: "xmark")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 20, height: 20)
-                            .contentShape(Circle())
-                    }
+                Button(action: claim) { content }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Dismiss")
-                    .padding(.trailing, -6)
-                }
+                    .shadow(color: .black.opacity(0.14), radius: 10, y: 3)
+                    .accessibilityLabel("New dictation from \(update.deviceName). Click to open it here.")
+            } else if update.isStale {
+                Button(action: dismiss) { content }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(update.title) Click to dismiss.")
+            } else {
+                content
+                    .allowsHitTesting(false) // information only
+                    .accessibilityLabel(update.title)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .frame(maxWidth: 320)
-            .fixedSize(horizontal: false, vertical: true)
-            .glassBackground(shape: Capsule())
-            .contentShape(Capsule())
         }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.15), value: hovering)
         .scaleEffect(bounce ? 1.06 : 1)
-        .rotationEffect(.degrees(wobble == 0 ? 0 : 2), anchor: .center)
-        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
-        .accessibilityLabel(update.isReady ? "New dictation from \(update.deviceName). Tap to open it here." : update.title)
         .onAppear { startPulsing() }
         .onChange(of: update.isReady) { _, ready in
             if ready {
@@ -81,6 +46,42 @@ struct PhoneUpdateBlob: View {
                 startPulsing()
             }
         }
+    }
+
+    private var content: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(update.isReady ? AnyShapeStyle(Color.appBackground) : AnyShapeStyle(.secondary))
+                .frame(width: 8, height: 8)
+                .opacity(update.isReady ? 1 : (pulsing ? 0.25 : 1))
+            Text(update.title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(update.isReady ? AnyShapeStyle(Color.appBackground) : AnyShapeStyle(.secondary))
+            if let preview = update.preview {
+                Text(preview)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.appBackground.opacity(0.7))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            if update.isStale {
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .frame(maxWidth: 320)
+        .fixedSize(horizontal: false, vertical: true)
+        .background {
+            if update.isReady {
+                Capsule().fill(.primary)
+            } else {
+                Capsule().fill(Color.pillFill)
+            }
+        }
+        .contentShape(Capsule())
     }
 
     private func startPulsing() {
