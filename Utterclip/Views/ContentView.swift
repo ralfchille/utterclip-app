@@ -41,7 +41,9 @@ struct ContentView: View {
                         // Mac: the phone has something — a recording under way or a finished
                         // dictation one tap away. Nothing loads until it is tapped.
                         if let update = viewModel.phoneUpdate {
-                            PhoneUpdateBlob(update: update) { viewModel.claimPhoneUpdate() }
+                            PhoneUpdateBlob(update: update,
+                                            claim: { viewModel.claimPhoneUpdate() },
+                                            dismiss: { viewModel.dismissPhoneUpdate() })
                                 .padding(.top, 4)
                                 .transition(.scale(scale: 0.6).combined(with: .opacity))
                         }

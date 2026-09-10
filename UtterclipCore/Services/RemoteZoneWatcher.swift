@@ -90,13 +90,18 @@ public final class RemoteZoneWatcher {
         // Also notify when nothing new arrived but the freshest activity aged out, so an
         // indicator does not outlive its ten minutes.
         let current = latestRemote(within: 10 * 60)
-        if changed || current != lastReported {
+        let stale = current.map { !($0.phase == "idle") && Date().timeIntervalSince($0.updatedAt) > Self.staleAfter } ?? false
+        if changed || current != lastReported || stale != lastStale {
             lastReported = current
+            lastStale = stale
             NotificationCenter.default.post(name: Self.didChange, object: nil)
         }
     }
 
+    /// An in-progress phase older than this means the phone has not synced since.
+    public static let staleAfter: TimeInterval = 90
     private var lastReported: ActivitySync.Remote?
+    private var lastStale = false
 
     /// True when the record is one we show. Core Data mirrors entity `X` as record type
     /// `CD_X` with `CD_<attribute>` fields; UUIDs travel as strings.
