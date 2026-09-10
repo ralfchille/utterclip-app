@@ -282,6 +282,14 @@ try again, a little closer to the phone.
 Check the connection and retry from the card on the main screen. The download is about 220 MB and
 happens once; Wi-Fi is recommended.
 
+**The mic takes ages to become ready.**
+Almost always a full phone. The first load after a restart normally takes about three seconds:
+iOS compiles the model for the Neural Engine once and caches the result. That cache lives in the
+app's Caches folder, and when the device has no free space left the write fails silently and the
+compile is repeated on every single launch — measured at 24 seconds on an iPhone 15 Pro, and up
+to four minutes on a phone that was completely full. Free a few gigabytes and it goes back to
+three seconds. Utterclip itself keeps about 220 MB of model plus that cache.
+
 **The on-device engine says it is unavailable.**
 It needs iOS 26, an iPhone that supports Apple Intelligence (iPhone 15 Pro or later), and Apple
 Intelligence turned on in Settings. The app shows the specific reason under the toggle.
