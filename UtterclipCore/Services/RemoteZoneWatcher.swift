@@ -87,8 +87,16 @@ public final class RemoteZoneWatcher {
         // Blocks above hop to the main actor; give them a turn before reading the flags.
         await Task.yield()
         if expired { token = nil }
-        if changed { NotificationCenter.default.post(name: Self.didChange, object: nil) }
+        // Also notify when nothing new arrived but the freshest activity aged out, so an
+        // indicator does not outlive its ten minutes.
+        let current = latestRemote(within: 10 * 60)
+        if changed || current != lastReported {
+            lastReported = current
+            NotificationCenter.default.post(name: Self.didChange, object: nil)
+        }
     }
+
+    private var lastReported: ActivitySync.Remote?
 
     /// True when the record is one we show. Core Data mirrors entity `X` as record type
     /// `CD_X` with `CD_<attribute>` fields; UUIDs travel as strings.
