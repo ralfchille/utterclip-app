@@ -68,6 +68,7 @@ public enum LiveSync {
         switch result {
         case .success:
             zoneReady = true
+            logger.notice("Live state saved: \(record["phase"] as? String ?? "?", privacy: .public)")
         case .failure(let error):
             if retryOnMissingZone, let ck = error as? CKError, ck.code == .zoneNotFound || ck.code == .userDeletedZone {
                 await createZone()
