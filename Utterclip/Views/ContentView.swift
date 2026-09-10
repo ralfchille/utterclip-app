@@ -248,15 +248,17 @@ struct ContentView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    editButton("Edit formatted text") { editTarget = .styled }
                     markdownToggle
                 }
                 MarkdownView(markdown: styled)
-                    .textSelection(.enabled)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
+            // The card itself is the edit affordance; selecting text happens in the editor.
+            .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
+                editTarget = .styled
+            }
         }
 
         if viewModel.rewriteNeedsKey, viewModel.phase == .done {
@@ -282,7 +284,6 @@ struct ContentView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    editButton("Edit raw transcript") { editTarget = .raw }
                     Button {
                         viewModel.copyRaw()
                     } label: {
@@ -295,9 +296,11 @@ struct ContentView: View {
                 Text(raw)
                     .font(PlatformFont.rawTranscript)
                     .foregroundStyle(viewModel.styledText == nil ? .primary : .secondary)
-                    .textSelection(.enabled)
             }
             .padding(.horizontal) // align with the styled card's inner content
+            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 8)) {
+                editTarget = .raw
+            }
         }
     }
 
@@ -381,16 +384,6 @@ struct ContentView: View {
         .accessibilityLabel(viewModel.copyAsMarkdown
             ? "Markdown copy on — tap to copy plain text instead"
             : "Copy as markdown")
-    }
-
-    /// Compact monochrome "Edit" affordance opening the full-screen editor.
-    private func editButton(_ accessibilityLabel: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label("Edit", systemImage: "square.and.pencil")
-                .font(.caption.weight(.semibold))
-        }
-        .compactActionStyle()
-        .accessibilityLabel(accessibilityLabel)
     }
 
     private func progressRow(_ text: String) -> some View {
