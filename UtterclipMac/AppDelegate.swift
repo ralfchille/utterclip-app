@@ -163,15 +163,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 showWindow()
             }
-            // The phone has a dictation on screen (finished or in progress): show that, no
-            // recording — recording would replace it. Otherwise the click means "dictate".
-            if let remote = ActivitySync.latestRemote(within: 30 * 60),
-               remote.phase == "done" || remote.isInProgress {
-                NotificationCenter.default.post(name: .utterclipShowRemote, object: nil)
-            } else {
-                ActivitySync.touch() // pull whatever the phone did since the last push
-                NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
-            }
+            ActivitySync.touch() // pull whatever the phone did since the last refresh
+            NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
         }
     }
 
@@ -270,7 +263,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         WindowPresence.isVisible = true
-        NotificationCenter.default.post(name: .utterclipWindowDidShow, object: nil)
     }
 
     /// Shows the window centred under a menu bar item, kept within that screen. The size is

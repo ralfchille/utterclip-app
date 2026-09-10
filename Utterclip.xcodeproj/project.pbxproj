@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		058B7E01AD2E18EC2BC616D7 /* PhoneUpdateBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */; };
 		0B337B9FA74802B4BBC86A4B /* UtterclipCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; };
 		14E3AC7AAC9D96319A616985 /* Utterclip.icon in Resources */ = {isa = PBXBuildFile; fileRef = 6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */; };
 		1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */; };
@@ -38,6 +39,7 @@
 		61567AFD2F6E493BB1F620D2 /* CloudStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD88E4F3F2B892FB31863BD /* CloudStore.swift */; };
 		62098162588084269266CDD7 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */; };
 		642F920655658016D53AAA68 /* TuistAssets+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */; };
+		665C98E2E3DE1555E4AB877A /* PhoneUpdateBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */; };
 		6DA5EEDD1729EA6D7554CD52 /* TuistBundle+UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */; };
 		752437F6A32A9131E43D0051 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD7150D49FA9A45186D978E /* ContentView.swift */; };
 		7A904563AEC74247A278502F /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 28BA344A91D20285EA0C68BD /* WhisperKit */; };
@@ -163,6 +165,7 @@
 
 /* Begin PBXFileReference section */
 		0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipWidgets.swift; sourceTree = "<group>"; };
+		03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneUpdateBlob.swift; sourceTree = "<group>"; };
 		05088FCC2F78975859846EEB /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
 		07F68099360990BDD7A9CAD0 /* SyncedSetting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncedSetting.swift; sourceTree = "<group>"; };
 		09681937E4E4FE184312126B /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
@@ -475,6 +478,7 @@
 				D21D8DFF607B93A631014902 /* GlassBackground.swift */,
 				9F87071BCF63570CD4B59C66 /* HistoryView.swift */,
 				785D4834B39BC497D3590D82 /* MarkdownView.swift */,
+				03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */,
 				09681937E4E4FE184312126B /* Platform.swift */,
 				71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */,
 				6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */,
@@ -661,6 +665,7 @@
 				B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */,
 				C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */,
 				2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */,
+				058B7E01AD2E18EC2BC616D7 /* PhoneUpdateBlob.swift in Sources */,
 				A40747530FA740BB5EE2839C /* Platform.swift in Sources */,
 				EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */,
 				1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */,
@@ -679,6 +684,7 @@
 				ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */,
 				35F8C573FF7CF61A34A9F445 /* HistoryView.swift in Sources */,
 				F3538B61CD797DDD9C32A093 /* MarkdownView.swift in Sources */,
+				665C98E2E3DE1555E4AB877A /* PhoneUpdateBlob.swift in Sources */,
 				5AD10B680721814DF3311E1C /* Platform.swift in Sources */,
 				D2E079B1639B91C06EF6BDD6 /* SettingsView.swift in Sources */,
 				F33BCA87B0DFFD068C9E5E5A /* StylePickerRow.swift in Sources */,

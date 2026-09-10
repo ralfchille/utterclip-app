@@ -372,10 +372,6 @@ enum RecordingState {
 /// through notifications, so the view owns the view model and the scene owns the menus.
 extension Notification.Name {
     static let utterclipToggleRecording = Notification.Name("utterclip.toggleRecording")
-    /// Mac: the window came on screen (a mirrored result waiting to be copied is copied now).
-    static let utterclipWindowDidShow = Notification.Name("utterclip.windowDidShow")
-    /// Mac: the status item was clicked while the phone has a dictation on screen — show it.
-    static let utterclipShowRemote = Notification.Name("utterclip.showRemote")
     /// Start only (never stop): the URL scheme's meaning on both platforms.
     static let utterclipStartRecording = Notification.Name("utterclip.startRecording")
     static let utterclipContinueRecording = Notification.Name("utterclip.continueRecording")

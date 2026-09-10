@@ -37,6 +37,16 @@ struct ContentView: View {
                 }
                 #endif
                 resultArea
+                    .overlay(alignment: .top) {
+                        // Mac: the phone has something — a recording under way or a finished
+                        // dictation one tap away. Nothing loads until it is tapped.
+                        if let update = viewModel.phoneUpdate {
+                            PhoneUpdateBlob(update: update) { viewModel.claimPhoneUpdate() }
+                                .padding(.top, 4)
+                                .transition(.scale(scale: 0.6).combined(with: .opacity))
+                        }
+                    }
+                    .animation(.spring(duration: 0.45, bounce: 0.35), value: viewModel.phoneUpdate)
                 // Always present: before a recording the highlighted pill is the style the
                 // recording will be rewritten in; afterwards tapping one re-runs the rewrite.
                 StylePickerRow(
@@ -98,15 +108,9 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowHistory)) { _ in
                 showHistory = true
             }
-            .onReceive(NotificationCenter.default.publisher(for: .utterclipWindowDidShow)) { _ in
-                viewModel.windowDidShow()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .utterclipShowRemote)) { _ in
-                viewModel.showLatestRemote()
-            }
             .task {
                 #if os(macOS)
-                viewModel.startMirroring() // the Mac follows the phone; the phone stays as it is
+                viewModel.startWatchingOtherDevices() // the indicator; the phone stays as it is
                 #endif
             }
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowSettings)) { _ in
@@ -141,11 +145,7 @@ struct ContentView: View {
             // hint stays anchored above the record button.
             VStack(spacing: 0) {
                 Spacer()
-                if let remote = viewModel.remoteActivity {
-                    progressRow(remote.statusText)
-                } else {
-                    modelLoadingIndicator
-                }
+                modelLoadingIndicator
                 Spacer()
                 Spacer()
                 statusHint
@@ -252,9 +252,6 @@ struct ContentView: View {
     @ViewBuilder
     private var transcriptSection: some View {
         noticeRow
-        if let remote = viewModel.remoteActivity {
-            progressRow(remote.statusText)
-        }
         if viewModel.phase == .rewriting {
             progressRow("Rewriting as \(viewModel.selectedStyle.name)…")
         }
@@ -262,7 +259,7 @@ struct ContentView: View {
         if let styled = viewModel.styledText, viewModel.phase == .done {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label(copiedLabel, systemImage: "doc.on.clipboard")
+                    Label("Copied — \(viewModel.selectedStyle.name)", systemImage: "doc.on.clipboard")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -378,13 +375,6 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
-    }
-
-    /// "Copied — Slack", or "Copied — Slack · from iPhone" for a result mirrored from another device.
-    private var copiedLabel: String {
-        let base = "Copied — \(viewModel.selectedStyle.name)"
-        if let device = viewModel.mirroredFrom { return base + " · from \(device)" }
-        return base
     }
 
     /// Sticky copy-mode switch: off = plain text (markdown stripped), on = raw markdown.
