@@ -202,9 +202,35 @@ struct HeaderActionButtonStyle: ButtonStyle {
             .opacity(configuration.isPressed ? 0.5 : 1)
     }
 }
+
+/// Small monochrome action chips (Edit, Copy raw). Drawn explicitly instead of the automatic
+/// bordered bezel: on macOS 26 that bezel is glass and takes its colour from what is behind it,
+/// so over the (also glass) result card it disappeared whenever the window was key and
+/// reappeared when it wasn't. Fixed fill = label primary at 6 %, radius 8, padding 10 × 6.
+struct CompactActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 8).fill(.primary.opacity(0.06)))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .opacity(configuration.isPressed ? 0.5 : 1)
+    }
+}
 #endif
 
 extension View {
+    /// Mac: the fixed-fill chip above. iOS keeps the system button look.
+    @ViewBuilder
+    func compactActionStyle() -> some View {
+        #if os(macOS)
+        buttonStyle(CompactActionButtonStyle())
+        #else
+        self
+        #endif
+    }
+
     /// iOS: inline navigation title plus the bar items. macOS: no system bar at all — the
     /// view draws a `MacHeader` instead — so the window toolbar is hidden.
     @ViewBuilder
