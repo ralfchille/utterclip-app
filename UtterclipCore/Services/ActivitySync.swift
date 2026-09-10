@@ -45,44 +45,33 @@ public enum ActivitySync {
 
     // MARK: - Publishing
 
-    /// Records this device's phase. Cheap and idempotent; a no-op when sync is off.
+    /// Records this device's phase as a new record; a no-op when sync is off. Append-only on
+    /// purpose: CloudKit exports of *updates* to one long-lived record silently stalled on the
+    /// phone, while inserts always went through. Older records of this device are pruned so
+    /// the zone stays small; readers take the newest per device.
     public static func publish(phase: String, dictationID: UUID?) {
         guard store.isSyncing else { return }
         let mine = DeviceIdentity.id
-        let descriptor = FetchDescriptor<DeviceActivity>(predicate: #Predicate { $0.deviceID == mine })
-        let existing = (try? store.context.fetch(descriptor)) ?? []
-        let record: DeviceActivity
-        if let first = existing.first {
-            record = first
-            for extra in existing.dropFirst() { store.context.delete(extra) } // imported twice
-        } else {
-            record = DeviceActivity(deviceID: mine, deviceName: DeviceIdentity.kind)
-            store.context.insert(record)
-        }
-        record.deviceName = DeviceIdentity.kind
-        record.phase = phase
-        record.dictationID = dictationID
-        record.updatedAt = .now
+        store.context.insert(DeviceActivity(deviceID: mine, deviceName: DeviceIdentity.kind, phase: phase, dictationID: dictationID))
+        prune(mine: mine)
         store.save()
         if phase == "done" { ExportKeepAlive.hold() }
     }
 
+    /// Keeps this device's newest few records and drops the rest (older than a minute).
+    private static func prune(mine: String) {
+        let descriptor = FetchDescriptor<DeviceActivity>(
+            predicate: #Predicate { $0.deviceID == mine },
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
+        guard let own = try? store.context.fetch(descriptor) else { return }
+        let cutoff = Date().addingTimeInterval(-60)
+        for (index, record) in own.enumerated() where index >= 3 && record.updatedAt < cutoff {
+            store.context.delete(record)
+        }
+    }
+
     // MARK: - Reading the other devices
 
-    /// Re-saves this device's record with a new timestamp. A save starts a CloudKit export
-    /// cycle, and the mirroring import rides along with it — the quickest way to pull the
-    /// other devices' latest records when no push has arrived.
-    public static func touch() {
-        guard store.isSyncing else { return }
-        let mine = DeviceIdentity.id
-        let descriptor = FetchDescriptor<DeviceActivity>(predicate: #Predicate { $0.deviceID == mine })
-        if let record = try? store.context.fetch(descriptor).first {
-            record.updatedAt = .now
-        } else {
-            store.context.insert(DeviceActivity(deviceID: mine, deviceName: DeviceIdentity.kind))
-        }
-        store.save()
-    }
 
     /// The other devices' most recent activity, if it is fresh enough to still be "current"
     /// (`within` seconds; five minutes by default — long enough to cover a slow sync, short
