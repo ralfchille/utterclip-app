@@ -22,13 +22,20 @@ public enum ActivitySync {
 
         public var isInProgress: Bool { ["recording", "transcribing", "rewriting"].contains(phase) }
 
-        /// "Recording", "Transcribing", "Rewriting" — for "Recording on iPhone…".
-        public var verb: String {
+        /// Finished over there, but the dictation record has not reached this device yet.
+        @MainActor public var awaitsDictation: Bool {
+            guard phase == "done", let id = dictationID else { return false }
+            return HistoryStore.shared.entry(id: id) == nil
+        }
+
+        /// "Recording on iPhone…", "Transcribing on iPhone…", "Fetching the result from iPhone…".
+        public var statusText: String {
             switch phase {
-            case "recording": return "Recording"
-            case "transcribing": return "Transcribing"
-            case "rewriting": return "Rewriting"
-            default: return "Working"
+            case "recording": return "Recording on \(deviceName)…"
+            case "transcribing": return "Transcribing on \(deviceName)…"
+            case "rewriting": return "Rewriting on \(deviceName)…"
+            case "done": return "Fetching the result from \(deviceName)…"
+            default: return "Working on \(deviceName)…"
             }
         }
     }

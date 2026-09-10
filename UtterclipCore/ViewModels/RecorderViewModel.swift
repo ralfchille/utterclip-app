@@ -280,6 +280,7 @@ public final class RecorderViewModel {
                 entry.styledText = cached
                 entry.styleID = style.id
             }
+            commitCurrentEntry() // stored before "done" is published, so both sync together
             phase = .done
             haptic(.light)
             return
@@ -312,6 +313,9 @@ public final class RecorderViewModel {
         } catch {
             rewriteError = error.localizedDescription
         }
+        // Store first, announce second: the "done" activity record names this dictation, and
+        // the other device can only show it if both records travel in the same export.
+        commitCurrentEntry()
         phase = .done
     }
 
@@ -547,8 +551,12 @@ public final class RecorderViewModel {
             mirror(entry)
             return
         }
-        // 3. Something in progress elsewhere (or nothing any more).
+        // 3. Something in progress elsewhere (or nothing any more). A finished dictation whose
+        //    record has not been imported yet also counts as in progress for the display.
         if let remote = ActivitySync.latestRemote(), remote.isInProgress {
+            remoteActivity = remote
+        } else if let remote = ActivitySync.latestRemote(), remote.awaitsDictation {
+            Self.mirrorLogger.notice("Phone finished but its dictation is not here yet; waiting for the import.")
             remoteActivity = remote
         } else {
             remoteActivity = nil

@@ -142,7 +142,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 Spacer()
                 if let remote = viewModel.remoteActivity {
-                    progressRow("\(remote.verb) on \(remote.deviceName)…")
+                    progressRow(remote.statusText)
                 } else {
                     modelLoadingIndicator
                 }
@@ -253,7 +253,7 @@ struct ContentView: View {
     private var transcriptSection: some View {
         noticeRow
         if let remote = viewModel.remoteActivity {
-            progressRow("\(remote.verb) on \(remote.deviceName)…")
+            progressRow(remote.statusText)
         }
         if viewModel.phase == .rewriting {
             progressRow("Rewriting as \(viewModel.selectedStyle.name)…")
