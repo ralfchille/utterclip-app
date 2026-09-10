@@ -24,9 +24,15 @@ struct SettingsView: View {
             VStack(spacing: 0) {
             #if os(macOS)
             MacHeader(title: "Settings") {
-                Button("Done") { dismiss() }
-                    .font(.body.weight(.semibold))
-                    .keyboardShortcut(.cancelAction) // Escape closes; Return stays with the fields
+                // Settings saves as you go, so leaving is plain navigation: a close glyph, like
+                // History. Only the editor, which can save or discard, keeps Cancel / Done.
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .accessibilityLabel("Close")
+                .keyboardShortcut(.cancelAction) // Escape closes; Return stays with the fields
             }
             #endif
             Form {
