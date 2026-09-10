@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private static let pushLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "push")
+    private let syncNudger = SyncNudger()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
@@ -31,6 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // CloudKit tells us about the phone's changes through silent pushes; without this
         // registration the Mac only imported when it exported something itself.
         NSApp.registerForRemoteNotifications()
+        // Pushes reach a Mac late or not at all often enough that the mirror needs a fallback:
+        // a periodic sync nudge, paced by how likely the phone is to have news.
+        syncNudger.start()
 
         let controller = MainWindowController(rootView: ContentView())
         controller.floatOnTop = floatOnTop
@@ -317,5 +321,35 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         } else {
             window.collectionBehavior.remove(utilityBehavior)
         }
+    }
+}
+
+/// Keeps the Mac's copy of the synced store fresh when CloudKit pushes don't arrive. Each
+/// nudge is one small save (this device's activity record), which makes Core Data run an
+/// export cycle — and the import of the other devices' changes rides along. Cadence: every
+/// 4 s while the phone is mid-dictation (its result is imminent), 15 s while the window is
+/// on screen and idle, 60 s while hidden; never while this Mac is recording.
+@MainActor
+final class SyncNudger {
+    private var timer: Timer?
+    private var lastNudge = Date.distantPast
+
+    func start() {
+        guard timer == nil else { return }
+        let timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.tick() }
+        }
+        timer.tolerance = 0.5
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
+    }
+
+    private func tick() {
+        guard !RecordingState.isRecording else { return }
+        let remoteBusy = ActivitySync.latestRemote()?.isInProgress == true
+        let interval: TimeInterval = remoteBusy ? 4 : (WindowPresence.isVisible ? 15 : 60)
+        guard Date().timeIntervalSince(lastNudge) >= interval else { return }
+        lastNudge = .now
+        ActivitySync.touch()
     }
 }
