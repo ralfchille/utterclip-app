@@ -181,7 +181,7 @@ struct MacHeader<Actions: View>: View {
             Spacer()
             actions
         }
-        .font(.system(size: 17, weight: .medium))
+        .font(.system(size: 15, weight: .medium))
         .buttonStyle(HeaderActionButtonStyle())
         .foregroundStyle(.primary)
         .padding(.leading, 20)
