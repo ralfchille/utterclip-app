@@ -20,8 +20,8 @@
 		2874F95B0738FE1F1E562AB8 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05088FCC2F78975859846EEB /* AIProvider.swift */; };
 		2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 785D4834B39BC497D3590D82 /* MarkdownView.swift */; };
 		2B95AEDE3EBA7BDD6C635A6F /* UtterclipMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */; };
+		2DA64C6C679FEA199C719882 /* LiveSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1749AAF47F9587C103D0FF5 /* LiveSync.swift */; };
 		2F62C8E257E18A51D23D08EC /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = C3BAFCC920439AB8767F1F7F /* HighlightedTextEditor */; };
-		2F74FA100F9787211B5A8E98 /* DeviceActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DEB5F4C7C614A964493922C /* DeviceActivity.swift */; };
 		35EC8A69FCF46B31D13DBAD0 /* RewritePrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5549F4613006277DBA3D15C3 /* RewritePrompt.swift */; };
 		35F8C573FF7CF61A34A9F445 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
 		38056EDAFB87075550CEB900 /* LocalRewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F007D7E0E2D1031D583BED /* LocalRewriter.swift */; };
@@ -55,7 +55,6 @@
 		A59A946C1605D7F9AA4FCD96 /* UtterclipCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; };
 		A68D031AD002AA5667C937BF /* SyncedSetting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07F68099360990BDD7A9CAD0 /* SyncedSetting.swift */; };
 		A996E9C6CE54CD86A8FCE291 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F371DCE7FFFF2BF874588E3C /* Clipboard.swift */; };
-		AA3E8F91DFA6EF9C73FA7C21 /* ActivitySync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E76E5DF6803C5CB2839C36 /* ActivitySync.swift */; };
 		AB5FA10D4793DADBDC680876 /* SyncedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */; };
 		ACC4FC8670FAA7F631A6F72C /* TuistBundle+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B90F7198CD313B27B6305C /* TuistBundle+UtterclipMac.swift */; };
 		ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
@@ -176,10 +175,8 @@
 		108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipMacApp.swift; sourceTree = "<group>"; };
 		10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UtterclipCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPreference.swift; sourceTree = "<group>"; };
-		13E76E5DF6803C5CB2839C36 /* ActivitySync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySync.swift; sourceTree = "<group>"; };
 		148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipWidgets.swift"; sourceTree = "<group>"; };
-		1DEB5F4C7C614A964493922C /* DeviceActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivity.swift; sourceTree = "<group>"; };
 		266C41CDA52548681C16CF3E /* UtterclipMac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipMac-Info.plist"; sourceTree = "<group>"; };
 		28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Utterclip.swift"; sourceTree = "<group>"; };
 		3123A0639BF8CDA10A1480DE /* Utterclip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Utterclip.entitlements; sourceTree = "<group>"; };
@@ -216,6 +213,7 @@
 		957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		9F87071BCF63570CD4B59C66 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		A1749AAF47F9587C103D0FF5 /* LiveSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSync.swift; sourceTree = "<group>"; };
 		A87D9C7543EC8DFB48425596 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
 		AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStyle.swift; sourceTree = "<group>"; };
 		AFE4D57BC27671C755D9C083 /* Utterclip.icon */ = {isa = PBXFileReference; path = Utterclip.icon; sourceTree = "<group>"; };
@@ -357,7 +355,6 @@
 		5C9B80E317B0AB58B3F03BF9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				13E76E5DF6803C5CB2839C36 /* ActivitySync.swift */,
 				05088FCC2F78975859846EEB /* AIProvider.swift */,
 				A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */,
 				F371DCE7FFFF2BF874588E3C /* Clipboard.swift */,
@@ -366,6 +363,7 @@
 				83AD0C5C528141821CBE816D /* DeviceIdentity.swift */,
 				88EA603762F41B74D7D9CAF5 /* HistoryStore.swift */,
 				51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */,
+				A1749AAF47F9587C103D0FF5 /* LiveSync.swift */,
 				76F007D7E0E2D1031D583BED /* LocalRewriter.swift */,
 				A87D9C7543EC8DFB48425596 /* Redactor.swift */,
 				0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */,
@@ -433,7 +431,6 @@
 			isa = PBXGroup;
 			children = (
 				669869C3385DA0D2ACBDDEFC /* AppError.swift */,
-				1DEB5F4C7C614A964493922C /* DeviceActivity.swift */,
 				C093652C348BB70958F729A4 /* Dictation.swift */,
 				DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */,
 				AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */,
@@ -714,14 +711,12 @@
 			files = (
 				1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */,
 				F6243ED762A77340D76022DF /* AppError.swift in Sources */,
-				2F74FA100F9787211B5A8E98 /* DeviceActivity.swift in Sources */,
 				8459CA4C54484367CEC8B378 /* Dictation.swift in Sources */,
 				1A6FE8E17BD232B472E22A6F /* HistoryEntry.swift in Sources */,
 				480626F9116B78E1BE4E5610 /* MessageStyle.swift in Sources */,
 				43BFF92680ADB6A92A6B9977 /* Styles.swift in Sources */,
 				A68D031AD002AA5667C937BF /* SyncedSetting.swift in Sources */,
 				2874F95B0738FE1F1E562AB8 /* AIProvider.swift in Sources */,
-				AA3E8F91DFA6EF9C73FA7C21 /* ActivitySync.swift in Sources */,
 				7CEE152E4AA4D07266F89C9F /* AudioRecorder.swift in Sources */,
 				A996E9C6CE54CD86A8FCE291 /* Clipboard.swift in Sources */,
 				95705DE3FF34F661315EF837 /* CloudRewriter.swift in Sources */,
@@ -729,6 +724,7 @@
 				DD29B7820D003A6F82D7C686 /* DeviceIdentity.swift in Sources */,
 				1AB79A81350866B35ED1AF95 /* HistoryStore.swift in Sources */,
 				5E0F5480E1CEADA3D83FC904 /* KeyProvider.swift in Sources */,
+				2DA64C6C679FEA199C719882 /* LiveSync.swift in Sources */,
 				38056EDAFB87075550CEB900 /* LocalRewriter.swift in Sources */,
 				DD0A1FE32345E9C9A69ED3A4 /* Redactor.swift in Sources */,
 				26774D83AC1D2BA1F4B1B83F /* RemoteZoneWatcher.swift in Sources */,

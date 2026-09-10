@@ -248,7 +248,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         super.init(window: window)
         window.delegate = self
         applyLevel()
-        WindowPresence.isVisible = false // shown under the status item once it has a frame
     }
 
     @available(*, unavailable)
@@ -257,7 +256,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     func show() {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
-        WindowPresence.isVisible = true
         RemoteZoneWatcher.shared.interval = 2
         Task { await RemoteZoneWatcher.shared.poll() } // current the moment the window is up
         // App Nap otherwise suspends the refresh timer once the app has been in the
@@ -289,7 +287,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     func hide() {
         window?.orderOut(nil)
-        WindowPresence.isVisible = false
         RemoteZoneWatcher.shared.interval = 30
         if let napHold { ProcessInfo.processInfo.endActivity(napHold) }
         napHold = nil

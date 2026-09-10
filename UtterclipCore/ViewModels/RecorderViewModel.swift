@@ -182,7 +182,7 @@ public final class RecorderViewModel {
         }
         // Tell the other devices this screen is empty right now: the indicator over there
         // must not keep pointing at a result that is no longer on this screen.
-        ActivitySync.publish(phase: "idle", dictationID: nil)
+        LiveSync.publish(phase: "idle", entry: nil)
     }
 
     /// Another device changed a synced setting: take the new values without echoing them
@@ -379,6 +379,7 @@ public final class RecorderViewModel {
         currentEntry = entry
         if currentEntryIsStored {
             HistoryStore.shared.update(entry.id) { $0 = entry }
+            if phase == .done { LiveSync.publish(phase: "done", entry: entry) } // an edit on screen
         }
     }
 
@@ -503,8 +504,8 @@ public final class RecorderViewModel {
 
     // MARK: - Watching the phone
 
-    /// Every phase change is published to the synced store, so the other devices can show
-    /// what this one is doing. `done` carries the dictation's id.
+    /// Every phase change goes out on the live channel, so the other devices can show what
+    /// this one is doing. `done` carries the finished dictation itself.
     private func phaseDidChange() {
         let name: String
         switch phase {
@@ -514,7 +515,7 @@ public final class RecorderViewModel {
         case .rewriting: name = "rewriting"
         case .done: name = "done"
         }
-        ActivitySync.publish(phase: name, dictationID: phase == .done ? currentEntry?.id : nil)
+        LiveSync.publish(phase: name, entry: phase == .done ? currentEntry : nil)
     }
 
     private static let phoneLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "phone-watch")
@@ -533,30 +534,17 @@ public final class RecorderViewModel {
     }
 
     private func refreshPhoneUpdate() {
-        let watcher = RemoteZoneWatcher.shared
-        // The finished dictation is the reliable signal — it is a record insert, and those
-        // sync. The activity record (recording / transcribing / idle) covers the interim and
-        // tells us when the phone's screen went empty.
-        let ready = watcher.dictations.values
-            .filter { $0.date > dismissedActivityAt && !claimedRemoteIDs.contains($0.id) && $0.id != currentEntry?.id }
-            .max { $0.date < $1.date }
-        let remote = watcher.latestRemote(within: .infinity).flatMap { $0.updatedAt > dismissedActivityAt ? $0 : nil }
-        let deviceName = remote?.deviceName ?? "iPhone"
-        // The phone said "idle" after that result: its screen is empty, nothing to point at.
-        let phoneWentIdle = remote.map { $0.phase == "idle" && $0.updatedAt > (ready?.date ?? .distantPast) } ?? false
+        guard let remote = RemoteZoneWatcher.shared.latestRemote(), remote.updatedAt > dismissedActivityAt else {
+            phoneUpdate = nil
+            return
+        }
+        let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
         var update: PhoneUpdate?
-        if let ready, !phoneWentIdle,
-           remote == nil || !remote!.isInProgress || ready.date >= remote!.updatedAt.addingTimeInterval(-5) {
-            // A result newer than the phone's last reported activity: it is on screen there.
-            update = PhoneUpdate(deviceName: deviceName, phase: "done", entry: ready, updatedAt: ready.date)
-        } else if let remote, remote.isInProgress {
-            let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
+        if remote.isInProgress {
             update = PhoneUpdate(deviceName: remote.deviceName, phase: remote.phase, entry: nil, updatedAt: remote.updatedAt, isStale: stale)
-        } else if let remote, remote.phase == "done", let id = remote.dictationID,
-                  !claimedRemoteIDs.contains(id), currentEntry?.id != id {
-            // Announced but the dictation record has not arrived yet.
-            let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
-            update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt, isStale: stale)
+        } else if remote.phase == "done", let entry = remote.entry,
+                  !claimedRemoteIDs.contains(entry.id), currentEntry?.id != entry.id {
+            update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: entry, updatedAt: remote.updatedAt)
         }
         if update != phoneUpdate {
             Self.phoneLogger.notice("Indicator: \(update?.title ?? "none", privacy: .public)")
@@ -571,8 +559,8 @@ public final class RecorderViewModel {
         claimedRemoteIDs.insert(entry.id)
         dismissedActivityAt = max(dismissedActivityAt, entry.date) // older results never resurface
         phoneUpdate = nil
-        // Read from CloudKit ahead of the local import: put it in History now; the import's
-        // copy is collapsed as a duplicate by id when it lands.
+        // The live record arrives ahead of History's own sync: put it in History now; the
+        // synced copy is collapsed as a duplicate by id when it lands.
         if HistoryStore.shared.entry(id: entry.id) == nil { HistoryStore.shared.add(entry) }
         restore(entry)
     }
