@@ -289,6 +289,7 @@ struct ContentView: View {
                         Label("Copy raw", systemImage: "doc.on.doc")
                             .font(.caption)
                     }
+                    .compactActionStyle()
                     .accessibilityLabel("Copy raw transcript")
                 }
                 Text(raw)
@@ -388,6 +389,7 @@ struct ContentView: View {
             Label("Edit", systemImage: "square.and.pencil")
                 .font(.caption.weight(.semibold))
         }
+        .compactActionStyle()
         .accessibilityLabel(accessibilityLabel)
     }
 
