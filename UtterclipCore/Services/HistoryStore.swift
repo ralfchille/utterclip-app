@@ -44,7 +44,7 @@ public final class HistoryStore {
     public func add(_ entry: HistoryEntry) {
         context.insert(Dictation(
             id: entry.id, date: entry.date, rawTranscript: entry.rawTranscript,
-            styledText: entry.styledText, styleID: entry.styleID))
+            styledText: entry.styledText, styleID: entry.styleID, originDevice: entry.originDevice))
         save()
         refresh()
     }
@@ -86,6 +86,11 @@ public final class HistoryStore {
     /// screen also calls this when it opens, so it never shows a stale list.
     public func reload() {
         refresh()
+    }
+
+    /// The stored entry with this id, fresh from the store.
+    public func entry(id: UUID) -> HistoryEntry? {
+        dictation(id: id)?.entry
     }
 
     // MARK: - Store

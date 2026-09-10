@@ -16,7 +16,9 @@ public final class RecorderViewModel {
         case error(String)
     }
 
-    public private(set) var phase: Phase = .idle
+    public private(set) var phase: Phase = .idle {
+        didSet { phaseDidChange() }
+    }
     public private(set) var rawTranscript: String?
     public private(set) var styledText: String?
     /// Non-fatal rewrite failure — raw transcript remains available and copied.
@@ -50,6 +52,18 @@ public final class RecorderViewModel {
     /// Set while a recording should be appended to the transcript on screen instead of
     /// replacing it (see `continueRecording`).
     private var isContinuing = false
+
+    // Mirroring another device (Mac only; see `startMirroring`).
+
+    /// A dictation in progress on another device, shown here while this one is not busy.
+    public private(set) var remoteActivity: ActivitySync.Remote?
+    /// "iPhone" when the result on screen was dictated on another device and mirrored here.
+    public private(set) var mirroredFrom: String?
+    private var mirrorObserver: NSObjectProtocol?
+    private var mirrorStartedAt = Date()
+    private var lastMirroredDate = Date.distantPast
+    private var pendingMirroredCopy = false
+    private var isReconcilingRemote = false
 
     /// Rewrites already produced for the current transcript, keyed by the exact style
     /// (id + prompt) that produced them. Cleared whenever the transcript changes.
@@ -154,6 +168,7 @@ public final class RecorderViewModel {
 
     public func record() async {
         isContinuing = false
+        mirroredFrom = nil
         rawTranscript = nil
         styledText = nil
         rewriteError = nil
@@ -314,7 +329,8 @@ public final class RecorderViewModel {
         currentEntryIsStored = false
         guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         currentEntry = HistoryEntry(
-            id: UUID(), date: .now, rawTranscript: raw, styledText: nil, styleID: nil)
+            id: UUID(), date: .now, rawTranscript: raw, styledText: nil, styleID: nil,
+            originDevice: DeviceIdentity.id)
     }
 
     private func updateCurrentEntry(_ mutate: (inout HistoryEntry) -> Void) {
@@ -339,6 +355,7 @@ public final class RecorderViewModel {
     public func restore(_ entry: HistoryEntry) {
         recorder.cancel()
         processingTask?.cancel()
+        mirroredFrom = nil
         rawTranscript = entry.rawTranscript
         styledText = entry.styledText
         rewriteError = nil
@@ -443,6 +460,113 @@ public final class RecorderViewModel {
     public func dismissError() {
         recorder.cancel()
         phase = rawTranscript == nil ? .idle : .done
+    }
+
+    // MARK: - Mirroring another device
+
+    /// Every phase change is published to the synced store, so the other devices can show
+    /// what this one is doing. `done` carries the dictation's id.
+    private func phaseDidChange() {
+        let name: String
+        switch phase {
+        case .idle, .error: name = "idle"
+        case .recording: name = "recording"
+        case .transcribing: name = "transcribing"
+        case .rewriting: name = "rewriting"
+        case .done: name = "done"
+        }
+        // A mirrored result is the other device's news, not ours to re-announce.
+        if !(phase == .done && mirroredFrom != nil) {
+            ActivitySync.publish(phase: name, dictationID: phase == .done ? currentEntry?.id : nil)
+        }
+        // Our own work just ended: the other device may have moved on in the meantime.
+        if mirrorObserver != nil, phase == .idle || phase == .done { reconcileRemoteActivity() }
+    }
+
+    /// Mac: follow the other devices. While this one is idle (or showing a result), a
+    /// dictation happening on the phone appears here — "Recording on iPhone…", then the
+    /// finished result, which is copied to this Mac's clipboard as soon as the window is
+    /// visible. Nothing on the phone changes; it only publishes what it already syncs.
+    public func startMirroring() {
+        guard mirrorObserver == nil else { return }
+        mirrorStartedAt = .now
+        mirrorObserver = NotificationCenter.default.addObserver(
+            forName: CloudStore.didChange, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.reconcileRemoteActivity() }
+        }
+        reconcileRemoteActivity()
+    }
+
+    private func reconcileRemoteActivity() {
+        guard !isReconcilingRemote, !recorder.isRecording, !isBusy else { return }
+        isReconcilingRemote = true
+        defer { isReconcilingRemote = false }
+        HistoryStore.shared.reload() // the history observer may run after this one
+
+        // 1. The mirrored result was edited or re-styled over there: follow it.
+        if mirroredFrom != nil, let current = currentEntry,
+           let updated = HistoryStore.shared.entry(id: current.id), updated != current {
+            mirror(updated)
+            return
+        }
+        // 2. A newer dictation finished elsewhere. Only ones from the last few minutes at
+        //    launch — yesterday's phone result is History, not the current state.
+        let floor = max(mirrorStartedAt.addingTimeInterval(-10 * 60), lastMirroredDate)
+        if let entry = ActivitySync.latestRemoteDictation(after: floor),
+           entry.id != currentEntry?.id,
+           entry.date > (currentEntry?.date ?? .distantPast) {
+            mirror(entry)
+            return
+        }
+        // 3. Something in progress elsewhere (or nothing any more).
+        if let remote = ActivitySync.latestRemote(), remote.isInProgress {
+            remoteActivity = remote
+        } else {
+            remoteActivity = nil
+        }
+    }
+
+    /// Shows another device's finished dictation as the result here, exactly as if it had
+    /// been dictated on this device, and copies it — now, or when the window next appears.
+    private func mirror(_ entry: HistoryEntry) {
+        remoteActivity = nil
+        rawTranscript = entry.rawTranscript
+        styledText = entry.styledText
+        rewriteError = nil
+        rewriteNeedsKey = false
+        notice = nil
+        currentEntry = entry
+        currentEntryIsStored = true
+        rewriteCache.removeAll()
+        if let styleID = entry.styleID {
+            selectedStyle = StyleStore.shared.style(withID: styleID)
+            if let styled = entry.styledText { rewriteCache[selectedStyle] = styled }
+        }
+        mirroredFrom = entry.originDevice.flatMap(ActivitySync.deviceName(for:)) ?? "iPhone"
+        lastMirroredDate = max(lastMirroredDate, entry.date)
+        phase = .done
+        if WindowPresence.isVisible {
+            copyMirroredResult()
+        } else {
+            pendingMirroredCopy = true
+            WindowPresence.hasUnseenMirroredResult = true
+        }
+    }
+
+    /// The window came on screen: a mirrored result that was waiting is copied now.
+    public func windowDidShow() {
+        WindowPresence.hasUnseenMirroredResult = false
+        if pendingMirroredCopy { copyMirroredResult() }
+    }
+
+    private func copyMirroredResult() {
+        pendingMirroredCopy = false
+        if let styled = styledText {
+            copyStyled(styled)
+        } else if let raw = rawTranscript {
+            Clipboard.copy(raw)
+        }
     }
 
     // MARK: - Haptics

@@ -24,7 +24,7 @@ public final class CloudStore {
     private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "cloud-store")
 
     private init() {
-        let schema = Schema([Dictation.self, SyncedSetting.self])
+        let schema = Schema([Dictation.self, SyncedSetting.self, DeviceActivity.self])
         let url = Self.directory().appendingPathComponent("Utterclip.store")
         var made: (ModelContainer, Bool)?
         if SyncPreference.isEnabled {

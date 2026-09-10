@@ -98,6 +98,14 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowHistory)) { _ in
                 showHistory = true
             }
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipWindowDidShow)) { _ in
+                viewModel.windowDidShow()
+            }
+            .task {
+                #if os(macOS)
+                viewModel.startMirroring() // the Mac follows the phone; the phone stays as it is
+                #endif
+            }
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowSettings)) { _ in
                 showSettings = true
             }
@@ -130,7 +138,11 @@ struct ContentView: View {
             // hint stays anchored above the record button.
             VStack(spacing: 0) {
                 Spacer()
-                modelLoadingIndicator
+                if let remote = viewModel.remoteActivity {
+                    progressRow("\(remote.verb) on \(remote.deviceName)…")
+                } else {
+                    modelLoadingIndicator
+                }
                 Spacer()
                 Spacer()
                 statusHint
@@ -237,6 +249,9 @@ struct ContentView: View {
     @ViewBuilder
     private var transcriptSection: some View {
         noticeRow
+        if let remote = viewModel.remoteActivity {
+            progressRow("\(remote.verb) on \(remote.deviceName)…")
+        }
         if viewModel.phase == .rewriting {
             progressRow("Rewriting as \(viewModel.selectedStyle.name)…")
         }
@@ -244,7 +259,7 @@ struct ContentView: View {
         if let styled = viewModel.styledText, viewModel.phase == .done {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("Copied — \(viewModel.selectedStyle.name)", systemImage: "doc.on.clipboard")
+                    Label(copiedLabel, systemImage: "doc.on.clipboard")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -360,6 +375,13 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
+    }
+
+    /// "Copied — Slack", or "Copied — Slack · from iPhone" for a result mirrored from another device.
+    private var copiedLabel: String {
+        let base = "Copied — \(viewModel.selectedStyle.name)"
+        if let device = viewModel.mirroredFrom { return base + " · from \(device)" }
+        return base
     }
 
     /// Sticky copy-mode switch: off = plain text (markdown stripped), on = raw markdown.

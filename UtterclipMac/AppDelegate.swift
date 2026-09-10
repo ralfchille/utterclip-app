@@ -1,4 +1,5 @@
 import AppKit
+import UtterclipCore
 import SwiftUI
 
 /// Menu bar presence and the one window. Left-click on the status item is the whole
@@ -135,7 +136,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 showWindow()
             }
-            NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
+            // A result dictated on the phone is waiting to be seen: showing it is the job;
+            // starting a recording would replace it.
+            if !WindowPresence.hasUnseenMirroredResult {
+                NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
+            }
         }
     }
 
@@ -224,6 +229,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         super.init(window: window)
         window.delegate = self
         applyLevel()
+        WindowPresence.isVisible = false // shown under the status item once it has a frame
     }
 
     @available(*, unavailable)
@@ -232,6 +238,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     func show() {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+        WindowPresence.isVisible = true
+        NotificationCenter.default.post(name: .utterclipWindowDidShow, object: nil)
     }
 
     /// Shows the window centred under a menu bar item, kept within that screen. The size is
@@ -252,6 +260,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     func hide() {
         window?.orderOut(nil)
+        WindowPresence.isVisible = false
     }
 
     /// Status-item click: hide if the window is up and in front, otherwise bring it forward.
