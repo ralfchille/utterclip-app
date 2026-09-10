@@ -77,7 +77,9 @@ let project = Project(
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
                 "UILaunchScreen": [:],
                 // CloudKit wakes the app with a silent push when another device changed history.
-                "UIBackgroundModes": ["remote-notification"],
+                "UIBackgroundModes": ["remote-notification", "fetch"],
+                // Wakes the app to pre-load the Whisper model; see WarmUpScheduler.
+                "BGTaskSchedulerPermittedIdentifiers": ["com.ralfchille.voicer.warm"],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "ITSAppUsesNonExemptEncryption": false,
                 // utterclip://record — the widget and control open the app into a recording.
