@@ -88,7 +88,7 @@ public final class RemoteZoneWatcher {
         if expired { token = nil }
         // Also notify when nothing new arrived but the freshest activity aged out, so an
         // indicator does not outlive its ten minutes.
-        let current = latestRemote(within: 10 * 60)
+        let current = latestRemote(within: .infinity)
         let stale = current.map { !($0.phase == "idle") && Date().timeIntervalSince($0.updatedAt) > Self.staleAfter } ?? false
         if changed || current != lastReported || stale != lastStale {
             lastReported = current
@@ -121,15 +121,15 @@ public final class RemoteZoneWatcher {
             guard let origin = record["CD_originDevice"] as? String, origin != mine,
                   let idString = record["CD_id"] as? String, let id = UUID(uuidString: idString),
                   let date = record["CD_date"] as? Date,
-                  date > Date().addingTimeInterval(-60 * 60) else { return false }
+                  date > Date().addingTimeInterval(-24 * 60 * 60) else { return false }
             dictations[id] = HistoryEntry(
                 id: id, date: date,
                 rawTranscript: record["CD_rawTranscript"] as? String ?? "",
                 styledText: record["CD_styledText"] as? String,
                 styleID: record["CD_styleID"] as? String,
                 originDevice: origin)
-            // Keep the map small: only the last hour matters.
-            dictations = dictations.filter { $0.value.date > Date().addingTimeInterval(-60 * 60) }
+            // Keep the map small: a day is more than the phone keeps on screen.
+            dictations = dictations.filter { $0.value.date > Date().addingTimeInterval(-24 * 60 * 60) }
             Self.logger.notice("Dictation from another device arrived (\(id, privacy: .public)).")
             return true
         default:

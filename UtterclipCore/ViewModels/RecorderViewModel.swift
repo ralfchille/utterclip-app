@@ -180,6 +180,9 @@ public final class RecorderViewModel {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in self?.applyRemoteSettings() }
         }
+        // Tell the other devices this screen is empty right now: the indicator over there
+        // must not keep pointing at a result that is no longer on this screen.
+        ActivitySync.publish(phase: "idle", dictationID: nil)
     }
 
     /// Another device changed a synced setting: take the new values without echoing them
@@ -531,17 +534,19 @@ public final class RecorderViewModel {
 
     private func refreshPhoneUpdate() {
         let watcher = RemoteZoneWatcher.shared
-        let horizon = Date().addingTimeInterval(-10 * 60)
         // The finished dictation is the reliable signal — it is a record insert, and those
-        // sync. The activity record (recording / transcribing …) is only for the interim.
+        // sync. The activity record (recording / transcribing / idle) covers the interim and
+        // tells us when the phone's screen went empty.
         let ready = watcher.dictations.values
-            .filter { $0.date > horizon && $0.date > dismissedActivityAt
-                && !claimedRemoteIDs.contains($0.id) && $0.id != currentEntry?.id }
+            .filter { $0.date > dismissedActivityAt && !claimedRemoteIDs.contains($0.id) && $0.id != currentEntry?.id }
             .max { $0.date < $1.date }
-        let remote = watcher.latestRemote(within: 10 * 60).flatMap { $0.updatedAt > dismissedActivityAt ? $0 : nil }
+        let remote = watcher.latestRemote(within: .infinity).flatMap { $0.updatedAt > dismissedActivityAt ? $0 : nil }
         let deviceName = remote?.deviceName ?? "iPhone"
+        // The phone said "idle" after that result: its screen is empty, nothing to point at.
+        let phoneWentIdle = remote.map { $0.phase == "idle" && $0.updatedAt > (ready?.date ?? .distantPast) } ?? false
         var update: PhoneUpdate?
-        if let ready, remote == nil || !remote!.isInProgress || ready.date >= remote!.updatedAt.addingTimeInterval(-5) {
+        if let ready, !phoneWentIdle,
+           remote == nil || !remote!.isInProgress || ready.date >= remote!.updatedAt.addingTimeInterval(-5) {
             // A result newer than the phone's last reported activity: it is on screen there.
             update = PhoneUpdate(deviceName: deviceName, phase: "done", entry: ready, updatedAt: ready.date)
         } else if let remote, remote.isInProgress {
