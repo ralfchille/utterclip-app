@@ -20,6 +20,10 @@ struct HistoryView: View {
                         Button("Clear") { confirmClear = true }
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            // Anchored to the button, so the popover's tail points at Clear.
+                            .confirmationDialog("Delete all dictations?", isPresented: $confirmClear, titleVisibility: .visible) {
+                                Button("Delete All", role: .destructive) { clearAfterDialogCloses() }
+                            }
                     }
                     Button {
                         dismiss()
@@ -39,6 +43,14 @@ struct HistoryView: View {
                         Button("Clear", role: .destructive) {
                             confirmClear = true
                         }
+                        // Anchored to the button so the popover's tail points at Clear.
+                        .confirmationDialog(
+                            "Delete all dictations?",
+                            isPresented: $confirmClear,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete All", role: .destructive) { clearAfterDialogCloses() }
+                        }
                     }
                 }
                 ToolbarItem(placement: .sheetCancel) {
@@ -52,15 +64,18 @@ struct HistoryView: View {
             }
         }
         .tint(.primary)
-        // On the whole screen, not on the Clear button: clearing removes that button (the
-        // list is empty), and a dialog whose owner disappears stays on screen.
-        .confirmationDialog("Delete all dictations?", isPresented: $confirmClear, titleVisibility: .visible) {
-            Button("Delete All", role: .destructive) {
-                store.clear()
-                confirmClear = false
-            }
-        }
         .onAppear { store.reload() } // a CloudKit import may have landed since the last look
+    }
+
+    /// Empties the log a beat after the dialog has closed. Clearing immediately removes the
+    /// Clear button — the dialog's own anchor — and a dialog whose anchor disappears mid-
+    /// dismissal stays on screen with nothing left to confirm.
+    private func clearAfterDialogCloses() {
+        confirmClear = false
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            store.clear()
+        }
     }
 
     @ViewBuilder
