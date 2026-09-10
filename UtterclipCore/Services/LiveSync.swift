@@ -70,13 +70,28 @@ public enum LiveSync {
             zoneReady = true
             logger.notice("Live state saved: \(record["phase"] as? String ?? "?", privacy: .public)")
         case .failure(let error):
-            if retryOnMissingZone, let ck = error as? CKError, ck.code == .zoneNotFound || ck.code == .userDeletedZone {
+            if retryOnMissingZone, Self.isMissingZone(error) {
                 await createZone()
+                await save(record, retryOnMissingZone: false)
+            } else if retryOnMissingZone {
+                // Transient (network, throttling): one more try after a moment.
+                logger.notice("Live state save failed (\(error.localizedDescription, privacy: .public)); retrying.")
+                try? await Task.sleep(for: .seconds(2))
                 await save(record, retryOnMissingZone: false)
             } else {
                 logger.error("Live state save failed: \(error.localizedDescription, privacy: .public)")
             }
         }
+    }
+
+    /// Zone missing, reported either at the top level or wrapped in a partial failure.
+    private static func isMissingZone(_ error: Error) -> Bool {
+        guard let ck = error as? CKError else { return false }
+        if ck.code == .zoneNotFound || ck.code == .userDeletedZone { return true }
+        if ck.code == .partialFailure, let inner = ck.partialErrorsByItemID?.values {
+            return inner.contains { ($0 as? CKError).map { $0.code == .zoneNotFound || $0.code == .userDeletedZone } ?? false }
+        }
+        return false
     }
 
     private static func createZone() async {
