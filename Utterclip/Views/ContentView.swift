@@ -101,6 +101,9 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .utterclipWindowDidShow)) { _ in
                 viewModel.windowDidShow()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipShowRemote)) { _ in
+                viewModel.showLatestRemote()
+            }
             .task {
                 #if os(macOS)
                 viewModel.startMirroring() // the Mac follows the phone; the phone stays as it is
