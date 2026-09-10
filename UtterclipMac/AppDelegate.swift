@@ -263,7 +263,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         WindowPresence.isVisible = true
+        // App Nap otherwise suspends the sync-refresh timer once the app has been in the
+        // background for a few minutes — the phone indicator then only updated on a click.
+        if napHold == nil {
+            napHold = ProcessInfo.processInfo.beginActivity(
+                options: [.userInitiatedAllowingIdleSystemSleep],
+                reason: "Keeping the phone indicator current while the window is on screen")
+        }
     }
+
+    private var napHold: NSObjectProtocol?
 
     /// Shows the window centred under a menu bar item, kept within that screen. The size is
     /// whatever the user last resized it to; only the position moves.
@@ -284,6 +293,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     func hide() {
         window?.orderOut(nil)
         WindowPresence.isVisible = false
+        if let napHold { ProcessInfo.processInfo.endActivity(napHold) }
+        napHold = nil
     }
 
     /// Status-item click: hide if the window is up and in front, otherwise bring it forward.
@@ -323,6 +334,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 /// while the window is on screen, 30 s while hidden; never while this Mac is recording.
 @MainActor
 final class SyncNudger {
+    private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "sync-nudge")
     private var timer: Timer?
     private var lastNudge = Date.distantPast
 
@@ -343,6 +355,7 @@ final class SyncNudger {
         let interval: TimeInterval = remoteBusy ? 3 : (WindowPresence.isVisible ? 5 : 30)
         guard Date().timeIntervalSince(lastNudge) >= interval else { return }
         lastNudge = .now
+        Self.logger.debug("Sync nudge (every \(Int(interval), privacy: .public) s).")
         ActivitySync.touch()
     }
 }
