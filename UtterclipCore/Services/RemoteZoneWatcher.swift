@@ -20,7 +20,6 @@ public final class RemoteZoneWatcher {
 
     private let database = CKContainer(identifier: SyncPreference.containerIdentifier).privateCloudDatabase
     private let zoneID = CKRecordZone.ID(zoneName: "com.apple.coredata.cloudkit.zone", ownerName: CKCurrentUserDefaultName)
-    private static let tokenKey = "remoteZoneChangeToken"
     private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "zone-watch")
     private var timer: Timer?
     private var polling = false
@@ -145,17 +144,7 @@ public final class RemoteZoneWatcher {
             .max { $0.updatedAt < $1.updatedAt }
     }
 
-    private var token: CKServerChangeToken? {
-        get {
-            guard let data = UserDefaults.standard.data(forKey: Self.tokenKey) else { return nil }
-            return try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: data)
-        }
-        set {
-            if let newValue, let data = try? NSKeyedArchiver.archivedData(withRootObject: newValue, requiringSecureCoding: true) {
-                UserDefaults.standard.set(data, forKey: Self.tokenKey)
-            } else {
-                UserDefaults.standard.removeObject(forKey: Self.tokenKey)
-            }
-        }
-    }
+    /// In memory only: each launch starts with a full read of the zone (a few hundred small
+    /// records), so what the phone did while this app was not running is known right away.
+    private var token: CKServerChangeToken?
 }
