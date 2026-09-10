@@ -120,18 +120,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Recording → stop it (the rewrite follows). Window in front, nothing running → hide it.
-    /// Window visible but buried behind other apps (only possible with Float on Top off) →
-    /// bring it forward. Window hidden → show it under the icon and start recording.
+    /// Otherwise the click means "dictate": a hidden window is shown under the icon, a window
+    /// buried behind other apps (only possible with Float on Top off) is brought forward, and
+    /// in both cases recording starts right away.
     private func statusItemPrimaryAction() {
         guard let controller = windowController else { return }
         if RecordingState.isRecording {
             NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
         } else if controller.isInFront {
             controller.hide()
-        } else if controller.isShowing {
-            controller.show()
         } else {
-            showWindow()
+            if controller.isShowing {
+                controller.show()
+            } else {
+                showWindow()
+            }
             NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
         }
     }
