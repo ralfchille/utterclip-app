@@ -131,6 +131,7 @@ public final class RemoteZoneWatcher {
                 originDevice: origin)
             // Keep the map small: only the last hour matters.
             dictations = dictations.filter { $0.value.date > Date().addingTimeInterval(-60 * 60) }
+            Self.logger.notice("Dictation from another device arrived (\(id, privacy: .public)).")
             return true
         default:
             return false
