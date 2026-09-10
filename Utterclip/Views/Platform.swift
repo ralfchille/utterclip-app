@@ -222,7 +222,43 @@ struct CompactActionButtonStyle: ButtonStyle {
 }
 #endif
 
+/// Tap-to-edit for the result card and the raw transcript: the whole block is the target
+/// (no Edit chip), exposed to assistive tech as a button. The Mac shows a hand cursor and a
+/// faint tint while hovering, since nothing else says "editable"; buttons inside the block
+/// (Markdown toggle, Copy raw) keep priority over the block's tap.
+struct TapToEdit<S: Shape>: ViewModifier {
+    let label: String
+    let shape: S
+    let action: () -> Void
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .contentShape(shape)
+            .overlay {
+                shape.fill(.primary.opacity(hovering ? 0.06 : 0))
+                    .allowsHitTesting(false)
+            }
+            .onTapGesture(perform: action)
+            #if os(macOS)
+            .onHover { inside in
+                hovering = inside
+                if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+            }
+            #endif
+            .accessibilityElement(children: .contain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(label)
+            .accessibilityAction(named: label, action)
+    }
+}
+
 extension View {
+    /// Opens the editor when the block is tapped; see `TapToEdit`.
+    func tapToEdit<S: Shape>(_ label: String, shape: S, action: @escaping () -> Void) -> some View {
+        modifier(TapToEdit(label: label, shape: shape, action: action))
+    }
+
     /// Mac: the fixed-fill chip above. iOS keeps the system button look.
     @ViewBuilder
     func compactActionStyle() -> some View {
