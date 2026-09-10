@@ -61,8 +61,19 @@ public enum LiveSync {
         let operation = CKModifyRecordsOperation(recordsToSave: [record], recordIDsToDelete: nil)
         operation.savePolicy = .allKeys // this device is the only writer of its record
         operation.qualityOfService = .userInitiated
+        // With the per-record result blocks, a record's own failure (zone missing, say) is
+        // reported *only* there — the operation-level result still says success.
         let result: Result<Void, Error> = await withCheckedContinuation { continuation in
-            operation.modifyRecordsResultBlock = { continuation.resume(returning: $0) }
+            var recordFailure: Error?
+            operation.perRecordSaveBlock = { _, result in
+                if case .failure(let error) = result { recordFailure = error }
+            }
+            operation.modifyRecordsResultBlock = { result in
+                switch result {
+                case .success: continuation.resume(returning: recordFailure.map { .failure($0) } ?? .success(()))
+                case .failure(let error): continuation.resume(returning: .failure(error))
+                }
+            }
             database.add(operation)
         }
         switch result {
@@ -98,9 +109,16 @@ public enum LiveSync {
         let operation = CKModifyRecordZonesOperation(recordZonesToSave: [CKRecordZone(zoneID: zoneID)], recordZoneIDsToDelete: nil)
         operation.qualityOfService = .userInitiated
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            operation.perRecordZoneSaveBlock = { _, result in
+                if case .failure(let error) = result {
+                    logger.error("Live zone creation failed: \(error.localizedDescription, privacy: .public)")
+                }
+            }
             operation.modifyRecordZonesResultBlock = { result in
                 if case .failure(let error) = result {
                     logger.error("Live zone creation failed: \(error.localizedDescription, privacy: .public)")
+                } else {
+                    logger.notice("Live zone created.")
                 }
                 continuation.resume()
             }
