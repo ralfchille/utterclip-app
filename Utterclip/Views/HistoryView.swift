@@ -152,7 +152,7 @@ struct HistoryView: View {
                 }
             }
             Text(entry.rawTranscript)
-                .font(.callout)
+                .font(PlatformFont.historyTranscript)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
         }

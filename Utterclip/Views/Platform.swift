@@ -313,3 +313,16 @@ extension Notification.Name {
     static let utterclipShowHistory = Notification.Name("utterclip.showHistory")
     static let utterclipShowSettings = Notification.Name("utterclip.showSettings")
 }
+
+/// Text roles whose size differs between the platforms: the Mac window is denser, so its
+/// history rows read at body size while the raw transcript steps down to caption
+/// (matched to the Figma spec, page "Mac app"); iOS keeps callout for both.
+enum PlatformFont {
+    #if os(macOS)
+    static let historyTranscript: Font = .body
+    static let rawTranscript: Font = .caption
+    #else
+    static let historyTranscript: Font = .callout
+    static let rawTranscript: Font = .callout
+    #endif
+}
