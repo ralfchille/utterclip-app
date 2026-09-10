@@ -292,7 +292,7 @@ struct ContentView: View {
                     .accessibilityLabel("Copy raw transcript")
                 }
                 Text(raw)
-                    .font(.callout)
+                    .font(PlatformFont.rawTranscript)
                     .foregroundStyle(viewModel.styledText == nil ? .primary : .secondary)
                     .textSelection(.enabled)
             }
