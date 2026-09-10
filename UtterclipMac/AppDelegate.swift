@@ -327,8 +327,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 /// Keeps the Mac's copy of the synced store fresh when CloudKit pushes don't arrive. Each
 /// nudge is one small save (this device's activity record), which makes Core Data run an
 /// export cycle — and the import of the other devices' changes rides along. Cadence: every
-/// 4 s while the phone is mid-dictation (its result is imminent), 15 s while the window is
-/// on screen and idle, 60 s while hidden; never while this Mac is recording.
+/// 3 s while the phone is mid-dictation or its finished dictation is still on its way, 5 s
+/// while the window is on screen, 30 s while hidden; never while this Mac is recording.
 @MainActor
 final class SyncNudger {
     private var timer: Timer?
@@ -336,7 +336,7 @@ final class SyncNudger {
 
     func start() {
         guard timer == nil else { return }
-        let timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.tick() }
         }
         timer.tolerance = 0.5
@@ -346,8 +346,9 @@ final class SyncNudger {
 
     private func tick() {
         guard !RecordingState.isRecording else { return }
-        let remoteBusy = ActivitySync.latestRemote()?.isInProgress == true
-        let interval: TimeInterval = remoteBusy ? 4 : (WindowPresence.isVisible ? 15 : 60)
+        let remote = ActivitySync.latestRemote()
+        let remoteBusy = remote?.isInProgress == true || remote?.awaitsDictation == true
+        let interval: TimeInterval = remoteBusy ? 3 : (WindowPresence.isVisible ? 5 : 30)
         guard Date().timeIntervalSince(lastNudge) >= interval else { return }
         lastNudge = .now
         ActivitySync.touch()
