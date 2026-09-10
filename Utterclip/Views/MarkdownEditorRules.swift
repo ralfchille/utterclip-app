@@ -24,6 +24,8 @@ private extension UIFont {
 }
 #endif
 
+/// Matches the whole document, so the paragraph style below reaches every line.
+private let everythingRegex = try! NSRegularExpression(pattern: "[\\s\\S]+", options: [])
 private let headingRegex = try! NSRegularExpression(pattern: "^#{1,6}\\s.*$", options: [.anchorsMatchLines])
 private let boldRegex = try! NSRegularExpression(pattern: "((\\*|_){2})((?!\\1).)+\\1", options: [])
 private let asteriskEmphasisRegex = try! NSRegularExpression(pattern: "(?<!\\*)(\\*)((?!\\1).)+\\1(?!\\*)", options: [])
@@ -41,6 +43,10 @@ extension Sequence where Iterator.Element == HighlightRule {
     /// and link syntax in the secondary colour. No letter-spacing or expanded faces.
     static var utterclipMarkdown: [HighlightRule] {
         [
+            // First, so the per-run font it re-applies is still the uniform base font:
+            // 20 % more leading than the font's own, headings included (the multiple scales
+            // with each line's font size).
+            HighlightRule(pattern: everythingRegex, formattingRule: TextFormattingRule(key: .paragraphStyle, value: roomierLines)),
             HighlightRule(pattern: headingRegex, formattingRule: TextFormattingRule(key: .font, calculateValue: { content, _ in
                 let level = content.prefix(while: { $0 == "#" }).count
                 return level <= 1 ? headingLevel1 : level == 2 ? headingLevel2 : headingLevel3
@@ -57,6 +63,13 @@ extension Sequence where Iterator.Element == HighlightRule {
         ]
     }
 }
+
+/// The editor's line spacing: 1.2× the natural line height.
+private let roomierLines: NSParagraphStyle = {
+    let style = NSMutableParagraphStyle()
+    style.lineHeightMultiple = 1.2
+    return style
+}()
 
 #if os(macOS)
 private let boldTraitsOnly: NSFontDescriptor.SymbolicTraits = [.bold]
