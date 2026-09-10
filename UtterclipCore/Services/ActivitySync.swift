@@ -1,6 +1,9 @@
 import Foundation
 import SwiftData
 import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Publishes this device's dictation phase to the synced store (both platforms), and lets
 /// the Mac read what the other devices are up to. Together with the synced `Dictation`
@@ -61,6 +64,7 @@ public enum ActivitySync {
         record.dictationID = dictationID
         record.updatedAt = .now
         store.save()
+        if phase == "done" { ExportKeepAlive.hold() }
     }
 
     // MARK: - Reading the other devices
@@ -118,4 +122,34 @@ public enum ActivitySync {
 @MainActor
 public enum WindowPresence {
     public static var isVisible = true
+}
+
+/// iOS: a dictation is usually followed by locking the phone or switching apps, and a
+/// suspended app never gets to run its CloudKit export — the Mac then waits for a result
+/// that is still on the phone. A short background task keeps the process alive long enough
+/// for Core Data to export the finished dictation and the "done" record. No-op on macOS.
+@MainActor
+enum ExportKeepAlive {
+    #if canImport(UIKit) && !os(watchOS)
+    private static var task: UIBackgroundTaskIdentifier = .invalid
+    private static var release: Task<Void, Never>?
+
+    static func hold(seconds: TimeInterval = 25) {
+        end()
+        task = UIApplication.shared.beginBackgroundTask(withName: "utterclip.cloudkit-export") { end() }
+        release = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(seconds))
+            end()
+        }
+    }
+
+    private static func end() {
+        release?.cancel(); release = nil
+        guard task != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(task)
+        task = .invalid
+    }
+    #else
+    static func hold(seconds: TimeInterval = 25) {}
+    #endif
 }

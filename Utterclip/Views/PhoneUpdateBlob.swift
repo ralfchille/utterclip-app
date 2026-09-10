@@ -8,15 +8,19 @@ import UtterclipCore
 struct PhoneUpdateBlob: View {
     let update: RecorderViewModel.PhoneUpdate
     let claim: () -> Void
+    let dismiss: () -> Void
 
     @State private var pulsing = false
     @State private var bounce = false
     @State private var wobble = 0.0
+    @State private var hovering = false
 
     var body: some View {
         Button {
             if update.isReady {
                 claim()
+            } else if update.isStale {
+                dismiss() // nothing is coming; a click clears it
             } else {
                 withAnimation(.spring(duration: 0.3, bounce: 0.6)) { wobble = wobble == 0 ? 1 : 0 }
             }
@@ -36,6 +40,19 @@ struct PhoneUpdateBlob: View {
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
+                if hovering {
+                    // Mac: hover reveals the way out.
+                    Button(action: dismiss) {
+                        Image(systemName: "xmark")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20, height: 20)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Dismiss")
+                    .padding(.trailing, -6)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
@@ -45,6 +62,8 @@ struct PhoneUpdateBlob: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
         .scaleEffect(bounce ? 1.06 : 1)
         .rotationEffect(.degrees(wobble == 0 ? 0 : 2), anchor: .center)
         .shadow(color: .black.opacity(0.08), radius: 8, y: 2)

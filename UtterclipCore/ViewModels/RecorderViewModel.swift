@@ -63,6 +63,8 @@ public final class RecorderViewModel {
     private var phoneObserver: NSObjectProtocol?
     /// Dictations already pulled in (or dismissed): the indicator does not come back for them.
     private var claimedRemoteIDs: Set<UUID> = []
+    /// Phone activity up to this timestamp was dismissed; only newer activity shows again.
+    private var dismissedActivityAt = Date.distantPast
 
     public struct PhoneUpdate: Equatable {
         public let deviceName: String
@@ -70,12 +72,15 @@ public final class RecorderViewModel {
         /// The finished dictation, once its record has arrived; nil while still in progress.
         public let entry: HistoryEntry?
         public let updatedAt: Date
+        /// In progress for longer than a dictation takes: the phone has not synced since.
+        public var isStale = false
 
         public var isReady: Bool { entry != nil }
 
         /// "iPhone · Recording…", "iPhone · Transcribing…", "iPhone · Fetching…", "New from iPhone".
         public var title: String {
             if isReady { return "New from \(deviceName)" }
+            if isStale { return "\(deviceName) · Waiting for sync…" }
             switch phase {
             case "recording": return "\(deviceName) · Recording…"
             case "transcribing": return "\(deviceName) · Transcribing…"
@@ -526,23 +531,22 @@ public final class RecorderViewModel {
 
     private func refreshPhoneUpdate() {
         let watcher = RemoteZoneWatcher.shared
-        guard let remote = watcher.latestRemote(within: 10 * 60) else {
+        guard let remote = watcher.latestRemote(within: 10 * 60), remote.updatedAt > dismissedActivityAt else {
             phoneUpdate = nil
             return
         }
-        let update: PhoneUpdate?
+        let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
+        var update: PhoneUpdate?
         if remote.isInProgress {
-            update = PhoneUpdate(deviceName: remote.deviceName, phase: remote.phase, entry: nil, updatedAt: remote.updatedAt)
+            update = PhoneUpdate(deviceName: remote.deviceName, phase: remote.phase, entry: nil, updatedAt: remote.updatedAt, isStale: stale)
         } else if remote.phase == "done", let id = remote.dictationID {
             if claimedRemoteIDs.contains(id) || currentEntry?.id == id {
                 update = nil // already here
             } else if let entry = watcher.dictations[id] ?? HistoryStore.shared.entry(id: id) {
                 update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: entry, updatedAt: remote.updatedAt)
             } else {
-                update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt)
+                update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt, isStale: stale)
             }
-        } else {
-            update = nil
         }
         if update != phoneUpdate {
             Self.phoneLogger.notice("Indicator: \(update?.title ?? "none", privacy: .public)")
@@ -562,9 +566,12 @@ public final class RecorderViewModel {
         restore(entry)
     }
 
-    /// Swipe-away / ignore: the indicator goes for this dictation.
+    /// The ✕ on the indicator (or a click on a stale one): it goes, and only newer phone
+    /// activity brings it back.
     public func dismissPhoneUpdate() {
-        if let id = phoneUpdate?.entry?.id { claimedRemoteIDs.insert(id) }
+        guard let update = phoneUpdate else { return }
+        if let id = update.entry?.id { claimedRemoteIDs.insert(id) }
+        dismissedActivityAt = max(dismissedActivityAt, update.updatedAt)
         phoneUpdate = nil
     }
 
