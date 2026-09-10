@@ -234,11 +234,9 @@ struct TapToEdit<S: Shape>: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            // Behind the content, not over it: a tint on top of the text dulls it.
+            .background(shape.fill(.primary.opacity(hovering ? 0.06 : 0)))
             .contentShape(shape)
-            .overlay {
-                shape.fill(.primary.opacity(hovering ? 0.06 : 0))
-                    .allowsHitTesting(false)
-            }
             .onTapGesture(perform: action)
             #if os(macOS)
             .onHover { inside in

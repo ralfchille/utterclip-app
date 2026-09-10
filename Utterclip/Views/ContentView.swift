@@ -254,11 +254,12 @@ struct ContentView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
             // The card itself is the edit affordance; selecting text happens in the editor.
+            // Applied inside the glass so the hover tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
                 editTarget = .styled
             }
+            .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }
 
         if viewModel.rewriteNeedsKey, viewModel.phase == .done {
