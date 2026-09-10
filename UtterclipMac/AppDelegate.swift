@@ -1,6 +1,7 @@
 import AppKit
 import UtterclipCore
 import SwiftUI
+import os
 
 /// Menu bar presence and the one window. Left-click on the status item is the whole
 /// workflow: window hidden → it drops down under the icon and a dictation starts;
@@ -22,9 +23,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         set { UserDefaults.standard.set(newValue, forKey: Self.floatOnTopKey); windowController?.floatOnTop = newValue }
     }
 
+    private static let pushLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "push")
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
         UserDefaults.standard.register(defaults: [Self.floatOnTopKey: true])
+        // CloudKit tells us about the phone's changes through silent pushes; without this
+        // registration the Mac only imported when it exported something itself.
+        NSApp.registerForRemoteNotifications()
 
         let controller = MainWindowController(rootView: ContentView())
         controller.floatOnTop = floatOnTop
@@ -120,6 +126,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // MARK: - Remote notifications (CloudKit change pushes)
+
+    func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Self.pushLogger.notice("Registered for CloudKit pushes.")
+    }
+
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        Self.pushLogger.error("Push registration failed: \(error.localizedDescription, privacy: .public)")
+    }
+
+    /// Core Data's mirroring imports on its own when a CloudKit push lands; a nudge makes sure
+    /// the import happens even if it would otherwise wait for the next export.
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+        Self.pushLogger.notice("CloudKit push received.")
+        ActivitySync.touch()
+    }
+
     /// Recording → stop it (the rewrite follows). Window in front, nothing running → hide it.
     /// Otherwise the click means "dictate": a hidden window is shown under the icon, a window
     /// buried behind other apps (only possible with Float on Top off) is brought forward, and
@@ -136,9 +159,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 showWindow()
             }
-            // A result dictated on the phone is waiting to be seen: showing it is the job;
-            // starting a recording would replace it.
-            if !WindowPresence.hasUnseenMirroredResult {
+            // The phone has a dictation on screen (finished or in progress): show that, no
+            // recording — recording would replace it. Otherwise the click means "dictate".
+            if let remote = ActivitySync.latestRemote(within: 30 * 60),
+               remote.phase == "done" || remote.isInProgress {
+                NotificationCenter.default.post(name: .utterclipShowRemote, object: nil)
+            } else {
+                ActivitySync.touch() // pull whatever the phone did since the last push
                 NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
             }
         }

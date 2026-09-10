@@ -10,7 +10,7 @@ public enum ActivitySync {
     private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "activity-sync")
     private static var store: CloudStore { CloudStore.shared }
     /// Activity older than this is nobody's "current" state any more.
-    private static let freshness: TimeInterval = 5 * 60
+    public static let freshness: TimeInterval = 5 * 60
 
     /// A snapshot of another device's most recent activity.
     public struct Remote: Equatable {
@@ -58,8 +58,25 @@ public enum ActivitySync {
 
     // MARK: - Reading the other devices
 
-    /// The other devices' most recent activity, if it is fresh enough to still be "current".
-    public static func latestRemote() -> Remote? {
+    /// Re-saves this device's record with a new timestamp. A save starts a CloudKit export
+    /// cycle, and the mirroring import rides along with it — the quickest way to pull the
+    /// other devices' latest records when no push has arrived.
+    public static func touch() {
+        guard store.isSyncing else { return }
+        let mine = DeviceIdentity.id
+        let descriptor = FetchDescriptor<DeviceActivity>(predicate: #Predicate { $0.deviceID == mine })
+        if let record = try? store.context.fetch(descriptor).first {
+            record.updatedAt = .now
+        } else {
+            store.context.insert(DeviceActivity(deviceID: mine, deviceName: DeviceIdentity.kind))
+        }
+        store.save()
+    }
+
+    /// The other devices' most recent activity, if it is fresh enough to still be "current"
+    /// (`within` seconds; five minutes by default — long enough to cover a slow sync, short
+    /// enough that a finished dictation from this morning is History, not the current state).
+    public static func latestRemote(within: TimeInterval = freshness) -> Remote? {
         guard store.isSyncing else { return nil }
         let mine = DeviceIdentity.id
         var descriptor = FetchDescriptor<DeviceActivity>(
@@ -67,7 +84,7 @@ public enum ActivitySync {
             sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
         descriptor.fetchLimit = 1
         guard let record = try? store.context.fetch(descriptor).first,
-              record.updatedAt > Date().addingTimeInterval(-freshness) else { return nil }
+              record.updatedAt > Date().addingTimeInterval(-within) else { return nil }
         return Remote(deviceID: record.deviceID, deviceName: record.deviceName, phase: record.phase,
                       dictationID: record.dictationID, updatedAt: record.updatedAt)
     }

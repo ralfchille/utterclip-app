@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Observation
 #if canImport(UIKit)
 import UIKit
@@ -498,11 +499,38 @@ public final class RecorderViewModel {
         reconcileRemoteActivity()
     }
 
+    private static let mirrorLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "mirror")
+
+    /// Menu bar click while the phone has something on screen: show that, whatever this
+    /// device was showing. A finished dictation is mirrored (and copied); one in progress
+    /// shows as progress. If the phone's record is known but its dictation has not been
+    /// imported yet, a sync cycle is nudged and the import's change notification finishes
+    /// the job.
+    public func showLatestRemote() {
+        HistoryStore.shared.reload()
+        guard let remote = ActivitySync.latestRemote(within: 30 * 60) else { return }
+        if remote.phase == "done", let id = remote.dictationID {
+            if currentEntry?.id == id {
+                if pendingMirroredCopy { copyMirroredResult() }
+                return
+            }
+            if let entry = HistoryStore.shared.entry(id: id) {
+                mirror(entry)
+            } else {
+                Self.mirrorLogger.notice("Phone result \(id, privacy: .public) not imported yet; nudging a sync.")
+                ActivitySync.touch()
+            }
+        } else if remote.isInProgress {
+            remoteActivity = remote
+        }
+    }
+
     private func reconcileRemoteActivity() {
         guard !isReconcilingRemote, !recorder.isRecording, !isBusy else { return }
         isReconcilingRemote = true
         defer { isReconcilingRemote = false }
         HistoryStore.shared.reload() // the history observer may run after this one
+        Self.mirrorLogger.notice("Reconciling: remote=\(ActivitySync.latestRemote().map { "\($0.deviceName) \($0.phase)" } ?? "none", privacy: .public)")
 
         // 1. The mirrored result was edited or re-styled over there: follow it.
         if mirroredFrom != nil, let current = currentEntry,
