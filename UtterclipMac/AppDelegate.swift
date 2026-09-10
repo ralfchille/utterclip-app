@@ -159,7 +159,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 showWindow()
             }
-            Task { await RemoteZoneWatcher.shared.poll() } // the indicator is current when the window shows
             NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
         }
     }
@@ -259,7 +258,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         WindowPresence.isVisible = true
-        RemoteZoneWatcher.shared.interval = 5
+        RemoteZoneWatcher.shared.interval = 2
+        Task { await RemoteZoneWatcher.shared.poll() } // current the moment the window is up
         // App Nap otherwise suspends the refresh timer once the app has been in the
         // background for a few minutes — the phone indicator then only updated on a click.
         if napHold == nil {

@@ -569,6 +569,7 @@ public final class RecorderViewModel {
     public func claimPhoneUpdate() {
         guard let entry = phoneUpdate?.entry else { return }
         claimedRemoteIDs.insert(entry.id)
+        dismissedActivityAt = max(dismissedActivityAt, entry.date) // older results never resurface
         phoneUpdate = nil
         // Read from CloudKit ahead of the local import: put it in History now; the import's
         // copy is collapsed as a duplicate by id when it lands.

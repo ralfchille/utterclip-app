@@ -25,7 +25,7 @@ public final class RemoteZoneWatcher {
     private var polling = false
     private var lastPoll = Date.distantPast
     /// Seconds between polls; the caller adjusts it (window visible vs hidden).
-    public var interval: TimeInterval = 5
+    public var interval: TimeInterval = 2
 
     private init() {}
 
