@@ -320,6 +320,7 @@ What is different, and only because the platform is:
 | Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
 | iCloud sync | The same: dictate on the Mac, it is in the iPhone's History a moment later, and the other way round. Universal Clipboard covers the copy itself: copy on one device, paste on the other |
+| — | **From the phone:** while you dictate on the iPhone, a small capsule at the top of the Mac window says so ("iPhone · Recording…"); when the result has synced it reads "New from iPhone" with the first words. Click it and the dictation lands in the Mac window, copied to the Mac clipboard — the fallback for the days Universal Clipboard doesn't feel like it |
 
 <p align="center">
   <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window: title, History and Settings in its own header, style pills and the mic at the bottom">
