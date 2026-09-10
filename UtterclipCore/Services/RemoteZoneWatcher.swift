@@ -22,6 +22,7 @@ public final class RemoteZoneWatcher {
     private var token: CKServerChangeToken?
     private var lastReported: LiveSync.Remote?
     private var lastStale = false
+    private var reportedMissingZone = false
     /// Seconds between polls; the caller adjusts it (window visible vs hidden).
     public var interval: TimeInterval = 2
     /// An in-progress phase older than this means the phone has not synced since.
@@ -59,9 +60,11 @@ public final class RemoteZoneWatcher {
         let operation = CKFetchRecordZoneChangesOperation(recordZoneIDs: [zoneID], configurationsByRecordZoneID: [zoneID: config])
         operation.fetchAllChanges = true
         operation.qualityOfService = .userInitiated
+        var seen = 0
         operation.recordWasChangedBlock = { [weak self] _, result in
             guard case .success(let record) = result, record.recordType == LiveSync.recordType else { return }
             Task { @MainActor [weak self] in
+                seen += 1
                 guard let self, let remote = LiveSync.remote(from: record) else { return }
                 if let known = self.remotes[remote.deviceID], known.updatedAt > remote.updatedAt { return }
                 self.remotes[remote.deviceID] = remote
@@ -79,7 +82,8 @@ public final class RemoteZoneWatcher {
                     guard let ck = error as? CKError else { return }
                     switch ck.code {
                     case .changeTokenExpired: expired = true
-                    case .zoneNotFound, .userDeletedZone: break // no device has published yet
+                    case .zoneNotFound, .userDeletedZone:
+                        if self?.reportedMissingZone == false { Self.logger.notice("Live zone does not exist yet."); self?.reportedMissingZone = true }
                     default: Self.logger.error("Live zone fetch failed: \(error.localizedDescription, privacy: .public)")
                     }
                 }
@@ -90,6 +94,7 @@ public final class RemoteZoneWatcher {
             database.add(operation)
         }
         await Task.yield() // the blocks above hop to the main actor first
+        if seen > 0 { Self.logger.notice("Live zone: \(seen, privacy: .public) record(s) fetched, \(self.remotes.count, privacy: .public) other device(s).") }
         if expired { token = nil }
         let current = latestRemote()
         let stale = current.map { $0.isInProgress && Date().timeIntervalSince($0.updatedAt) > Self.staleAfter } ?? false
