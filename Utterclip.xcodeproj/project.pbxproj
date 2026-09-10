@@ -76,6 +76,7 @@
 		DE96AF92B18D386A29F9317A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD7150D49FA9A45186D978E /* ContentView.swift */; };
 		E1DB7CABDCD93565DF8EF385 /* TuistAssets+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */; };
 		E1EFB99FFE667063120F3E97 /* DebugSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C3F87BED6C2BC519B414B3 /* DebugSnapshot.swift */; };
+		EB5461035AA7C0F18DB4AD70 /* WarmUpScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD69E9EECA18572B51DE59B1 /* WarmUpScheduler.swift */; };
 		EC091E3637A1401CF24A5AC5 /* RecorderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */; };
 		EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
 		EF0D73EA9FF8E12D40DFBA81 /* Utterclip.icon in Resources */ = {isa = PBXBuildFile; fileRef = AFE4D57BC27671C755D9C083 /* Utterclip.icon */; };
@@ -222,6 +223,7 @@
 		B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B590ECC24C31E97E4D7E1421 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipWidgets.swift"; sourceTree = "<group>"; };
+		BD69E9EECA18572B51DE59B1 /* WarmUpScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarmUpScheduler.swift; sourceTree = "<group>"; };
 		C093652C348BB70958F729A4 /* Dictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dictation.swift; sourceTree = "<group>"; };
 		C53979B6DA6AEE201336D298 /* MarkdownEditorRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorRules.swift; sourceTree = "<group>"; };
 		CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipMac.swift"; sourceTree = "<group>"; };
@@ -398,6 +400,7 @@
 				1789AE79853DA94EAEA0DB93 /* Resources */,
 				EA3D7AE6697EA72F9BEB8A3E /* Views */,
 				362ACD5073A9A097201D6FBD /* UtterclipApp.swift */,
+				BD69E9EECA18572B51DE59B1 /* WarmUpScheduler.swift */,
 			);
 			path = Utterclip;
 			sourceTree = "<group>";
@@ -675,6 +678,7 @@
 				EDF02CD83F67343E597815C2 /* SettingsView.swift in Sources */,
 				1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */,
 				5CB3EE2E32D2FA0371B88F59 /* WaveformView.swift in Sources */,
+				EB5461035AA7C0F18DB4AD70 /* WarmUpScheduler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
