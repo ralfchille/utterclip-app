@@ -4,10 +4,10 @@ import HighlightedTextEditor
 /// Editor for quick tweaks to transcribed or formatted text: full screen on iOS, in place
 /// inside the window on macOS.
 ///
-/// Uses HighlightedTextEditor's `.markdown` preset so headings and emphasis stay
-/// visually distinct while the content remains plain, editable markdown — which
-/// keeps the rest of the pipeline (clipboard, `MarkdownStripper`) working on the
-/// same string the user sees. The edit is only committed on "Done"; "Cancel"
+/// Uses HighlightedTextEditor with our own rules (`utterclipMarkdown`) so headings and
+/// emphasis show at the same sizes as in the result view, while the content remains
+/// plain, editable markdown — which keeps the rest of the pipeline (clipboard,
+/// `MarkdownStripper`) working on the same string the user sees. The edit is only committed on "Done"; "Cancel"
 /// discards it, so a mistaken tap never destroys the result.
 struct EditorView: View {
     let title: String
@@ -35,7 +35,7 @@ struct EditorView: View {
                         .font(.body.weight(.semibold))
                 }
                 #endif
-                HighlightedTextEditor(text: $text, highlightRules: .markdown)
+                HighlightedTextEditor(text: $text, highlightRules: .utterclipMarkdown)
                     .padding(.horizontal, 12) // breathing room so text isn't flush to the edges
                     .editorTopInset()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
