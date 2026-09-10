@@ -196,7 +196,9 @@ struct MacHeader<Actions: View>: View {
 struct HeaderActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.horizontal, 6)
+            // 10 pt puts a text action's edge where a centred 15 pt glyph's edge lands in a
+            // 36 pt button, so Done / Cancel / Clear line up with the symbols.
+            .padding(.horizontal, 10)
             .frame(minWidth: 36, minHeight: 36)
             .contentShape(Rectangle())
             .opacity(configuration.isPressed ? 0.5 : 1)
