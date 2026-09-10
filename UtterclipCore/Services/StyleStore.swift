@@ -17,6 +17,7 @@ public final class StyleStore {
     private static let nameOverridesKey = "styleNameOverrides"
     private static let customStylesKey = "customStyles"
     private static let hiddenBuiltInsKey = "hiddenBuiltInStyles"
+    private static let markdownOverridesKey = "styleMarkdownOverrides"
 
     /// built-in style id → custom system prompt
     private var overrides: [String: String] = [:] {
@@ -26,6 +27,11 @@ public final class StyleStore {
     /// built-in style id → custom display name
     private var nameOverrides: [String: String] = [:] {
         didSet { if !isReloading { defaults.set(nameOverrides, forKey: Self.nameOverridesKey) } }
+    }
+
+    /// built-in style id → Markdown switch, where it differs from the built-in's default
+    private var markdownOverrides: [String: Bool] = [:] {
+        didSet { if !isReloading { defaults.set(markdownOverrides, forKey: Self.markdownOverridesKey) } }
     }
 
     /// User-added styles, in creation order.
@@ -66,6 +72,7 @@ public final class StyleStore {
         customStyles = defaults.data(forKey: Self.customStylesKey)
             .flatMap { try? JSONDecoder().decode([MessageStyle].self, from: $0) } ?? []
         hiddenBuiltIns = Set(defaults.stringArray(forKey: Self.hiddenBuiltInsKey) ?? [])
+        markdownOverrides = defaults.dictionary(forKey: Self.markdownOverridesKey) as? [String: Bool] ?? [:]
     }
 
     /// All visible styles in display order: built-ins that weren't deleted (with custom
@@ -75,7 +82,8 @@ public final class StyleStore {
             MessageStyle(
                 id: style.id,
                 name: nameOverrides[style.id] ?? style.name,
-                systemPrompt: overrides[style.id] ?? style.systemPrompt)
+                systemPrompt: overrides[style.id] ?? style.systemPrompt,
+                usesMarkdown: markdownOverrides[style.id] ?? style.usesMarkdown)
         }
         return builtIns + customStyles
     }
@@ -97,9 +105,9 @@ public final class StyleStore {
         customStyles.contains { $0.id == id }
     }
 
-    /// True when a built-in's name or prompt differs from its default.
+    /// True when a built-in's name, prompt or Markdown switch differs from its default.
     public func isCustomized(_ id: String) -> Bool {
-        overrides[id] != nil || nameOverrides[id] != nil
+        overrides[id] != nil || nameOverrides[id] != nil || markdownOverrides[id] != nil
     }
 
     // MARK: - Built-in styles
@@ -124,31 +132,46 @@ public final class StyleStore {
         }
     }
 
-    /// Restores a built-in's default name and prompt.
+    /// Built-in or custom: whether the style's results offer the Markdown copy switch.
+    public func setUsesMarkdown(_ on: Bool, for id: String) {
+        if let index = customStyles.firstIndex(where: { $0.id == id }) {
+            let style = customStyles[index]
+            customStyles[index] = MessageStyle(id: id, name: style.name, systemPrompt: style.systemPrompt, usesMarkdown: on)
+        } else if on == Styles.style(withID: id).usesMarkdown {
+            markdownOverrides[id] = nil
+        } else {
+            markdownOverrides[id] = on
+        }
+    }
+
+    /// Restores a built-in's default name, prompt and Markdown switch.
     public func resetToDefault(for id: String) {
         overrides[id] = nil
         nameOverrides[id] = nil
+        markdownOverrides[id] = nil
     }
 
     // MARK: - User-added styles
 
     /// Adds a style if there is room and both fields are non-blank; returns it, else nil.
     @discardableResult
-    public func addStyle(name: String, prompt: String) -> MessageStyle? {
+    public func addStyle(name: String, prompt: String, usesMarkdown: Bool = false) -> MessageStyle? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let prompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard canAddStyle, !name.isEmpty, !prompt.isEmpty else { return nil }
-        let style = MessageStyle(id: "custom-\(UUID().uuidString)", name: name, systemPrompt: prompt)
+        let style = MessageStyle(id: "custom-\(UUID().uuidString)", name: name, systemPrompt: prompt, usesMarkdown: usesMarkdown)
         customStyles.append(style)
         return style
     }
 
-    public func updateStyle(id: String, name: String, prompt: String) {
+    public func updateStyle(id: String, name: String, prompt: String, usesMarkdown: Bool? = nil) {
         guard let index = customStyles.firstIndex(where: { $0.id == id }) else { return }
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let prompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, !prompt.isEmpty else { return }
-        customStyles[index] = MessageStyle(id: id, name: name, systemPrompt: prompt)
+        customStyles[index] = MessageStyle(
+            id: id, name: name, systemPrompt: prompt,
+            usesMarkdown: usesMarkdown ?? customStyles[index].usesMarkdown)
     }
 
     // MARK: - Deleting

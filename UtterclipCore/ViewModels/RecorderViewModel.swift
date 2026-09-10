@@ -360,12 +360,15 @@ public final class RecorderViewModel {
         haptic(.light)
     }
 
-    /// Plain-text copy by default (markdown characters stripped); raw markdown when
-    /// the markdown mode is active. Always a plain string — rich clipboard items broke
-    /// pasting into single-line inputs on the Mac.
+    /// Plain-text copy by default (markdown characters stripped); raw markdown when the
+    /// style keeps Markdown and the markdown mode is active. Always a plain string — rich
+    /// clipboard items broke pasting into single-line inputs on the Mac.
     private func copyStyled(_ text: String) {
-        Clipboard.copy(copyAsMarkdown ? text : MarkdownStripper.plainText(text))
+        Clipboard.copy(copiesMarkdown ? text : MarkdownStripper.plainText(text))
     }
+
+    /// The Markdown switch is offered per style; for every other style results are plain.
+    public var copiesMarkdown: Bool { selectedStyle.usesMarkdown && copyAsMarkdown }
 
     /// Toggles markdown-copy mode and immediately re-copies the current result in the
     /// new mode. The mode sticks until toggled off.

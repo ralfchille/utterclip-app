@@ -29,7 +29,8 @@ public enum Styles {
     public static let prompt = MessageStyle(
         id: "prompt",
         name: "Prompt",
-        systemPrompt: "Rewrite the transcript as a prompt for an AI assistant, structured under four markdown headings in this order: ## The job — what to do, stated plainly; ## The why — the context and motivation behind it; ## The guardrails — constraints, things to avoid, non-negotiables; ## Done means — what a finished, acceptable result looks like. Use short bullets under each heading. Fill every section only from what was said; if the transcript gives nothing for a section, write a single line saying it was not specified rather than inventing content. Drop filler. Preserve the original language. Output only the prompt."
+        systemPrompt: "Rewrite the transcript as a prompt for an AI assistant, structured under four markdown headings in this order: ## The job — what to do, stated plainly; ## The why — the context and motivation behind it; ## The guardrails — constraints, things to avoid, non-negotiables; ## Done means — what a finished, acceptable result looks like. Use short bullets under each heading. Fill every section only from what was said; if the transcript gives nothing for a section, write a single line saying it was not specified rather than inventing content. Drop filler. Preserve the original language. Output only the prompt.",
+        usesMarkdown: true
     )
 
     /// All styles, in display order.

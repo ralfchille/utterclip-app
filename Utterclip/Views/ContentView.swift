@@ -248,7 +248,9 @@ struct ContentView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    markdownToggle
+                    if viewModel.selectedStyle.usesMarkdown {
+                        markdownToggle
+                    }
                 }
                 MarkdownView(markdown: styled)
             }

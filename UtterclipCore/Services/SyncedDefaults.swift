@@ -21,8 +21,8 @@ public final class SyncedDefaults {
 
     /// Everything that travels. Key names are the 1.0 `UserDefaults` names, unchanged.
     public static let syncedKeys: Set<String> = [
-        "stylePromptOverrides", "styleNameOverrides", "customStyles", "hiddenBuiltInStyles",
-        "defaultStyleID", "copyAsMarkdown", "redactPersonalData",
+        "stylePromptOverrides", "styleNameOverrides", "styleMarkdownOverrides", "customStyles",
+        "hiddenBuiltInStyles", "defaultStyleID", "copyAsMarkdown", "redactPersonalData",
     ]
 
     /// Sync is on and the store is attached to CloudKit.
@@ -120,7 +120,7 @@ public final class SyncedDefaults {
         case "customStyles":
             guard let data = value as? Data else { return false }
             return (try? JSONDecoder().decode([MessageStyle].self, from: data))?.isEmpty ?? false
-        case "stylePromptOverrides", "styleNameOverrides":
+        case "stylePromptOverrides", "styleNameOverrides", "styleMarkdownOverrides":
             return (value as? [String: Any])?.isEmpty ?? false
         case "hiddenBuiltInStyles":
             return (value as? [String])?.isEmpty ?? false
