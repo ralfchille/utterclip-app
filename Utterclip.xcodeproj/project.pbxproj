@@ -16,6 +16,7 @@
 		1AB79A81350866B35ED1AF95 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EA603762F41B74D7D9CAF5 /* HistoryStore.swift */; };
 		1C17B05A6E14698115D4A786 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53061E11287017DB6ABBF28A /* TranscriptionService.swift */; };
 		1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */; };
+		26774D83AC1D2BA1F4B1B83F /* RemoteZoneWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */; };
 		2874F95B0738FE1F1E562AB8 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05088FCC2F78975859846EEB /* AIProvider.swift */; };
 		2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 785D4834B39BC497D3590D82 /* MarkdownView.swift */; };
 		2B95AEDE3EBA7BDD6C635A6F /* UtterclipMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */; };
@@ -171,6 +172,7 @@
 		09681937E4E4FE184312126B /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 		09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipCore.swift"; sourceTree = "<group>"; };
 		0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderViewModel.swift; sourceTree = "<group>"; };
+		0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteZoneWatcher.swift; sourceTree = "<group>"; };
 		108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipMacApp.swift; sourceTree = "<group>"; };
 		10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UtterclipCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1262FDDDA49A4F25FDE70B48 /* SyncPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPreference.swift; sourceTree = "<group>"; };
@@ -366,6 +368,7 @@
 				51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */,
 				76F007D7E0E2D1031D583BED /* LocalRewriter.swift */,
 				A87D9C7543EC8DFB48425596 /* Redactor.swift */,
+				0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */,
 				5549F4613006277DBA3D15C3 /* RewritePrompt.swift */,
 				7D2590D1835ECF00E098B159 /* Rewriter.swift */,
 				319D09EB2560270E662093E7 /* StyleStore.swift */,
@@ -728,6 +731,7 @@
 				5E0F5480E1CEADA3D83FC904 /* KeyProvider.swift in Sources */,
 				38056EDAFB87075550CEB900 /* LocalRewriter.swift in Sources */,
 				DD0A1FE32345E9C9A69ED3A4 /* Redactor.swift in Sources */,
+				26774D83AC1D2BA1F4B1B83F /* RemoteZoneWatcher.swift in Sources */,
 				35EC8A69FCF46B31D13DBAD0 /* RewritePrompt.swift in Sources */,
 				1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */,
 				CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */,

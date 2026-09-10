@@ -515,8 +515,9 @@ public final class RecorderViewModel {
     /// itself; the user pulls a finished dictation in with `claimPhoneUpdate()`.
     public func startWatchingOtherDevices() {
         guard phoneObserver == nil else { return }
+        RemoteZoneWatcher.shared.start()
         phoneObserver = NotificationCenter.default.addObserver(
-            forName: CloudStore.didChange, object: nil, queue: .main
+            forName: RemoteZoneWatcher.didChange, object: nil, queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in self?.refreshPhoneUpdate() }
         }
@@ -524,8 +525,8 @@ public final class RecorderViewModel {
     }
 
     private func refreshPhoneUpdate() {
-        HistoryStore.shared.reload() // the history observer may run after this one
-        guard let remote = ActivitySync.latestRemote(within: 10 * 60) else {
+        let watcher = RemoteZoneWatcher.shared
+        guard let remote = watcher.latestRemote(within: 10 * 60) else {
             phoneUpdate = nil
             return
         }
@@ -535,7 +536,7 @@ public final class RecorderViewModel {
         } else if remote.phase == "done", let id = remote.dictationID {
             if claimedRemoteIDs.contains(id) || currentEntry?.id == id {
                 update = nil // already here
-            } else if let entry = HistoryStore.shared.entry(id: id) {
+            } else if let entry = watcher.dictations[id] ?? HistoryStore.shared.entry(id: id) {
                 update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: entry, updatedAt: remote.updatedAt)
             } else {
                 update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt)
@@ -555,6 +556,9 @@ public final class RecorderViewModel {
         guard let entry = phoneUpdate?.entry else { return }
         claimedRemoteIDs.insert(entry.id)
         phoneUpdate = nil
+        // Read from CloudKit ahead of the local import: put it in History now; the import's
+        // copy is collapsed as a duplicate by id when it lands.
+        if HistoryStore.shared.entry(id: entry.id) == nil { HistoryStore.shared.add(entry) }
         restore(entry)
     }
 
