@@ -14,16 +14,19 @@ public final class Dictation {
     public var rawTranscript: String = ""
     public var styledText: String?
     public var styleID: String?
+    /// Which install dictated it (`DeviceIdentity.id`); the Mac mirrors dictations from others.
+    public var originDevice: String?
 
-    public init(id: UUID = UUID(), date: Date = .now, rawTranscript: String, styledText: String? = nil, styleID: String? = nil) {
+    public init(id: UUID = UUID(), date: Date = .now, rawTranscript: String, styledText: String? = nil, styleID: String? = nil, originDevice: String? = nil) {
         self.id = id
         self.date = date
         self.rawTranscript = rawTranscript
         self.styledText = styledText
         self.styleID = styleID
+        self.originDevice = originDevice
     }
 
     var entry: HistoryEntry {
-        HistoryEntry(id: id, date: date, rawTranscript: rawTranscript, styledText: styledText, styleID: styleID)
+        HistoryEntry(id: id, date: date, rawTranscript: rawTranscript, styledText: styledText, styleID: styleID, originDevice: originDevice)
     }
 }
