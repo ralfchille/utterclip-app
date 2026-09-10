@@ -76,9 +76,22 @@ public struct KeyProvider {
     /// key does not have to).
     public func applySyncPreference() {
         Self.migrateOnce(self)
-        guard let current = readValue(itemQuery),
-              let synced = storedItemIsSynchronizable(), synced != Self.syncs else { return }
-        setApiKeyWithoutMigration(current)
+        alignSyncFlagWithPreference()
+    }
+
+    /// Re-stores the key when its synchronizable flag disagrees with what the *user* chose.
+    /// Sync is only ever switched off here because the preference is off — never because a
+    /// capability probe failed, since re-storing without sync deletes the synced copy
+    /// everywhere. Switching it on waits for a usable shared group.
+    private func alignSyncFlagWithPreference() {
+        guard let current = readValue(itemQuery), let synced = storedItemIsSynchronizable() else { return }
+        if synced && !SyncPreference.isEnabled {
+            Self.logger.notice("Re-storing the API key with sync off (user preference).")
+            setApiKeyWithoutMigration(current)
+        } else if !synced && Self.syncs {
+            Self.logger.notice("Re-storing the API key with sync on.")
+            setApiKeyWithoutMigration(current)
+        }
     }
 
     // MARK: - Queries
@@ -121,21 +134,44 @@ public struct KeyProvider {
     /// access group entitlement present and, on macOS, the data-protection keychain).
     private static var syncs: Bool { SyncPreference.isEnabled && usableSharedGroup != nil }
 
-    /// `<TeamID>.com.ralfchille.voicer.shared`, from the Info.plist entry Xcode fills in at
-    /// signing time. Nil for builds without a team prefix, or where the keychain refuses the
-    /// group (no `keychain-access-groups` entitlement) — then the key stays per app.
-    private static let usableSharedGroup: String? = {
+    /// The shared group from the Info.plist prefix, or nil for builds without a team prefix.
+    private static let sharedGroupName: String? = {
         guard let prefix = Bundle.main.object(forInfoDictionaryKey: "UtterclipAppIdentifierPrefix") as? String,
               !prefix.isEmpty, !prefix.hasPrefix("$(") else { return nil }
-        let group = prefix + "com.ralfchille.voicer.shared"
+        return prefix + "com.ralfchille.voicer.shared"
+    }()
+
+    /// `<TeamID>.com.ralfchille.voicer.shared` when this build may use it; nil where the
+    /// keychain refuses the group (no `keychain-access-groups` entitlement) — then the key
+    /// stays per app. Probed with a throwaway write. A *transient* failure — the keychain is
+    /// locked right after launch, `errSecInteractionNotAllowed` — is not a verdict: the group
+    /// is assumed usable and the probe repeats next time. Only definitive answers are cached.
+    /// (Before 1.1 build 4 a locked keychain was read as "no group", and the key was then
+    /// re-stored per device, which deleted the synced copy on every other device.)
+    private static var usableSharedGroup: String? {
+        groupLock.lock(); defer { groupLock.unlock() }
+        if let decided = groupDecision { return decided }
+        let (group, definitive) = probeSharedGroup()
+        if definitive { groupDecision = .some(group) }
+        return group
+    }
+
+    private static let groupLock = NSLock()
+    /// `.none` = not decided yet; `.some(nil)` = no usable group; `.some(group)` = usable.
+    private static var groupDecision: String?? = nil
+
+    private static func probeSharedGroup() -> (group: String?, definitive: Bool) {
+        guard let group = sharedGroupName else { return (nil, true) }
         var probe: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "com.ralfchille.utterclip.keychain-probe",
             kSecAttrAccount as String: "group-probe",
             kSecAttrAccessGroup as String: group,
+            // Writable while the screen is locked (after the first unlock since boot).
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
         #if os(macOS)
-        guard usesDataProtectionKeychain else { return nil } // groups need the modern keychain
+        guard usesDataProtectionKeychain else { return (nil, true) } // groups need the modern keychain
         probe[kSecUseDataProtectionKeychain as String] = true
         #endif
         SecItemDelete(probe as CFDictionary)
@@ -143,12 +179,17 @@ public struct KeyProvider {
         let status = SecItemAdd(probe as CFDictionary, nil)
         probe.removeValue(forKey: kSecValueData as String)
         SecItemDelete(probe as CFDictionary)
-        guard status == errSecSuccess else {
+        switch status {
+        case errSecSuccess:
+            return (group, true)
+        case errSecMissingEntitlement, errSecNoAccessForItem, errSecParam:
             logger.notice("Shared keychain group unavailable (\(status, privacy: .public)); key stays per device.")
-            return nil
+            return (nil, true)
+        default:
+            logger.notice("Shared keychain group probe inconclusive (\(status, privacy: .public)); assuming it works, will retry.")
+            return (group, false)
         }
-        return group
-    }()
+    }
 
     #if os(macOS)
     /// The data-protection keychain is only open to processes with an application identifier
@@ -191,11 +232,8 @@ public struct KeyProvider {
 
     private func migrate() {
         // 1. Already in the target location? Then only the sync flag may need adjusting.
-        if let current = readValue(itemQuery) {
-            if let synced = storedItemIsSynchronizable(), synced != Self.syncs {
-                Self.logger.notice("Re-storing the API key with sync \(Self.syncs ? "on" : "off", privacy: .public).")
-                setApiKeyWithoutMigration(current)
-            }
+        if readValue(itemQuery) != nil {
+            alignSyncFlagWithPreference()
             return
         }
         // 2. Look where 1.0 kept it and move it over.
