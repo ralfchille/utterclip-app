@@ -168,7 +168,7 @@ struct MacHeader<Actions: View>: View {
     @ViewBuilder var actions: Actions
 
     var body: some View {
-        HStack(spacing: 2) { // the button style adds the breathing room
+        HStack(spacing: 0) { // the button style adds the breathing room
             if let back {
                 Button(action: back) {
                     Image(systemName: "chevron.left")
@@ -185,7 +185,7 @@ struct MacHeader<Actions: View>: View {
         .buttonStyle(HeaderActionButtonStyle())
         .foregroundStyle(.primary)
         .padding(.leading, 20)
-        .padding(.trailing, 8) // the buttons carry 6 pt of their own; glyph edges stay ~20 pt in
+        .padding(.trailing, 10) // plus the button's own ~8 pt: glyph edges sit ~18 pt in
         .padding(.top, 6) // the 36 pt buttons give the row its height; keep the title where it was
         .padding(.bottom, 0)
     }
@@ -196,10 +196,11 @@ struct MacHeader<Actions: View>: View {
 struct HeaderActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            // 10 pt puts a text action's edge where a centred 15 pt glyph's edge lands in a
-            // 36 pt button, so Done / Cancel / Clear line up with the symbols.
-            .padding(.horizontal, 10)
-            .frame(minWidth: 36, minHeight: 36)
+            // 8 pt puts a text action's edge where a centred 15 pt glyph's edge lands in a
+            // 32 pt button, so Done / Cancel / Clear line up with the symbols. 32 keeps the
+            // two header glyphs close together; the row stays 36 pt tall.
+            .padding(.horizontal, 8)
+            .frame(minWidth: 32, minHeight: 36)
             .contentShape(Rectangle())
             .opacity(configuration.isPressed ? 0.5 : 1)
     }
@@ -229,13 +230,15 @@ struct CompactActionButtonStyle: ButtonStyle {
 struct TapToEdit<S: Shape>: ViewModifier {
     let label: String
     let shape: S
+    /// Hover tint strength: 6 % on the glass card, 3 % on the bare raw transcript.
+    var tint: Double = 0.06
     let action: () -> Void
     @State private var hovering = false
 
     func body(content: Content) -> some View {
         content
             // Behind the content, not over it: a tint on top of the text dulls it.
-            .background(shape.fill(.primary.opacity(hovering ? 0.06 : 0)))
+            .background(shape.fill(.primary.opacity(hovering ? tint : 0)))
             .contentShape(shape)
             .onTapGesture(perform: action)
             #if os(macOS)
@@ -253,8 +256,8 @@ struct TapToEdit<S: Shape>: ViewModifier {
 
 extension View {
     /// Opens the editor when the block is tapped; see `TapToEdit`.
-    func tapToEdit<S: Shape>(_ label: String, shape: S, action: @escaping () -> Void) -> some View {
-        modifier(TapToEdit(label: label, shape: shape, action: action))
+    func tapToEdit<S: Shape>(_ label: String, shape: S, tint: Double = 0.06, action: @escaping () -> Void) -> some View {
+        modifier(TapToEdit(label: label, shape: shape, tint: tint, action: action))
     }
 
     /// Mac: the fixed-fill chip above. iOS keeps the system button look.

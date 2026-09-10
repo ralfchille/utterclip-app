@@ -300,7 +300,7 @@ struct ContentView: View {
             }
             .padding(.horizontal) // align with the styled card's inner content
             .padding(.vertical, 10) // air inside the hover tint …
-            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 12)) {
+            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 12), tint: 0.03) {
                 editTarget = .raw
             }
             .padding(.vertical, -10) // … without moving the block in the layout
