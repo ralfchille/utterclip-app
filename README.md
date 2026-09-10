@@ -91,6 +91,9 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
   though the style is called "Slack".
 
 **Everything around it**
+- **Sync with iCloud** (iPhone ↔ Mac): History, your rewrite styles, settings and the API key
+  follow you between devices, inside your own iCloud account and encrypted by Apple. One
+  switch in Settings turns it off; then everything stays on the device.
 - **Privacy redaction** (cloud engine, on by default): emails, phone numbers, links and addresses
   are swapped for placeholders before the text is sent, and restored in the result.
 - **History** of past dictations with one-tap restore and re-copy.
@@ -123,6 +126,7 @@ cents a month. The on-device engine costs nothing at all.
 | **Control Center control** | iOS 18 or later |
 | **Cloud rewriting** | An API key from Anthropic, OpenAI, Google Gemini, or Groq |
 | **First launch** | Internet access to download the Whisper model once (about 220 MB, Wi-Fi recommended) |
+| **Sync between devices** | Optional. An iCloud account signed in on each device; iCloud Keychain on for the API key to travel. Works even where iCloud Drive is switched off |
 
 ### First run
 
@@ -132,6 +136,7 @@ cents a month. The on-device engine costs nothing at all.
 2. **Choose a rewrite engine** in Settings (the gear icon). Either paste an API key under
    **AI provider API key**, or turn on **Rewrite engine → Rewrite on device (Apple Intelligence)**.
    Without either you still get the raw transcript on the clipboard after every recording.
+   With iCloud sync on, a key entered on one device shows up on your others.
 3. **Pick your starting style** under **One-tap rewrite**. Plain is the default; the pills above
    the mic change it for any recording.
 4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, or the **Dictate**
@@ -222,8 +227,12 @@ phone, and so that nothing else leaves it without your say-so.
   of its own to any request.
 - **Your API key** lives in the iOS Keychain. **History** is a local JSON file in the app's
   container; clear it any time from the History screen. Deleting the app deletes both.
+- **iCloud sync** (on by default, off with one switch in Settings): History, styles, settings and
+  the API key are stored in *your* iCloud account, in the app's private CloudKit database and in
+  iCloud Keychain, encrypted by Apple. The developer cannot read them; there is still no server
+  of ours. Turn it off and everything stays on the device, exactly as in 1.0.
 - **Network access** is used for exactly three things: the one-time Whisper model download from
-  `huggingface.co`, the rewrite request to your chosen provider, and nothing else.
+  `huggingface.co`, the rewrite request to your chosen provider, and iCloud sync when it is on.
 
 The full privacy policy, written for the App Store listing, is in [PRIVACY.md](PRIVACY.md).
 
@@ -235,6 +244,19 @@ The full privacy policy, written for the App Store listing, is in [PRIVACY.md](P
 Because Utterclip has no server and no subscription. Your key means your text goes straight from
 your phone to the provider, and you pay only for what you use (cents, for short messages). If you
 would rather not deal with keys, turn on the on-device engine instead.
+
+**Does History sync between my iPhone and my Mac?**
+Yes, since 1.1, through your own iCloud account: dictations, the styles you edited or added,
+settings, and the API key. A dictation made on one device shows up in the other's History within
+seconds. Turn it off under **Settings → iCloud** if you would rather keep everything local.
+
+**My work Mac has iCloud Drive disabled. Does sync still work?**
+Yes. Utterclip uses CloudKit and iCloud Keychain, which do not depend on iCloud Drive. The
+Apple key-value store, which does, is deliberately not used.
+
+**I turned sync off but History still shows the other device's entries.**
+The switch takes effect for History and styles the next time you open the app; the API key
+follows immediately. Entries already on this device stay; nothing new comes in.
 
 **Which engine should I use?**
 Cloud models are noticeably better at restructuring (Email, Prompt) and at holding tone. The
@@ -292,10 +314,12 @@ What is different, and only because the platform is:
 |---|---|
 | Tap the app icon, tap the mic | **Click the menu bar icon**: the window drops down right under it and a recording starts; click again to stop it and get the rewrite; click once more, with nothing running, and the window hides. **Right-click** opens a menu: Start / Stop Dictation, Continue Dictating, Show/Hide, History, Settings, Float on Top, Quit |
 | Home Screen / Lock Screen widget, Control Center control | Keyboard shortcuts while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
+| Settings and History as sheets | They open **in the same window** — no second window, no sheet; Done, ✕ or Escape bring the main screen back |
 | Full-screen editor | Editor in a sheet |
 | Always fills the screen | **Float on Top** (right-click menu, or **⌥⌘T**) keeps the window above other apps, on every Space and over full-screen apps; on by default |
 | Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
+| iCloud sync | The same: dictate on the Mac, it is in the iPhone's History a moment later, and the other way round. Universal Clipboard covers the copy itself: copy on one device, paste on the other |
 
 <p align="center">
   <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window: title, History and Settings in its own header, style pills and the mic at the bottom">
@@ -342,7 +366,8 @@ control.
 
 ```
 UtterclipCore/                     # framework, iOS + macOS: everything below the UI
-├─ Models/                         # MessageStyle, built-in Styles, HistoryEntry, AppError
+├─ Models/                         # MessageStyle, built-in Styles, HistoryEntry, AppError,
+│                                  # Dictation + SyncedSetting (SwiftData records CloudKit mirrors)
 ├─ Services/
 │  ├─ AudioRecorder.swift          # 16 kHz mono WAV, live level metering, silence detection
 │  ├─ TranscriptionService.swift   # always-warm WhisperKit singleton
@@ -353,8 +378,11 @@ UtterclipCore/                     # framework, iOS + macOS: everything below th
 │  ├─ LocalRewriter.swift          # Apple Foundation Models engine (iOS 26)
 │  ├─ Redactor.swift               # reversible placeholder redaction (NSDataDetector)
 │  ├─ StyleStore.swift             # built-in overrides, custom styles, deletions
-│  ├─ HistoryStore.swift           # dictation log (JSON in Application Support)
-│  ├─ KeyProvider.swift            # Keychain-backed key storage
+│  ├─ HistoryStore.swift           # dictation log on the CloudKit-backed store (imports 1.0's JSON once)
+│  ├─ CloudStore.swift             # the one SwiftData store CloudKit syncs; shared by history + settings
+│  ├─ SyncedDefaults.swift         # UserDefaults mirrored as SyncedSetting records, newest wins
+│  ├─ SyncPreference.swift         # the Sync with iCloud switch; SyncStatus.swift asks CloudKit for the account
+│  ├─ KeyProvider.swift            # Keychain-backed key storage; shared access group + iCloud Keychain
 │  └─ Clipboard.swift              # UIPasteboard / NSPasteboard, markdown stripping
 └─ ViewModels/RecorderViewModel.swift  # record → transcribe → copy → rewrite → copy
 
@@ -371,7 +399,8 @@ UtterclipWidgets/                  # widget extension: Home/Lock Screen widget +
 
 The flow, in one sentence: `RecorderViewModel` stops the recorder, hands the WAV to WhisperKit,
 copies the raw transcript, then asks whichever `Rewriter` is active to restyle it and copies the
-result; a failed rewrite never takes the raw text off the clipboard.
+result; a failed rewrite never takes the raw text off the clipboard. The dictation goes into
+History once that attempt has settled, so other devices receive one finished entry.
 
 Design notes from the original build live in [`plan/`](plan/).
 
