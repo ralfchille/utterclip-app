@@ -1,8 +1,8 @@
 import SwiftUI
 import HighlightedTextEditor
 
-/// Editor for quick tweaks to transcribed or formatted text: full screen on iOS, a
-/// sheet on macOS.
+/// Editor for quick tweaks to transcribed or formatted text: full screen on iOS, in place
+/// inside the window on macOS.
 ///
 /// Uses HighlightedTextEditor's `.markdown` preset so headings and emphasis stay
 /// visually distinct while the content remains plain, editable markdown — which
@@ -23,7 +23,7 @@ struct EditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigation {
             VStack(spacing: 0) {
                 #if os(macOS)
                 MacHeader(title: title) {
@@ -41,6 +41,7 @@ struct EditorView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .background(Color.appBackground)
+            .ignoreHiddenTitleBar()
             .barChrome(title: title) {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -52,7 +53,6 @@ struct EditorView: View {
             }
         }
         .tint(.primary)
-        .sheetFrame(minWidth: 520, minHeight: 420)
     }
 
     private func save() {

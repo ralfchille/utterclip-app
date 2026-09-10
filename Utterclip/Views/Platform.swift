@@ -112,17 +112,6 @@ extension View {
         #endif
     }
 
-    /// macOS sheets size to their content and would otherwise come up tiny; iOS sheets
-    /// fill the screen and ignore this.
-    @ViewBuilder
-    func sheetFrame(minWidth: CGFloat, minHeight: CGFloat) -> some View {
-        #if os(macOS)
-        frame(minWidth: minWidth, idealWidth: minWidth, minHeight: minHeight, idealHeight: minHeight)
-        #else
-        self
-        #endif
-    }
-
     /// The Mac window hides its title bar but SwiftUI still reserves its height as a safe
     /// area; the header row takes that space instead. No-op on iOS.
     @ViewBuilder
@@ -134,12 +123,11 @@ extension View {
         #endif
     }
 
-    /// Breathing room between a sheet's title bar and the editor text on macOS, where no
-    /// navigation bar separates them; iOS already has that gap.
+    /// Breathing room between the Mac header and the editor text; iOS already has that gap.
     @ViewBuilder
     func editorTopInset() -> some View {
         #if os(macOS)
-        padding(.top, 14)
+        padding(.top, 8)
         #else
         self
         #endif
@@ -156,14 +144,15 @@ extension View {
         #endif
     }
 
-    /// The text editor takes the whole screen on iOS; on macOS it is a sheet.
+    /// The text editor takes the whole screen on iOS; on macOS it opens in place inside the
+    /// window, like History and Settings.
     @ViewBuilder
-    func editorPresentation<Item: Identifiable, Content: View>(
+    func editorPresentation<Item: Identifiable & Hashable, Content: View>(
         item: Binding<Item?>,
         @ViewBuilder content: @escaping (Item) -> Content
     ) -> some View {
         #if os(macOS)
-        sheet(item: item, content: content)
+        navigationDestination(item: item, destination: content)
         #else
         fullScreenCover(item: item, content: content)
         #endif

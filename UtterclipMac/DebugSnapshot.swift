@@ -26,8 +26,8 @@ enum DebugSnapshot {
         // Remove last time's image first, so a failed render can't pass for a fresh one.
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("snapshot.png")
         try? FileManager.default.removeItem(at: url)
-        // A presented sheet (the editor) wins; otherwise the main window, which now also
-        // hosts History and Settings in place.
+        // A presented sheet wins if there is one; otherwise the main window, which hosts
+        // History, Settings and the editor in place.
         let visible = NSApp.windows.filter(\.isVisible)
         guard let window = visible.first(where: \.isSheet) ?? visible.first(where: { $0.title == "Utterclip" }),
               let view = window.contentView?.superview ?? window.contentView, // frame view: title bar included
