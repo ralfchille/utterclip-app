@@ -531,22 +531,27 @@ public final class RecorderViewModel {
 
     private func refreshPhoneUpdate() {
         let watcher = RemoteZoneWatcher.shared
-        guard let remote = watcher.latestRemote(within: 10 * 60), remote.updatedAt > dismissedActivityAt else {
-            phoneUpdate = nil
-            return
-        }
-        let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
+        let horizon = Date().addingTimeInterval(-10 * 60)
+        // The finished dictation is the reliable signal — it is a record insert, and those
+        // sync. The activity record (recording / transcribing …) is only for the interim.
+        let ready = watcher.dictations.values
+            .filter { $0.date > horizon && $0.date > dismissedActivityAt
+                && !claimedRemoteIDs.contains($0.id) && $0.id != currentEntry?.id }
+            .max { $0.date < $1.date }
+        let remote = watcher.latestRemote(within: 10 * 60).flatMap { $0.updatedAt > dismissedActivityAt ? $0 : nil }
+        let deviceName = remote?.deviceName ?? "iPhone"
         var update: PhoneUpdate?
-        if remote.isInProgress {
+        if let ready, remote == nil || !remote!.isInProgress || ready.date >= remote!.updatedAt.addingTimeInterval(-5) {
+            // A result newer than the phone's last reported activity: it is on screen there.
+            update = PhoneUpdate(deviceName: deviceName, phase: "done", entry: ready, updatedAt: ready.date)
+        } else if let remote, remote.isInProgress {
+            let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
             update = PhoneUpdate(deviceName: remote.deviceName, phase: remote.phase, entry: nil, updatedAt: remote.updatedAt, isStale: stale)
-        } else if remote.phase == "done", let id = remote.dictationID {
-            if claimedRemoteIDs.contains(id) || currentEntry?.id == id {
-                update = nil // already here
-            } else if let entry = watcher.dictations[id] ?? HistoryStore.shared.entry(id: id) {
-                update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: entry, updatedAt: remote.updatedAt)
-            } else {
-                update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt, isStale: stale)
-            }
+        } else if let remote, remote.phase == "done", let id = remote.dictationID,
+                  !claimedRemoteIDs.contains(id), currentEntry?.id != id {
+            // Announced but the dictation record has not arrived yet.
+            let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
+            update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt, isStale: stale)
         }
         if update != phoneUpdate {
             Self.phoneLogger.notice("Indicator: \(update?.title ?? "none", privacy: .public)")
