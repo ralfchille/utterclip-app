@@ -11,7 +11,7 @@ struct ContentView: View {
     @State private var editTarget: EditTarget?
 
     /// Which text the editor is currently editing.
-    private enum EditTarget: String, Identifiable {
+    private enum EditTarget: String, Identifiable, Hashable {
         case styled, raw
         var id: String { rawValue }
     }

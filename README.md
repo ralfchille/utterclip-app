@@ -315,7 +315,7 @@ What is different, and only because the platform is:
 | Tap the app icon, tap the mic | **Click the menu bar icon**: the window drops down right under it and a recording starts; click again to stop it and get the rewrite; click once more, with nothing running, and the window hides. **Right-click** opens a menu: Start / Stop Dictation, Continue Dictating, Show/Hide, History, Settings, Float on Top, Quit |
 | Home Screen / Lock Screen widget, Control Center control | Keyboard shortcuts while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
 | Settings and History as sheets | They open **in the same window** — no second window, no sheet; Done, ✕ or Escape bring the main screen back |
-| Full-screen editor | Editor in a sheet |
+| Full-screen editor | The editor opens in the same window too, Cancel or Done to return |
 | Always fills the screen | **Float on Top** (right-click menu, or **⌥⌘T**) keeps the window above other apps, on every Space and over full-screen apps; on by default |
 | Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
