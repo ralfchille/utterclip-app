@@ -345,9 +345,9 @@ enum PlatformText {
     /// Settings footer under the style list; there is no swipe on a Mac.
     static var stylesFooter: String {
         #if os(macOS)
-        "Click a style to edit its name and instructions, or delete it from its editor. Deleted defaults can be restored. Up to \(maxStyles) styles."
+        "Click a style to edit its name, instructions and Markdown output, or delete it from its editor. Deleted defaults can be restored. Up to \(maxStyles) styles."
         #else
-        "Tap a style to edit its name and instructions; swipe to delete. Deleted defaults can be restored. Up to \(maxStyles) styles."
+        "Tap a style to edit its name, instructions and Markdown output; swipe to delete. Deleted defaults can be restored. Up to \(maxStyles) styles."
         #endif
     }
     private static let maxStyles = StyleStore.maxStyles

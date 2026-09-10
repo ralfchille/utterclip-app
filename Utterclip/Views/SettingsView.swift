@@ -228,6 +228,7 @@ struct StylePromptEditor: View {
     let mode: Mode
     @State private var name: String
     @State private var prompt: String
+    @State private var usesMarkdown: Bool
     @State private var store = StyleStore.shared
     /// Set by Delete so leaving the page afterwards doesn't re-create the style.
     @State private var deleted = false
@@ -239,9 +240,11 @@ struct StylePromptEditor: View {
         case .new:
             _name = State(initialValue: "")
             _prompt = State(initialValue: "")
+            _usesMarkdown = State(initialValue: false)
         case .edit(let style):
             _name = State(initialValue: style.name)
             _prompt = State(initialValue: style.systemPrompt)
+            _usesMarkdown = State(initialValue: style.usesMarkdown)
         }
     }
 
@@ -292,6 +295,14 @@ struct StylePromptEditor: View {
                 Text("Tip: keep “Preserve the original language.” and “Output only the message.” at the end for clean, language-correct results.")
             }
 
+            Section {
+                Toggle("Markdown output", isOn: $usesMarkdown)
+            } header: {
+                Text("Format")
+            } footer: {
+                Text("On: results in this style offer a Markdown switch on the result card, for prompts and other text with headings or lists. Off: results are always copied as plain text.")
+            }
+
             if let style = editedStyle, showsReset || showsDelete {
                 Section {
                     if showsReset {
@@ -300,6 +311,7 @@ struct StylePromptEditor: View {
                             let original = Styles.style(withID: style.id)
                             name = original.name
                             prompt = original.systemPrompt
+                            usesMarkdown = original.usesMarkdown
                         } label: {
                             Text("Reset to default").frame(maxWidth: .infinity)
                         }
@@ -332,13 +344,14 @@ struct StylePromptEditor: View {
     private func save() {
         switch mode {
         case .new:
-            store.addStyle(name: name, prompt: prompt)
+            store.addStyle(name: name, prompt: prompt, usesMarkdown: usesMarkdown)
         case .edit(let style):
             if store.isCustom(style.id) {
-                store.updateStyle(id: style.id, name: name, prompt: prompt)
+                store.updateStyle(id: style.id, name: name, prompt: prompt, usesMarkdown: usesMarkdown)
             } else {
                 store.setName(name, for: style.id)
                 store.setPrompt(prompt, for: style.id)
+                store.setUsesMarkdown(usesMarkdown, for: style.id)
             }
         }
     }
