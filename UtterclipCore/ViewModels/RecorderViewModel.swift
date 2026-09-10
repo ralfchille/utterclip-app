@@ -54,17 +54,45 @@ public final class RecorderViewModel {
     /// replacing it (see `continueRecording`).
     private var isContinuing = false
 
-    // Mirroring another device (Mac only; see `startMirroring`).
+    // Watching the phone (Mac only; see `startWatchingOtherDevices`).
 
-    /// A dictation in progress on another device, shown here while this one is not busy.
-    public private(set) var remoteActivity: ActivitySync.Remote?
-    /// "iPhone" when the result on screen was dictated on another device and mirrored here.
-    public private(set) var mirroredFrom: String?
-    private var mirrorObserver: NSObjectProtocol?
-    private var mirrorStartedAt = Date()
-    private var lastMirroredDate = Date.distantPast
-    private var pendingMirroredCopy = false
-    private var isReconcilingRemote = false
+    /// What the phone is up to, for the small indicator: recording, transcribing, a result on
+    /// its way, or a finished dictation ready to be pulled in with a tap. Nil when there is
+    /// nothing recent, or once the result was claimed.
+    public private(set) var phoneUpdate: PhoneUpdate?
+    private var phoneObserver: NSObjectProtocol?
+    /// Dictations already pulled in (or dismissed): the indicator does not come back for them.
+    private var claimedRemoteIDs: Set<UUID> = []
+
+    public struct PhoneUpdate: Equatable {
+        public let deviceName: String
+        public let phase: String
+        /// The finished dictation, once its record has arrived; nil while still in progress.
+        public let entry: HistoryEntry?
+        public let updatedAt: Date
+
+        public var isReady: Bool { entry != nil }
+
+        /// "iPhone · Recording…", "iPhone · Transcribing…", "iPhone · Fetching…", "New from iPhone".
+        public var title: String {
+            if isReady { return "New from \(deviceName)" }
+            switch phase {
+            case "recording": return "\(deviceName) · Recording…"
+            case "transcribing": return "\(deviceName) · Transcribing…"
+            case "rewriting": return "\(deviceName) · Rewriting…"
+            default: return "\(deviceName) · Fetching…"
+            }
+        }
+
+        /// First words of the result, for the indicator.
+        public var preview: String? {
+            guard let entry else { return nil }
+            let text = (entry.styledText.map(MarkdownStripper.plainText) ?? entry.rawTranscript)
+                .replacingOccurrences(of: "\n", with: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? nil : text
+        }
+    }
 
     /// Rewrites already produced for the current transcript, keyed by the exact style
     /// (id + prompt) that produced them. Cleared whenever the transcript changes.
@@ -169,7 +197,6 @@ public final class RecorderViewModel {
 
     public func record() async {
         isContinuing = false
-        mirroredFrom = nil
         rawTranscript = nil
         styledText = nil
         rewriteError = nil
@@ -360,7 +387,6 @@ public final class RecorderViewModel {
     public func restore(_ entry: HistoryEntry) {
         recorder.cancel()
         processingTask?.cancel()
-        mirroredFrom = nil
         rawTranscript = entry.rawTranscript
         styledText = entry.styledText
         rewriteError = nil
@@ -467,7 +493,7 @@ public final class RecorderViewModel {
         phase = rawTranscript == nil ? .idle : .done
     }
 
-    // MARK: - Mirroring another device
+    // MARK: - Watching the phone
 
     /// Every phase change is published to the synced store, so the other devices can show
     /// what this one is doing. `done` carries the dictation's id.
@@ -480,129 +506,62 @@ public final class RecorderViewModel {
         case .rewriting: name = "rewriting"
         case .done: name = "done"
         }
-        // A mirrored result is the other device's news, not ours to re-announce.
-        if !(phase == .done && mirroredFrom != nil) {
-            ActivitySync.publish(phase: name, dictationID: phase == .done ? currentEntry?.id : nil)
-        }
-        // Our own work just ended: the other device may have moved on in the meantime.
-        if mirrorObserver != nil, phase == .idle || phase == .done { reconcileRemoteActivity() }
+        ActivitySync.publish(phase: name, dictationID: phase == .done ? currentEntry?.id : nil)
     }
 
-    /// Mac: follow the other devices. While this one is idle (or showing a result), a
-    /// dictation happening on the phone appears here — "Recording on iPhone…", then the
-    /// finished result, which is copied to this Mac's clipboard as soon as the window is
-    /// visible. Nothing on the phone changes; it only publishes what it already syncs.
-    public func startMirroring() {
-        guard mirrorObserver == nil else { return }
-        mirrorStartedAt = .now
-        mirrorObserver = NotificationCenter.default.addObserver(
+    private static let phoneLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "phone-watch")
+
+    /// Mac: follow the phone's activity for the indicator. Nothing on this device changes by
+    /// itself; the user pulls a finished dictation in with `claimPhoneUpdate()`.
+    public func startWatchingOtherDevices() {
+        guard phoneObserver == nil else { return }
+        phoneObserver = NotificationCenter.default.addObserver(
             forName: CloudStore.didChange, object: nil, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.reconcileRemoteActivity() }
+            Task { @MainActor [weak self] in self?.refreshPhoneUpdate() }
         }
-        reconcileRemoteActivity()
+        refreshPhoneUpdate()
     }
 
-    private static let mirrorLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "mirror")
-
-    /// Menu bar click while the phone has something on screen: show that, whatever this
-    /// device was showing. A finished dictation is mirrored (and copied); one in progress
-    /// shows as progress. If the phone's record is known but its dictation has not been
-    /// imported yet, a sync cycle is nudged and the import's change notification finishes
-    /// the job.
-    public func showLatestRemote() {
-        HistoryStore.shared.reload()
-        guard let remote = ActivitySync.latestRemote(within: 30 * 60) else { return }
-        if remote.phase == "done", let id = remote.dictationID {
-            if currentEntry?.id == id {
-                if pendingMirroredCopy { copyMirroredResult() }
-                return
-            }
-            if let entry = HistoryStore.shared.entry(id: id) {
-                mirror(entry)
-            } else {
-                Self.mirrorLogger.notice("Phone result \(id, privacy: .public) not imported yet; nudging a sync.")
-                ActivitySync.touch()
-            }
-        } else if remote.isInProgress {
-            remoteActivity = remote
-        }
-    }
-
-    private func reconcileRemoteActivity() {
-        guard !isReconcilingRemote, !recorder.isRecording, !isBusy else { return }
-        isReconcilingRemote = true
-        defer { isReconcilingRemote = false }
+    private func refreshPhoneUpdate() {
         HistoryStore.shared.reload() // the history observer may run after this one
-        Self.mirrorLogger.notice("Reconciling: remote=\(ActivitySync.latestRemote().map { "\($0.deviceName) \($0.phase)" } ?? "none", privacy: .public)")
-
-        // 1. The mirrored result was edited or re-styled over there: follow it.
-        if mirroredFrom != nil, let current = currentEntry,
-           let updated = HistoryStore.shared.entry(id: current.id), updated != current {
-            mirror(updated)
+        guard let remote = ActivitySync.latestRemote(within: 10 * 60) else {
+            phoneUpdate = nil
             return
         }
-        // 2. A newer dictation finished elsewhere. Only ones from the last few minutes at
-        //    launch — yesterday's phone result is History, not the current state.
-        let floor = max(mirrorStartedAt.addingTimeInterval(-10 * 60), lastMirroredDate)
-        if let entry = ActivitySync.latestRemoteDictation(after: floor),
-           entry.id != currentEntry?.id,
-           entry.date > (currentEntry?.date ?? .distantPast) {
-            mirror(entry)
-            return
-        }
-        // 3. Something in progress elsewhere (or nothing any more). A finished dictation whose
-        //    record has not been imported yet also counts as in progress for the display.
-        if let remote = ActivitySync.latestRemote(), remote.isInProgress {
-            remoteActivity = remote
-        } else if let remote = ActivitySync.latestRemote(), remote.awaitsDictation {
-            Self.mirrorLogger.notice("Phone finished but its dictation is not here yet; waiting for the import.")
-            remoteActivity = remote
+        let update: PhoneUpdate?
+        if remote.isInProgress {
+            update = PhoneUpdate(deviceName: remote.deviceName, phase: remote.phase, entry: nil, updatedAt: remote.updatedAt)
+        } else if remote.phase == "done", let id = remote.dictationID {
+            if claimedRemoteIDs.contains(id) || currentEntry?.id == id {
+                update = nil // already here
+            } else if let entry = HistoryStore.shared.entry(id: id) {
+                update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: entry, updatedAt: remote.updatedAt)
+            } else {
+                update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: nil, updatedAt: remote.updatedAt)
+            }
         } else {
-            remoteActivity = nil
+            update = nil
+        }
+        if update != phoneUpdate {
+            Self.phoneLogger.notice("Indicator: \(update?.title ?? "none", privacy: .public)")
+            phoneUpdate = update
         }
     }
 
-    /// Shows another device's finished dictation as the result here, exactly as if it had
-    /// been dictated on this device, and copies it — now, or when the window next appears.
-    private func mirror(_ entry: HistoryEntry) {
-        remoteActivity = nil
-        rawTranscript = entry.rawTranscript
-        styledText = entry.styledText
-        rewriteError = nil
-        rewriteNeedsKey = false
-        notice = nil
-        currentEntry = entry
-        currentEntryIsStored = true
-        rewriteCache.removeAll()
-        if let styleID = entry.styleID {
-            selectedStyle = StyleStore.shared.style(withID: styleID)
-            if let styled = entry.styledText { rewriteCache[selectedStyle] = styled }
-        }
-        mirroredFrom = entry.originDevice.flatMap(ActivitySync.deviceName(for:)) ?? "iPhone"
-        lastMirroredDate = max(lastMirroredDate, entry.date)
-        phase = .done
-        if WindowPresence.isVisible {
-            copyMirroredResult()
-        } else {
-            pendingMirroredCopy = true
-            WindowPresence.hasUnseenMirroredResult = true
-        }
+    /// The indicator was tapped with a result ready: bring the phone's dictation in, exactly
+    /// like restoring it from History (result, raw transcript, style, clipboard).
+    public func claimPhoneUpdate() {
+        guard let entry = phoneUpdate?.entry else { return }
+        claimedRemoteIDs.insert(entry.id)
+        phoneUpdate = nil
+        restore(entry)
     }
 
-    /// The window came on screen: a mirrored result that was waiting is copied now.
-    public func windowDidShow() {
-        WindowPresence.hasUnseenMirroredResult = false
-        if pendingMirroredCopy { copyMirroredResult() }
-    }
-
-    private func copyMirroredResult() {
-        pendingMirroredCopy = false
-        if let styled = styledText {
-            copyStyled(styled)
-        } else if let raw = rawTranscript {
-            Clipboard.copy(raw)
-        }
+    /// Swipe-away / ignore: the indicator goes for this dictation.
+    public func dismissPhoneUpdate() {
+        if let id = phoneUpdate?.entry?.id { claimedRemoteIDs.insert(id) }
+        phoneUpdate = nil
     }
 
     // MARK: - Haptics

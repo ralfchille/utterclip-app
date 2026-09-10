@@ -114,11 +114,8 @@ public enum ActivitySync {
 }
 
 /// Whether this app's window is on screen — always on iOS; on the Mac the window controller
-/// keeps it current. A dictation mirrored from another device is copied to the clipboard only
-/// while the window is visible; otherwise it waits for the next show.
+/// keeps it current. Paces how often the Mac refreshes the synced store.
 @MainActor
 public enum WindowPresence {
     public static var isVisible = true
-    /// A mirrored result arrived while the window was hidden and has not been shown yet.
-    public static var hasUnseenMirroredResult = false
 }
