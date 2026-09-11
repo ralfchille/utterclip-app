@@ -507,14 +507,14 @@ struct ContentView: View {
         .overlay(alignment: .leading) {
             if viewModel.recorder.isRecording || viewModel.isBusy {
                 cancelButton
-                    .offset(x: -80)
+                    .offset(x: -ControlMetrics.satelliteOffset)
                     .transition(.opacity.combined(with: .scale))
             }
         }
         .overlay(alignment: .trailing) {
             if viewModel.phase == .done, viewModel.rawTranscript != nil {
                 continueButton
-                    .offset(x: 80)
+                    .offset(x: ControlMetrics.satelliteOffset)
                     .transition(.opacity.combined(with: .scale))
             }
         }
@@ -527,9 +527,9 @@ struct ContentView: View {
     @ViewBuilder
     private var recordButtonLabel: some View {
         let icon = Image(systemName: viewModel.recorder.isRecording ? "stop.fill" : "mic.fill")
-            .font(.system(size: 30, weight: .semibold))
+            .font(.system(size: ControlMetrics.recordGlyph, weight: .semibold))
             .foregroundStyle(viewModel.recorder.isRecording ? Color.appBackground : .primary)
-            .frame(width: 84, height: 84)
+            .frame(width: ControlMetrics.record, height: ControlMetrics.record)
         // Explicit hit shape: on macOS the glass/background layers don't count as content,
         // so without it only the glyph's own pixels would take the click.
         if viewModel.recorder.isRecording {
@@ -545,9 +545,9 @@ struct ContentView: View {
             viewModel.cancel()
         } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: ControlMetrics.satelliteGlyph, weight: .semibold))
                 .foregroundStyle(.primary)
-                .frame(width: 56, height: 56)
+                .frame(width: ControlMetrics.satellite, height: ControlMetrics.satellite)
                 .glassBackground(shape: Circle())
                 .contentShape(Circle())
         }
@@ -561,9 +561,9 @@ struct ContentView: View {
             Task { await viewModel.continueRecording() }
         } label: {
             Image(systemName: "mic.badge.plus")
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: ControlMetrics.satelliteGlyph, weight: .semibold))
                 .foregroundStyle(.primary)
-                .frame(width: 56, height: 56)
+                .frame(width: ControlMetrics.satellite, height: ControlMetrics.satellite)
                 .glassBackground(shape: Circle())
                 .contentShape(Circle())
         }
