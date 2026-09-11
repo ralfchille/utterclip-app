@@ -10,6 +10,7 @@ final class MacPreferences {
 
     private static let shortcutKey = "globalShortcut"
     private static let openNearFieldKey = "openNearTextField"
+    private static let pasteBackKey = "pasteBack"
 
     private let defaults = UserDefaults.standard
 
@@ -17,6 +18,7 @@ final class MacPreferences {
         defaults.register(defaults: [
             Self.shortcutKey: GlobalHotkey.Shortcut.controlOptionCommandSpace.rawValue,
             Self.openNearFieldKey: true,
+            Self.pasteBackKey: true,
         ])
     }
 
@@ -34,5 +36,12 @@ final class MacPreferences {
     var opensNearTextField: Bool {
         get { defaults.bool(forKey: Self.openNearFieldKey) }
         set { defaults.set(newValue, forKey: Self.openNearFieldKey) }
+    }
+
+    /// After a dictation started with the shortcut, hand the text back to the app it came
+    /// from with a ⌘V (needs the same Accessibility access).
+    var pastesBack: Bool {
+        get { defaults.bool(forKey: Self.pasteBackKey) }
+        set { defaults.set(newValue, forKey: Self.pasteBackKey) }
     }
 }

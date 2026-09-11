@@ -101,6 +101,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window
 
     /// Brings the window forward; when the status item is on screen, right under its icon.
+    /// Gets the window out of the way just before the text is pasted back.
+    func hideWindowForPasteBack() {
+        windowController?.hide()
+    }
+
     func showWindow() {
         if let anchor = statusItemFrame {
             windowController?.show(under: anchor)
@@ -176,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let anchor = MacPreferences.shared.opensNearTextField ? FocusedField.caretRect() : nil
+        PasteBack.shared.arm() // remember where to hand the text back, before we take focus
         windowController?.show(beside: anchor ?? CGRect(origin: NSEvent.mouseLocation, size: .zero))
         NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
     }
