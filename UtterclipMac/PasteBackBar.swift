@@ -37,11 +37,12 @@ struct PasteBackBar: View {
         .overlay(alignment: .trailing) {
             // Its own target inside the bar: cancel without sending.
             Button(action: dismiss) {
+                // Just the mark: a filled circle on top of a filled capsule was one shape too
+                // many. The frame keeps the target comfortably bigger than the glyph.
                 Image(systemName: "xmark")
                     .font(.caption2.weight(.bold))
-                    .foregroundStyle(Color.appBackground.opacity(0.7))
+                    .foregroundStyle(Color.appBackground.opacity(0.6))
                     .frame(width: 24, height: 24)
-                    .background(Circle().fill(Color.appBackground.opacity(0.16)))
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
