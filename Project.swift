@@ -128,10 +128,13 @@ let project = Project(
             ]),
             sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift"],
             resources: ["UtterclipMac/Resources/**"],
-            // Sandboxed like a store app: microphone for recording, outbound network for the
-            // one-time model download and the optional cloud rewrite. Nothing else.
+            // Not sandboxed, deliberately. The global shortcut's two useful halves — reading
+            // which text field another app has focused, and handing the text back with a ⌘V —
+            // are Accessibility APIs, and the sandbox blocks those against other processes
+            // even once the user has granted Accessibility access (macOS grants it, every call
+            // then fails). Every Mac dictation tool that types into other apps is unsandboxed
+            // for the same reason. The cost: this app cannot go to the Mac App Store as it is.
             entitlements: .dictionary([
-                "com.apple.security.app-sandbox": true,
                 "com.apple.security.device.audio-input": true,
                 "com.apple.security.network.client": true,
             ].merging(iCloudEntitlements) { current, _ in current }
