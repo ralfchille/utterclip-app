@@ -52,17 +52,9 @@ struct ContentView: View {
                         }
                     }
                     .animation(.spring(duration: 0.45, bounce: 0.35), value: viewModel.phoneUpdate)
-                #if os(macOS)
-                // A dictation started with the shortcut waits here until it is sent on, so the
-                // result can be read, edited or re-styled first.
-                if let appName = pasteBack.offeredAppName {
-                    PasteBackBar(appName: appName,
-                                 paste: { pasteBack.paste() },
-                                 dismiss: { pasteBack.disarm() })
-                        .padding(.horizontal, 16)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-                #endif
+            #if os(macOS)
+            .animation(.spring(duration: 0.35, bounce: 0.2), value: pasteBack.offeredAppName)
+            #endif
                 // Always present: before a recording the highlighted pill is the style the
                 // recording will be rewritten in; afterwards tapping one re-runs the rewrite.
                 StylePickerRow(
@@ -72,8 +64,23 @@ struct ContentView: View {
                     viewModel.select(style)
                 }
                 .padding(.bottom, 10) // sit a touch higher above the record button
+                #if os(macOS)
+                // A dictation started with the shortcut waits under the record button until it
+                // is sent on, so the result can be read, edited or re-styled first.
+                recordButton
+                    .padding(.bottom, pasteBack.offeredAppName == nil ? 24 : 16)
+                if let appName = pasteBack.offeredAppName {
+                    PasteBackBar(appName: appName,
+                                 paste: { pasteBack.paste() },
+                                 dismiss: { pasteBack.disarm() })
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                #else
                 recordButton
                     .padding(.bottom, 24)
+                #endif
             }
             .ignoreHiddenTitleBar()
             .barChrome(title: "Utterclip") {
