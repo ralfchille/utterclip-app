@@ -348,9 +348,18 @@ Same repository, same steps as [Option A](#option-a-build-it-yourself-with-xcode
 xcodebuild -workspace Utterclip.xcworkspace -scheme UtterclipMac -destination 'platform=macOS' -configuration Release build
 ```
 
-The app lands in Xcode's DerivedData folder; drag it into `/Applications`. The Mac app is
-sandboxed with exactly two permissions, microphone and outgoing network, and asks for the
-microphone the first time you record.
+The app lands in Xcode's DerivedData folder; drag it into `/Applications`. It asks for the
+microphone the first time you record, and the network only for the one-time model download and
+cloud rewrites.
+
+The Mac app is not sandboxed. The global dictation shortcut's two useful halves — reading which
+text field you are typing in, and pasting the finished text back — are Accessibility APIs, and
+the sandbox blocks those against other apps even after you grant Accessibility access. Every
+Mac dictation tool that types into other apps makes the same trade. The consequence is that
+this build cannot go to the Mac App Store as it stands; turn the sandbox back on in
+`Project.swift` if you would rather have it and do without the shortcut's placement and
+paste-back. Nothing else changes: transcription is still on-device and the only outbound
+connections are the model download and, if you use it, your own AI provider.
 
 Note on locally built copies: the build is signed with your development certificate, so
 microphone permission and keychain access survive rebuilds. Without a provisioning profile the

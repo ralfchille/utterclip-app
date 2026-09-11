@@ -25,6 +25,7 @@ public final class CloudStore {
 
     private init() {
         let schema = Schema([Dictation.self, SyncedSetting.self])
+        Self.adoptSandboxedStoreIfNeeded()
         let url = Self.directory().appendingPathComponent("Utterclip.store")
         var made: (ModelContainer, Bool)?
         if SyncPreference.isEnabled {
@@ -60,6 +61,28 @@ public final class CloudStore {
         } catch {
             Self.logger.error("Store save failed: \(error, privacy: .public)")
         }
+    }
+
+    /// The Mac app was sandboxed until 1.1, which put its files inside
+    /// ~/Library/Containers; unsandboxed they belong in ~/Library/Application Support. Moves
+    /// the old store across on first launch so local history survives the change. A no-op
+    /// everywhere else, and once the new store exists.
+    private static func adoptSandboxedStoreIfNeeded() {
+        #if os(macOS)
+        let manager = FileManager.default
+        let destination = directory()
+        guard !manager.fileExists(atPath: destination.appendingPathComponent("Utterclip.store").path) else { return }
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.ralfchille.voicer.mac"
+        let legacy = manager.homeDirectoryForCurrentUser
+            .appending(path: "Library/Containers/\(bundleID)/Data/Library/Application Support/\(bundleID)")
+        guard manager.fileExists(atPath: legacy.appendingPathComponent("Utterclip.store").path) else { return }
+        for name in ["Utterclip.store", "Utterclip.store-shm", "Utterclip.store-wal", "history.json.migrated"] {
+            let source = legacy.appendingPathComponent(name)
+            guard manager.fileExists(atPath: source.path) else { continue }
+            try? manager.copyItem(at: source, to: destination.appendingPathComponent(name))
+        }
+        logger.notice("Adopted the sandboxed store from the previous install.")
+        #endif
     }
 
     /// Application Support: iOS hands out a per-app container; macOS shares
