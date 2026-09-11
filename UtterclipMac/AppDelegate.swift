@@ -194,9 +194,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
             return
         }
-        let anchor = MacPreferences.shared.opensNearTextField ? FocusedField.caretRect() : nil
         PasteBack.shared.arm() // remember where to hand the text back, before we take focus
-        windowController?.show(beside: anchor ?? CGRect(origin: NSEvent.mouseLocation, size: .zero))
+        // Beside the caret when there is one to find. Otherwise under the menu bar icon —
+        // its home — rather than at the pointer, which is wherever it was last left and so
+        // puts the window somewhere different every time.
+        if MacPreferences.shared.opensNearTextField, let caret = FocusedField.caretRect() {
+            windowController?.show(beside: caret)
+        } else {
+            showWindow()
+        }
         NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
     }
 
