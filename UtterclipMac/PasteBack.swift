@@ -1,6 +1,7 @@
 import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
+import Observation
 import os
 
 /// Puts the finished dictation into the app you started it from: the shortcut remembers which
@@ -10,9 +11,15 @@ import os
 ///
 /// Only ever armed by the global shortcut — opening the window from the menu bar has no
 /// target to return to — and only with Accessibility access, which posting a key needs.
+@Observable
 @MainActor
 final class PasteBack {
     static let shared = PasteBack()
+
+    /// Set once a dictation started with the shortcut has settled: the name of the app the
+    /// text would go back to. The result stays on screen, editable and re-styleable, until
+    /// the paste is confirmed — dictation is rarely right first time.
+    private(set) var offeredAppName: String?
 
     private var target: NSRunningApplication?
     private var armedAt: Date?
@@ -47,18 +54,27 @@ final class PasteBack {
     func disarm() {
         target = nil
         armedAt = nil
+        offeredAppName = nil
     }
 
-    /// The dictation settled and its text is on the clipboard: hand it back.
-    func deliver() {
+    /// The dictation settled and its text is on the clipboard: offer to hand it back, rather
+    /// than doing it behind the user's back while they are still reading the result.
+    func offer() {
         guard let target, let armedAt else { return } // nothing was armed; not our business
         guard Date().timeIntervalSince(armedAt) < Self.validity, AXIsProcessTrusted() else {
-            Self.logger.notice("Dropping the paste: stale, or Accessibility access is gone.")
+            Self.logger.notice("Dropping the offer: stale, or Accessibility access is gone.")
             disarm()
             return
         }
-        disarm()
+        offeredAppName = target.localizedName ?? "the previous app"
+    }
+
+    /// Confirmed: close up, bring that app back and paste whatever is on the clipboard now —
+    /// including any edit or restyle made since the dictation finished.
+    func paste() {
+        guard let target else { return }
         Self.logger.notice("Pasting into \(target.localizedName ?? "the previous app", privacy: .public).")
+        disarm()
         AppDelegate.shared?.hideWindowForPasteBack()
         target.activate()
         Task { @MainActor in
