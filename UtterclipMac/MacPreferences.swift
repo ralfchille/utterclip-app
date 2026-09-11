@@ -11,6 +11,7 @@ final class MacPreferences {
     private static let shortcutKey = "globalShortcut"
     private static let openNearFieldKey = "openNearTextField"
     private static let pasteBackKey = "pasteBack"
+    private static let expandedKey = "windowExpanded"
 
     private let defaults = UserDefaults.standard
 
@@ -43,5 +44,12 @@ final class MacPreferences {
     var pastesBack: Bool {
         get { defaults.bool(forKey: Self.pasteBackKey) }
         set { defaults.set(newValue, forKey: Self.pasteBackKey) }
+    }
+
+    /// The roomier of the two window sizes. Two fixed sizes rather than a remembered one:
+    /// the small one to dictate into, the large one to read and edit in.
+    var isWindowExpanded: Bool {
+        get { defaults.bool(forKey: Self.expandedKey) }
+        set { defaults.set(newValue, forKey: Self.expandedKey) }
     }
 }
