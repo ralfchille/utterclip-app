@@ -1,5 +1,6 @@
 import AVFoundation
 import Observation
+import os
 
 /// One metered mic sample; the id keeps bar identity stable as the window slides,
 /// so the waveform bars glide left instead of morphing in place.
@@ -13,6 +14,7 @@ public struct LevelSample: Identifiable, Equatable {
 @Observable
 @MainActor
 public final class AudioRecorder {
+    private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "recorder")
     private var recorder: AVAudioRecorder?
     public private(set) var isRecording = false
     public private(set) var startedAt: Date?
@@ -32,6 +34,14 @@ public final class AudioRecorder {
     /// noise on an iPhone sits around −50; normal speech peaks well above −30.
     private static let speechThresholdDB: Float = -40
     private var lastSpeechAt: Date?
+    /// Loudest level seen during the take: around -120 dB means the input delivered silence,
+    /// which is what a pair of AirPods does when it is connected but not streaming its mic.
+    private var loudestSample: Float = -160
+    /// The last take never rose above the noise floor — the microphone is not actually
+    /// hearing anything, as opposed to the user simply not having spoken.
+    public private(set) var lastTakeWasSilent = false
+    /// The input device that take used, for an error message that names it.
+    public private(set) var lastInputName: String?
 
     func start() async throws {
         // The microphone gate differs by platform. macOS decides it through AVCaptureDevice —
@@ -39,7 +49,11 @@ public final class AudioRecorder {
         // consulting the system, and the recorder then quietly captures silence. (Inside the
         // sandbox the first use of the hardware prompted anyway, which hid this.)
         #if os(macOS)
-        guard await AVCaptureDevice.requestAccess(for: .audio) else {
+        let status = AVCaptureDevice.authorizationStatus(for: .audio)
+        let granted = await AVCaptureDevice.requestAccess(for: .audio)
+        lastInputName = AVCaptureDevice.default(for: .audio)?.localizedName
+        Self.logger.notice("Microphone: status \(status.rawValue, privacy: .public), granted \(granted, privacy: .public), device \(self.lastInputName ?? "none", privacy: .public)")
+        guard granted else {
             throw AppError.microphonePermissionDenied
         }
         #else
@@ -83,6 +97,11 @@ public final class AudioRecorder {
         isRecording = false
         startedAt = nil
         deactivateSession()
+        let bytes = ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int) ?? 0
+        // A take that never rose above -100 dBFS carried no sound at all. Real rooms sit far
+        // above that even in silence, so this is the device, not the speaker.
+        lastTakeWasSilent = loudestSample < -100
+        Self.logger.notice("Recorded \(bytes, privacy: .public) bytes, loudest sample \(self.loudestSample, privacy: .public) dB")
         return url
     }
 
@@ -113,6 +132,7 @@ public final class AudioRecorder {
         levels = []
         sampleCount = 0
         lastSpeechAt = nil
+        loudestSample = -160
         meterTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self, self.isRecording else { break }
@@ -132,6 +152,7 @@ public final class AudioRecorder {
         guard let recorder else { return }
         recorder.updateMeters()
         let dB = recorder.averagePower(forChannel: 0) // -160…0 dBFS
+        loudestSample = max(loudestSample, dB)
         let normalized = max(0, min(1, (dB + 50) / 50))
         // Slight curve keeps room noise as dots while speech still fills the bar.
         let shaped = pow(normalized, 1.5)

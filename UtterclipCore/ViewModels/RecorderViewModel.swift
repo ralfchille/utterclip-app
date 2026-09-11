@@ -272,7 +272,7 @@ public final class RecorderViewModel {
             // `cancel()` already restored the visible state.
         } catch AppError.emptyTranscript {
             // Silence or non-speech only: keep what was on screen, copy and log nothing.
-            notice = "Nothing heard — tap the mic and try again."
+            notice = silenceNotice
             phase = rawTranscript == nil ? .idle : .done
         } catch {
             phase = .error(error.localizedDescription)
@@ -352,6 +352,23 @@ public final class RecorderViewModel {
         // the other device can only show it if both records travel in the same export.
         commitCurrentEntry()
         phase = .done
+    }
+
+    /// Whether the microphone delivered nothing at all, or simply caught no speech. A muted
+    /// or half-connected input (AirPods that are paired but not streaming) is the common
+    /// cause and worth naming, since no amount of re-recording fixes it.
+    private var silenceNotice: String {
+        guard recorder.lastTakeWasSilent else {
+            #if os(macOS)
+            return "Nothing heard — click the mic and try again."
+            #else
+            return "Nothing heard — tap the mic and try again."
+            #endif
+        }
+        if let device = recorder.lastInputName {
+            return "No sound came from \(device). Pick another input in Sound settings and try again."
+        }
+        return "No sound came from the microphone. Check the input device and try again."
     }
 
     /// Chosen from the missing-key card: switch engines and rewrite the current transcript.
