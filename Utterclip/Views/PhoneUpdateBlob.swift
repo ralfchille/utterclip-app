@@ -22,15 +22,27 @@ struct PhoneUpdateBlob: View {
                     .buttonStyle(.plain)
                     .shadow(color: .black.opacity(0.14), radius: 10, y: 3)
                     .accessibilityLabel("New dictation from \(update.deviceName). Click to open it here.")
-            } else if update.isStale {
-                Button(action: dismiss) { content }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(update.title) Click to dismiss.")
             } else {
                 content
-                    .allowsHitTesting(false) // information only
+                    .allowsHitTesting(false) // information only until the text has landed
                     .accessibilityLabel(update.title)
             }
+        }
+        // Always dismissable: the phone's business is not always the Mac's, and this sits in
+        // the window until the phone goes quiet on its own.
+        .overlay(alignment: .trailing) {
+            Button(action: dismiss) {
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(update.isReady
+                        ? AnyShapeStyle(Color.appBackground.opacity(0.6))
+                        : AnyShapeStyle(.secondary))
+                    .frame(width: 24, height: 24)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 6)
+            .accessibilityLabel("Dismiss")
         }
         .scaleEffect(bounce ? 1.06 : 1)
         .onAppear { startPulsing() }
@@ -64,11 +76,7 @@ struct PhoneUpdateBlob: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
-            if update.isStale {
-                Image(systemName: "xmark")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
+            Spacer(minLength: 26) // room for the ✕ that sits on top
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
