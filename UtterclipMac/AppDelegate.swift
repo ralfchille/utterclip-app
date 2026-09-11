@@ -259,6 +259,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         // The view draws its own header (title left, History/Settings right); no AppKit
         // toolbar or title bar chrome.
         hosting.sceneBridgingOptions = []
+        // Without this the hosting controller pins the window's minimum size to whatever
+        // SwiftUI says the content needs, which quietly clamped the window back to 420x720
+        // every launch — a saved smaller frame was restored and then grown again. The window
+        // keeps its own contentMinSize below instead.
+        hosting.sizingOptions = []
         let window = NSWindow(contentViewController: hosting)
         window.title = "Utterclip" // for the window list / accessibility; not drawn
         // Titled (so ⌘W and edge-resizing keep working) but with the bar invisible: no
@@ -270,15 +275,19 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
             window.standardWindowButton(button)?.isHidden = true
         }
-        window.setContentSize(NSSize(width: 420, height: 720))
+        // Sized for what it is: a panel you dictate into, not a document window. Resizable
+        // from here if someone wants more room for long results.
+        window.setContentSize(NSSize(width: 340, height: 560))
         // Low enough for the compact size people settle on for quick dictation; the style
         // pills scroll rather than wrap below it.
         window.contentMinSize = NSSize(width: 300, height: 420)
         window.isReleasedWhenClosed = false // hide on close; keep the view tree alive
         window.isMovableByWindowBackground = true
-        window.setFrameAutosaveName(Self.frameAutosaveName)
-        if !window.setFrameUsingName(Self.frameAutosaveName) { window.center() }
+        window.center()
         super.init(window: window)
+        // AppKit's frame autosave kept handing back a size the app never saved, and the app
+        // repositions the window on every show anyway — so only the size is remembered, and
+        // by us.
         window.delegate = self
         applyLevel()
     }
@@ -317,6 +326,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         }
         show()
     }
+
 
     /// Shows the window beside a caret (or the pointer): just below it when there is room,
     /// above it otherwise, and always fully on the screen it belongs to.
@@ -362,18 +372,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         return false
     }
 
-    // AppKit's autosave only writes the frame at certain moments, and a window that is only
-    // ever hidden never hits them — so the size you resize to was lost on the next launch.
-    // Saving on every resize and move keeps it.
-    func windowDidResize(_ notification: Notification) { saveFrame() }
-    func windowDidMove(_ notification: Notification) { saveFrame() }
-
-    private func saveFrame() {
-        guard let window, window.isVisible else { return }
-        window.saveFrame(usingName: Self.frameAutosaveName)
-    }
-
-    static let frameAutosaveName = "Utterclip.main"
 
     private func applyLevel() {
         guard let window else { return }
