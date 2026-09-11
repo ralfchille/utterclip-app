@@ -119,7 +119,7 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("AI provider API key")
+                    Text("AI provider API key for rewrites")
                 } footer: {
                     Text("Kept in the Keychain — and, with iCloud sync on, in your iCloud Keychain so your other devices have it too. The provider is detected from the key. Needed for style rewrites; transcription works without it.")
                 }
