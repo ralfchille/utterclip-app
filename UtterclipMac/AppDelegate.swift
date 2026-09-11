@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController = controller
 
         // Dictate from any app: the shortcut brings the window up where you are typing.
+        Self.pushLogger.notice("Accessibility access: \(FocusedField.isAllowed ? "granted" : "not granted", privacy: .public)")
         GlobalHotkey.shared.onPress = { [weak self] in self?.hotkeyPressed() }
         GlobalHotkey.shared.register(MacPreferences.shared.shortcut)
 
