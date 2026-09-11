@@ -15,6 +15,7 @@ struct EditorView: View {
 
     @State private var text: String
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.panelDismiss) private var panelDismiss
 
     init(title: String, initialText: String, onSave: @escaping (String) -> Void) {
         self.title = title
@@ -27,7 +28,7 @@ struct EditorView: View {
             VStack(spacing: 0) {
                 #if os(macOS)
                 MacHeader(title: title) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { close() }
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .keyboardShortcut(.cancelAction)
@@ -44,7 +45,7 @@ struct EditorView: View {
             .ignoreHiddenTitleBar()
             .barChrome(title: title) {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { close() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { save() }
@@ -55,8 +56,12 @@ struct EditorView: View {
         .tint(.primary)
     }
 
+    private func close() {
+        if let panelDismiss { panelDismiss() } else { dismiss() }
+    }
+
     private func save() {
         onSave(text.trimmingCharacters(in: .whitespacesAndNewlines))
-        dismiss()
+        close()
     }
 }

@@ -10,6 +10,7 @@ struct HistoryView: View {
     @State private var store = HistoryStore.shared
     @State private var confirmClear = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.panelDismiss) private var panelDismiss
 
     var body: some View {
         SheetNavigation {
@@ -26,9 +27,9 @@ struct HistoryView: View {
                             }
                     }
                     Button {
-                        dismiss()
+                        close()
                     } label: {
-                        Image(systemName: "xmark")
+                        Image(systemName: "chevron.down")
                     }
                     .accessibilityLabel("Close")
                     .keyboardShortcut(.cancelAction)
@@ -55,7 +56,7 @@ struct HistoryView: View {
                 }
                 ToolbarItem(placement: .sheetCancel) {
                     Button {
-                        dismiss()
+                        close()
                     } label: {
                         Image(systemName: "xmark")
                     }
@@ -106,7 +107,7 @@ struct HistoryView: View {
                 ForEach(store.entries) { entry in
                     Button {
                         viewModel.restore(entry)
-                        dismiss()
+                        close()
                     } label: {
                         row(for: entry)
                             .padding(.horizontal, 20)
@@ -129,7 +130,7 @@ struct HistoryView: View {
             ForEach(store.entries) { entry in
                 Button {
                     viewModel.restore(entry)
-                    dismiss()
+                    close()
                 } label: {
                     row(for: entry)
                 }
@@ -142,6 +143,12 @@ struct HistoryView: View {
         }
         .listStyle(.plain)
         #endif
+    }
+
+    /// A Mac panel closes through the binding that presented it; everything else through the
+    /// system's own dismissal.
+    private func close() {
+        if let panelDismiss { panelDismiss() } else { dismiss() }
     }
 
     private func row(for entry: HistoryEntry) -> some View {

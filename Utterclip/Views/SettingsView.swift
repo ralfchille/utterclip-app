@@ -7,6 +7,7 @@ import UtterclipCore
 struct SettingsView: View {
     @Bindable var viewModel: RecorderViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.panelDismiss) private var panelDismiss
 
     @State private var store = StyleStore.shared
     @State private var apiKeyInput = ""
@@ -31,9 +32,9 @@ struct SettingsView: View {
                 // Settings saves as you go, so leaving is plain navigation: a close glyph, like
                 // History. Only the editor, which can save or discard, keeps Cancel / Done.
                 Button {
-                    dismiss()
+                    close()
                 } label: {
-                    Image(systemName: "xmark")
+                    Image(systemName: "chevron.down")
                 }
                 .accessibilityLabel("Close")
                 .keyboardShortcut(.cancelAction) // Escape closes; Return stays with the fields
@@ -208,10 +209,14 @@ struct SettingsView: View {
             .ignoreHiddenTitleBar()
             .barChrome(title: "Settings") {
                 ToolbarItem(placement: .sheetCancel) {
-                    Button("Done") { dismiss() }
+                    Button("Done") { close() }
                 }
             }
         }
+    }
+
+    private func close() {
+        if let panelDismiss { panelDismiss() } else { dismiss() }
     }
 
     /// Validates and stores the key; every failure is shown, including a Keychain refusal.

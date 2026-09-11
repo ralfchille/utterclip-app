@@ -138,7 +138,17 @@ extension View {
     @ViewBuilder
     func panel<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
         #if os(macOS)
-        navigationDestination(isPresented: isPresented, destination: content)
+        overlay {
+            ZStack {
+                if isPresented.wrappedValue {
+                    content()
+                        .environment(\.panelDismiss) { isPresented.wrappedValue = false }
+                        .background(Color.appBackground)
+                        .transition(.move(edge: .bottom))
+                }
+            }
+            .animation(.spring(duration: 0.38, bounce: 0.08), value: isPresented.wrappedValue)
+        }
         #else
         sheet(isPresented: isPresented, content: content)
         #endif
@@ -152,7 +162,17 @@ extension View {
         @ViewBuilder content: @escaping (Item) -> Content
     ) -> some View {
         #if os(macOS)
-        navigationDestination(item: item, destination: content)
+        overlay {
+            ZStack {
+                if let value = item.wrappedValue {
+                    content(value)
+                        .environment(\.panelDismiss) { item.wrappedValue = nil }
+                        .background(Color.appBackground)
+                        .transition(.move(edge: .bottom))
+                }
+            }
+            .animation(.spring(duration: 0.38, bounce: 0.08), value: item.wrappedValue)
+        }
         #else
         fullScreenCover(item: item, content: content)
         #endif
@@ -323,11 +343,23 @@ struct SheetNavigation<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        #if os(macOS)
-        content
-        #else
+        // Both platforms need a stack of their own now: a Mac panel slides up over the whole
+        // window rather than pushing onto the main one, so its own sub-pages (the style
+        // editor) have nowhere else to push.
         NavigationStack { content }
-        #endif
+    }
+}
+
+/// How a page closes itself when it is a Mac panel rather than a pushed or sheeted view.
+/// `dismiss` only knows about presentations SwiftUI made itself.
+private struct PanelDismissKey: EnvironmentKey {
+    static let defaultValue: (() -> Void)? = nil
+}
+
+extension EnvironmentValues {
+    var panelDismiss: (() -> Void)? {
+        get { self[PanelDismissKey.self] }
+        set { self[PanelDismissKey.self] = newValue }
     }
 }
 
