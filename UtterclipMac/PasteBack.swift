@@ -26,11 +26,22 @@ final class PasteBack {
     /// Remembers the app in front, before Utterclip takes focus.
     func arm() {
         disarm()
-        guard MacPreferences.shared.pastesBack, FocusedField.isAllowed else { return }
+        guard MacPreferences.shared.pastesBack else {
+            Self.logger.notice("Not arming: paste-back is switched off.")
+            return
+        }
+        guard FocusedField.isAllowed else {
+            Self.logger.notice("Not arming: no Accessibility access.")
+            return
+        }
         guard let front = NSWorkspace.shared.frontmostApplication,
-              front.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
+              front.bundleIdentifier != Bundle.main.bundleIdentifier else {
+            Self.logger.notice("Not arming: Utterclip was already the front app.")
+            return
+        }
         target = front
         armedAt = .now
+        Self.logger.notice("Armed for \(front.localizedName ?? "?", privacy: .public).")
     }
 
     func disarm() {
@@ -40,8 +51,9 @@ final class PasteBack {
 
     /// The dictation settled and its text is on the clipboard: hand it back.
     func deliver() {
-        guard let target, let armedAt, Date().timeIntervalSince(armedAt) < Self.validity,
-              AXIsProcessTrusted() else {
+        guard let target, let armedAt else { return } // nothing was armed; not our business
+        guard Date().timeIntervalSince(armedAt) < Self.validity, AXIsProcessTrusted() else {
+            Self.logger.notice("Dropping the paste: stale, or Accessibility access is gone.")
             disarm()
             return
         }
@@ -63,7 +75,9 @@ final class PasteBack {
               let up = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: false) else { return }
         down.flags = .maskCommand
         up.flags = .maskCommand
-        down.post(tap: .cgAnnotatedSessionEventTap)
-        up.post(tap: .cgAnnotatedSessionEventTap)
+        // The HID tap is where synthetic input belongs: the session tap is filtered by some
+        // apps and skipped entirely by others.
+        down.post(tap: .cghidEventTap)
+        up.post(tap: .cghidEventTap)
     }
 }
