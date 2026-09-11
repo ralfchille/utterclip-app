@@ -102,6 +102,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window
 
     /// Brings the window forward; when the status item is on screen, right under its icon.
+    /// The header's resize button: swap between the two window sizes.
+    func toggleWindowSize() {
+        MacPreferences.shared.isWindowExpanded.toggle()
+        windowController?.applyPreferredSize()
+    }
+
     /// Back to the menu bar. The ✕ in the header, the red close button and ⌘W all land here.
     func hideWindow() {
         windowController?.hide()
@@ -275,9 +281,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
             window.standardWindowButton(button)?.isHidden = true
         }
-        // Sized for what it is: a panel you dictate into, not a document window. Resizable
-        // from here if someone wants more room for long results.
-        window.setContentSize(NSSize(width: 340, height: 560))
+        // Sized for what it is: a panel you dictate into, not a document window. The header's
+        // resize button swaps in `expanded` for reading and editing; still draggable to
+        // anything in between.
+        window.setContentSize(Self.compact)
         // Low enough for the compact size people settle on for quick dictation; the style
         // pills scroll rather than wrap below it.
         window.contentMinSize = NSSize(width: 300, height: 420)
@@ -295,7 +302,30 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("not used") }
 
+    /// The two sizes the header button switches between; `expanded` is half as much again in
+    /// each direction, which is a different window rather than a slightly bigger one.
+    static let compact = NSSize(width: 340, height: 560)
+    static let expanded = NSSize(width: 510, height: 840)
+
+    /// Applies the chosen size, keeping the window's top-left corner and staying on screen.
+    func applyPreferredSize() {
+        guard let window else { return }
+        let wanted = MacPreferences.shared.isWindowExpanded ? Self.expanded : Self.compact
+        let visible = (window.screen ?? NSScreen.main)?.visibleFrame ?? .zero
+        let size = NSSize(width: min(wanted.width, visible.width), height: min(wanted.height, visible.height))
+        guard window.frame.size != size else { return }
+        var frame = window.frame
+        frame.origin.y += frame.height - size.height // grow downwards, not upwards
+        frame.size = size
+        if !visible.isEmpty {
+            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
+        }
+        window.setFrame(frame, display: true, animate: window.isVisible)
+    }
+
     func show() {
+        applyPreferredSize()
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         RemoteZoneWatcher.shared.interval = 2
@@ -314,6 +344,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     /// Shows the window centred under a menu bar item, kept within that screen. The size is
     /// whatever the user last resized it to; only the position moves.
     func show(under anchor: NSRect) {
+        applyPreferredSize()
         if let window,
            let screen = NSScreen.screens.first(where: { $0.frame.intersects(anchor) }) ?? NSScreen.main {
             let visible = screen.visibleFrame
@@ -331,6 +362,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     /// Shows the window beside a caret (or the pointer): just below it when there is room,
     /// above it otherwise, and always fully on the screen it belongs to.
     func show(beside anchor: CGRect) {
+        applyPreferredSize()
         if let window {
             let screen = NSScreen.screens.first { $0.frame.contains(CGPoint(x: anchor.midX, y: anchor.midY)) }
                 ?? NSScreen.main

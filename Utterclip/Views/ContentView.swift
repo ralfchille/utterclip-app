@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var editTarget: EditTarget?
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
+    @State private var mac = MacPreferences.shared
     #endif
 
     /// Which text the editor is currently editing.
@@ -37,6 +38,15 @@ struct ContentView: View {
                         Image(systemName: "gearshape")
                     }
                     .accessibilityLabel("Settings")
+                    // Two sizes: a panel to dictate into, and room to read and edit in.
+                    Button {
+                        AppDelegate.shared?.toggleWindowSize()
+                    } label: {
+                        Image(systemName: mac.isWindowExpanded
+                              ? "arrow.down.right.and.arrow.up.left"
+                              : "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityLabel(mac.isWindowExpanded ? "Smaller window" : "Bigger window")
                     // Back to the menu bar without having to aim for the status item.
                     Button {
                         AppDelegate.shared?.hideWindow()
