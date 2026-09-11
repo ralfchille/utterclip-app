@@ -55,6 +55,7 @@ struct ContentView: View {
                                             claim: { viewModel.claimPhoneUpdate() },
                                             dismiss: { viewModel.dismissPhoneUpdate() })
                                 .padding(.top, 4)
+                                .padding(.horizontal) // the style pills' margin
                                 .transition(.scale(scale: 0.6).combined(with: .opacity))
                         }
                     }
@@ -80,7 +81,7 @@ struct ContentView: View {
                     PasteBackBar(appName: appName,
                                  paste: { pasteBack.paste() },
                                  dismiss: { pasteBack.disarm() })
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal) // the style pills' margin
                         .padding(.bottom, 20)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }

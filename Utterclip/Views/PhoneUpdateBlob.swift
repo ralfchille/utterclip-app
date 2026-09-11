@@ -72,7 +72,8 @@ struct PhoneUpdateBlob: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .frame(maxWidth: 320)
+        // No width of its own: it hugs short text and truncates long text at whatever the
+        // window leaves, so it never reaches past the style pills' margin.
         .fixedSize(horizontal: false, vertical: true)
         .background {
             if update.isReady {
