@@ -37,6 +37,13 @@ struct ContentView: View {
                         Image(systemName: "gearshape")
                     }
                     .accessibilityLabel("Settings")
+                    // Back to the menu bar without having to aim for the status item.
+                    Button {
+                        AppDelegate.shared?.hideWindow()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("Close")
                 }
                 #endif
                 resultArea
