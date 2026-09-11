@@ -102,6 +102,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window
 
     /// Brings the window forward; when the status item is on screen, right under its icon.
+    /// Back to the menu bar. The ✕ in the header, the red close button and ⌘W all land here.
+    func hideWindow() {
+        windowController?.hide()
+    }
+
     /// Gets the window out of the way just before the text is pasted back: the dictation is
     /// finished and the text is about to appear in the field you were typing in.
     func hideWindowForPasteBack() {
