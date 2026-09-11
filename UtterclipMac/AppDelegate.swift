@@ -102,8 +102,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window
 
     /// Brings the window forward; when the status item is on screen, right under its icon.
-    /// Gets the window out of the way just before the text is pasted back.
+    /// Gets the window out of the way just before the text is pasted back: the dictation is
+    /// finished and the text is about to appear in the field you were typing in.
     func hideWindowForPasteBack() {
+        Self.pushLogger.notice("Hiding the window for the paste-back.")
         windowController?.hide()
     }
 
@@ -264,11 +266,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
             window.standardWindowButton(button)?.isHidden = true
         }
         window.setContentSize(NSSize(width: 420, height: 720))
-        window.contentMinSize = NSSize(width: 380, height: 600)
+        // Low enough for the compact size people settle on for quick dictation; the style
+        // pills scroll rather than wrap below it.
+        window.contentMinSize = NSSize(width: 300, height: 420)
         window.isReleasedWhenClosed = false // hide on close; keep the view tree alive
         window.isMovableByWindowBackground = true
-        window.setFrameAutosaveName("Utterclip.main")
-        if !window.setFrameUsingName("Utterclip.main") { window.center() }
+        window.setFrameAutosaveName(Self.frameAutosaveName)
+        if !window.setFrameUsingName(Self.frameAutosaveName) { window.center() }
         super.init(window: window)
         window.delegate = self
         applyLevel()
@@ -352,6 +356,19 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         hide()
         return false
     }
+
+    // AppKit's autosave only writes the frame at certain moments, and a window that is only
+    // ever hidden never hits them — so the size you resize to was lost on the next launch.
+    // Saving on every resize and move keeps it.
+    func windowDidResize(_ notification: Notification) { saveFrame() }
+    func windowDidMove(_ notification: Notification) { saveFrame() }
+
+    private func saveFrame() {
+        guard let window, window.isVisible else { return }
+        window.saveFrame(usingName: Self.frameAutosaveName)
+    }
+
+    static let frameAutosaveName = "Utterclip.main"
 
     private func applyLevel() {
         guard let window else { return }
