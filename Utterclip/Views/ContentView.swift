@@ -347,6 +347,9 @@ struct ContentView: View {
                 }
                 Text(raw)
                     .font(PlatformFont.rawTranscript)
+                    // The rewrite is the result; the raw text is there to check it against,
+                    // so it stays a glance rather than a wall. The editor shows all of it.
+                    .lineLimit(viewModel.styledText == nil ? nil : 4)
                     .foregroundStyle(viewModel.styledText == nil ? .primary : .secondary)
             }
             .padding(.horizontal) // align with the styled card's inner content
