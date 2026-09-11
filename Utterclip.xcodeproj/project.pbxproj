@@ -70,6 +70,7 @@
 		BBDF502CD8914F2939B1B24C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */; };
 		BF6A9F57B3FCB0191257D6A4 /* UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0344ECA6DB4AC1A96B78EE71 /* UtterclipWidgets.swift */; };
 		C1A4EBD08E645E3E27EAA8AA /* SyncStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */; };
+		C376C899C0A0D4F59ED1C7FB /* PasteBackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49B57140C869943C61F0CE7 /* PasteBackBar.swift */; };
 		C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
 		CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319D09EB2560270E662093E7 /* StyleStore.swift */; };
 		D2E079B1639B91C06EF6BDD6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
@@ -222,6 +223,7 @@
 		9F87071BCF63570CD4B59C66 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		A1749AAF47F9587C103D0FF5 /* LiveSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSync.swift; sourceTree = "<group>"; };
+		A49B57140C869943C61F0CE7 /* PasteBackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBackBar.swift; sourceTree = "<group>"; };
 		A4D02D86274CB92A92FF84D9 /* MacPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPreferences.swift; sourceTree = "<group>"; };
 		A87D9C7543EC8DFB48425596 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
 		AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStyle.swift; sourceTree = "<group>"; };
@@ -464,6 +466,7 @@
 				CD5C0A65E890EB32371EC03D /* GlobalHotkey.swift */,
 				A4D02D86274CB92A92FF84D9 /* MacPreferences.swift */,
 				D489A38614FBC3F0C60A8FDC /* PasteBack.swift */,
+				A49B57140C869943C61F0CE7 /* PasteBackBar.swift */,
 				108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */,
 			);
 			path = UtterclipMac;
@@ -717,6 +720,7 @@
 				A0E1DB9FACB728E92378A9FA /* GlobalHotkey.swift in Sources */,
 				5892FC19F5ED59CFAE513E2D /* MacPreferences.swift in Sources */,
 				B1DCF7BC97B87CD0CF241CA5 /* PasteBack.swift in Sources */,
+				C376C899C0A0D4F59ED1C7FB /* PasteBackBar.swift in Sources */,
 				2B95AEDE3EBA7BDD6C635A6F /* UtterclipMacApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -151,7 +151,7 @@ struct SettingsView: View {
                     }
                     Toggle("Open beside the text field", isOn: nearFieldBinding)
                         .disabled(mac.shortcut == nil)
-                    Toggle("Paste back into that app", isOn: pasteBackBinding)
+                    Toggle("Offer to paste back", isOn: pasteBackBinding)
                         .disabled(mac.shortcut == nil)
                     if mac.opensNearTextField, !accessibilityAllowed {
                         Button("Allow Accessibility access…") {
@@ -162,7 +162,7 @@ struct SettingsView: View {
                     Text("Shortcut")
                 } footer: {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Press the shortcut in any app to open Utterclip and start dictating; press it again to stop. The window opens next to wherever you are typing, and the finished text is pasted straight back into that app.")
+                        Text("Press the shortcut in any app to open Utterclip and start dictating; press it again to stop. The window opens next to wherever you are typing. When the text is ready, read it, edit or re-style it if you like, then press Return to send it into that app.")
                         if (mac.opensNearTextField || mac.pastesBack), !accessibilityAllowed {
                             Text("Finding the text field and pasting back both need Accessibility access. Without it the window opens beside the pointer and the text waits on the clipboard.")
                                 .foregroundStyle(.secondary)

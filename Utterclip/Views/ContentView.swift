@@ -9,6 +9,9 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var editTarget: EditTarget?
+    #if os(macOS)
+    @State private var pasteBack = PasteBack.shared
+    #endif
 
     /// Which text the editor is currently editing.
     private enum EditTarget: String, Identifiable, Hashable {
@@ -49,6 +52,17 @@ struct ContentView: View {
                         }
                     }
                     .animation(.spring(duration: 0.45, bounce: 0.35), value: viewModel.phoneUpdate)
+                #if os(macOS)
+                // A dictation started with the shortcut waits here until it is sent on, so the
+                // result can be read, edited or re-styled first.
+                if let appName = pasteBack.offeredAppName {
+                    PasteBackBar(appName: appName,
+                                 paste: { pasteBack.paste() },
+                                 dismiss: { pasteBack.disarm() })
+                        .padding(.horizontal, 16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                #endif
                 // Always present: before a recording the highlighted pill is the style the
                 // recording will be rewritten in; afterwards tapping one re-runs the rewrite.
                 StylePickerRow(
@@ -120,7 +134,7 @@ struct ContentView: View {
             // once its text is on the clipboard; anything else leaves the target alone.
             .onChange(of: viewModel.phase) { _, phase in
                 switch phase {
-                case .done: PasteBack.shared.deliver()
+                case .done: PasteBack.shared.offer()
                 case .idle, .error: PasteBack.shared.disarm()
                 default: break
                 }
