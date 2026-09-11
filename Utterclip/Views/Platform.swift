@@ -363,6 +363,25 @@ extension EnvironmentValues {
     }
 }
 
+/// The record button and the two satellites beside it. A thumb needs 84 pt; a pointer does
+/// not, and at that size they swallowed a small Mac window — so the Mac runs them at
+/// two-thirds, keeping every proportion between them.
+enum ControlMetrics {
+    #if os(macOS)
+    static let record: CGFloat = 56
+    static let recordGlyph: CGFloat = 20
+    static let satellite: CGFloat = 38
+    static let satelliteGlyph: CGFloat = 14
+    static let satelliteOffset: CGFloat = 54
+    #else
+    static let record: CGFloat = 84
+    static let recordGlyph: CGFloat = 30
+    static let satellite: CGFloat = 56
+    static let satelliteGlyph: CGFloat = 20
+    static let satelliteOffset: CGFloat = 80
+    #endif
+}
+
 /// Wording that names the input device.
 enum PlatformText {
     /// The idle-screen hint.
