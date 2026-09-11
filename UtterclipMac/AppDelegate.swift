@@ -314,9 +314,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         let visible = (window.screen ?? NSScreen.main)?.visibleFrame ?? .zero
         let size = NSSize(width: min(wanted.width, visible.width), height: min(wanted.height, visible.height))
         guard window.frame.size != size else { return }
+        // Anchored top-centre: the window is placed by its centre in the first place — under
+        // the status item, or beside the caret — so growing it should keep that centre and
+        // the top edge, and spread the extra width to both sides.
         var frame = window.frame
-        frame.origin.y += frame.height - size.height // grow downwards, not upwards
+        let centreX = frame.midX
+        let top = frame.maxY
         frame.size = size
+        frame.origin.x = centreX - size.width / 2
+        frame.origin.y = top - size.height
         if !visible.isEmpty {
             frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
             frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
