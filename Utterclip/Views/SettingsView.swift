@@ -151,6 +151,8 @@ struct SettingsView: View {
                     }
                     Toggle("Open beside the text field", isOn: nearFieldBinding)
                         .disabled(mac.shortcut == nil)
+                    Toggle("Paste back into that app", isOn: pasteBackBinding)
+                        .disabled(mac.shortcut == nil)
                     if mac.opensNearTextField, !accessibilityAllowed {
                         Button("Allow Accessibility access…") {
                             FocusedField.requestAccess()
@@ -160,9 +162,9 @@ struct SettingsView: View {
                     Text("Shortcut")
                 } footer: {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Press the shortcut in any app to open Utterclip and start dictating; press it again to stop. The window opens next to wherever you are typing.")
-                        if mac.opensNearTextField, !accessibilityAllowed {
-                            Text("Finding the text field needs Accessibility access. Without it the window opens beside the pointer instead.")
+                        Text("Press the shortcut in any app to open Utterclip and start dictating; press it again to stop. The window opens next to wherever you are typing, and the finished text is pasted straight back into that app.")
+                        if (mac.opensNearTextField || mac.pastesBack), !accessibilityAllowed {
+                            Text("Finding the text field and pasting back both need Accessibility access. Without it the window opens beside the pointer and the text waits on the clipboard.")
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -243,6 +245,14 @@ struct SettingsView: View {
     #if os(macOS)
     private var shortcutBinding: Binding<GlobalHotkey.Shortcut?> {
         Binding(get: { mac.shortcut }, set: { mac.shortcut = $0 })
+    }
+
+    private var pasteBackBinding: Binding<Bool> {
+        Binding(get: { mac.pastesBack }, set: { on in
+            mac.pastesBack = on
+            if on, !FocusedField.isAllowed { FocusedField.requestAccess() }
+            accessibilityAllowed = FocusedField.isAllowed
+        })
     }
 
     private var nearFieldBinding: Binding<Bool> {

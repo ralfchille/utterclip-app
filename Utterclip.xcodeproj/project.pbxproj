@@ -63,6 +63,7 @@
 		ACC4FC8670FAA7F631A6F72C /* TuistBundle+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B90F7198CD313B27B6305C /* TuistBundle+UtterclipMac.swift */; };
 		ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
 		B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
+		B1DCF7BC97B87CD0CF241CA5 /* PasteBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D489A38614FBC3F0C60A8FDC /* PasteBack.swift */; };
 		B4267352E2341CDDF8DABECE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */; };
 		B5B49810AA6AFC7BE9C30C2C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 753112FFBC0496CDE6B924D2 /* PrivacyInfo.xcprivacy */; };
 		BA543133A438725F553F01E1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 957C00188722A28CAB27FDCD /* PrivacyInfo.xcprivacy */; };
@@ -236,6 +237,7 @@
 		CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		CED60BD402FCD9AC33ADBAFF /* UtterclipMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UtterclipMac.entitlements; sourceTree = "<group>"; };
 		D21D8DFF607B93A631014902 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
+		D489A38614FBC3F0C60A8FDC /* PasteBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBack.swift; sourceTree = "<group>"; };
 		DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
 		E02D86E45BCDAFCC58CF7667 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatus.swift; sourceTree = "<group>"; };
@@ -461,6 +463,7 @@
 				3405A7B6FD5848A2EDE6E83D /* FocusedField.swift */,
 				CD5C0A65E890EB32371EC03D /* GlobalHotkey.swift */,
 				A4D02D86274CB92A92FF84D9 /* MacPreferences.swift */,
+				D489A38614FBC3F0C60A8FDC /* PasteBack.swift */,
 				108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */,
 			);
 			path = UtterclipMac;
@@ -713,6 +716,7 @@
 				DAAA2AB3BC4A8DF741F5E20E /* FocusedField.swift in Sources */,
 				A0E1DB9FACB728E92378A9FA /* GlobalHotkey.swift in Sources */,
 				5892FC19F5ED59CFAE513E2D /* MacPreferences.swift in Sources */,
+				B1DCF7BC97B87CD0CF241CA5 /* PasteBack.swift in Sources */,
 				2B95AEDE3EBA7BDD6C635A6F /* UtterclipMacApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

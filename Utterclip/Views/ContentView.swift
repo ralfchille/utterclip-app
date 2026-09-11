@@ -115,6 +115,17 @@ struct ContentView: View {
                 viewModel.startWatchingOtherDevices() // the indicator; the phone stays as it is
                 #endif
             }
+            #if os(macOS)
+            // A dictation started with the global shortcut goes back to the app it came from
+            // once its text is on the clipboard; anything else leaves the target alone.
+            .onChange(of: viewModel.phase) { _, phase in
+                switch phase {
+                case .done: PasteBack.shared.deliver()
+                case .idle, .error: PasteBack.shared.disarm()
+                default: break
+                }
+            }
+            #endif
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowSettings)) { _ in
                 showSettings = true
             }
