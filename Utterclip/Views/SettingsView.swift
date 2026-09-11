@@ -15,6 +15,10 @@ struct SettingsView: View {
     @State private var storedProvider = KeyProvider.shared.provider?.displayName
     @State private var keyError: String?
     @State private var syncEnabled = SyncPreference.isEnabled
+    #if os(macOS)
+    @State private var mac = MacPreferences.shared
+    @State private var accessibilityAllowed = FocusedField.isAllowed
+    #endif
     @State private var syncStatus = SyncStatus.shared
     /// The switch was flipped this session: history and settings pick it up after a relaunch.
     @State private var syncChangePending = false
@@ -137,6 +141,34 @@ struct SettingsView: View {
                     }
                 }
 
+                #if os(macOS)
+                Section {
+                    Picker("Dictate from anywhere", selection: shortcutBinding) {
+                        Text("Off").tag(GlobalHotkey.Shortcut?.none)
+                        ForEach(GlobalHotkey.Shortcut.allCases) { shortcut in
+                            Text(shortcut.label).tag(GlobalHotkey.Shortcut?.some(shortcut))
+                        }
+                    }
+                    Toggle("Open beside the text field", isOn: nearFieldBinding)
+                        .disabled(mac.shortcut == nil)
+                    if mac.opensNearTextField, !accessibilityAllowed {
+                        Button("Allow Accessibility access…") {
+                            FocusedField.requestAccess()
+                        }
+                    }
+                } header: {
+                    Text("Shortcut")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Press the shortcut in any app to open Utterclip and start dictating; press it again to stop. The window opens next to wherever you are typing.")
+                        if mac.opensNearTextField, !accessibilityAllowed {
+                            Text("Finding the text field needs Accessibility access. Without it the window opens beside the pointer instead.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                #endif
+
                 Section {
                     Toggle("Sync with iCloud", isOn: $syncEnabled)
                         .onChange(of: syncEnabled) { _, on in
@@ -207,6 +239,21 @@ struct SettingsView: View {
             store.removeStyle(id: styles[index].id)
         }
     }
+
+    #if os(macOS)
+    private var shortcutBinding: Binding<GlobalHotkey.Shortcut?> {
+        Binding(get: { mac.shortcut }, set: { mac.shortcut = $0 })
+    }
+
+    private var nearFieldBinding: Binding<Bool> {
+        Binding(get: { mac.opensNearTextField }, set: { on in
+            mac.opensNearTextField = on
+            // Ask the first time it is switched on; System Settings takes it from there.
+            if on, !FocusedField.isAllowed { FocusedField.requestAccess() }
+            accessibilityAllowed = FocusedField.isAllowed
+        })
+    }
+    #endif
 
     private var defaultStyleBinding: Binding<String> {
         Binding(
