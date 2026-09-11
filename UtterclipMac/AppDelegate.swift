@@ -36,6 +36,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.floatOnTop = floatOnTop
         windowController = controller
 
+        // Dictate from any app: the shortcut brings the window up where you are typing.
+        GlobalHotkey.shared.onPress = { [weak self] in self?.hotkeyPressed() }
+        GlobalHotkey.shared.register(MacPreferences.shared.shortcut)
+
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
             button.image = NSImage(named: "MenuBarIcon") // template: follows the menu bar's light/dark
@@ -163,6 +167,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// The global shortcut. Recording → stop it, as the second press of a dictation.
+    /// Otherwise open the window next to whatever you are typing in and start recording,
+    /// whichever app you were in.
+    private func hotkeyPressed() {
+        if RecordingState.isRecording {
+            NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
+            return
+        }
+        let anchor = MacPreferences.shared.opensNearTextField ? FocusedField.caretRect() : nil
+        windowController?.show(beside: anchor ?? CGRect(origin: NSEvent.mouseLocation, size: .zero))
+        NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
+    }
+
     /// The menu is attached only for the duration of the click, so a plain left-click keeps
     /// toggling the window instead of opening the menu.
     private func showStatusMenu() {
@@ -280,6 +297,27 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
             frame.origin.y = anchor.minY - frame.height - 6 // just below the menu bar
             frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
             frame.origin.y = max(frame.origin.y, visible.minY)
+            window.setFrame(frame, display: false)
+        }
+        show()
+    }
+
+    /// Shows the window beside a caret (or the pointer): just below it when there is room,
+    /// above it otherwise, and always fully on the screen it belongs to.
+    func show(beside anchor: CGRect) {
+        if let window {
+            let screen = NSScreen.screens.first { $0.frame.contains(CGPoint(x: anchor.midX, y: anchor.midY)) }
+                ?? NSScreen.main
+            let visible = screen?.visibleFrame ?? .zero
+            var frame = window.frame
+            let gap: CGFloat = 12
+            frame.origin.x = anchor.midX - frame.width / 2
+            frame.origin.y = anchor.minY - gap - frame.height // below the caret
+            if frame.origin.y < visible.minY {
+                frame.origin.y = anchor.maxY + gap // no room below: sit above it instead
+            }
+            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
             window.setFrame(frame, display: false)
         }
         show()
