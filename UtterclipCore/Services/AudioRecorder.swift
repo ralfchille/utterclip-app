@@ -34,9 +34,19 @@ public final class AudioRecorder {
     private var lastSpeechAt: Date?
 
     func start() async throws {
+        // The microphone gate differs by platform. macOS decides it through AVCaptureDevice —
+        // `AVAudioApplication.requestRecordPermission()` answers true there without ever
+        // consulting the system, and the recorder then quietly captures silence. (Inside the
+        // sandbox the first use of the hardware prompted anyway, which hid this.)
+        #if os(macOS)
+        guard await AVCaptureDevice.requestAccess(for: .audio) else {
+            throw AppError.microphonePermissionDenied
+        }
+        #else
         guard await AVAudioApplication.requestRecordPermission() else {
             throw AppError.microphonePermissionDenied
         }
+        #endif
 
         #if os(iOS)
         let session = AVAudioSession.sharedInstance()
