@@ -402,9 +402,12 @@ struct ContentView: View {
                         set: { styledDraft = $0 }
                     ), highlightRules: .utterclipMarkdown)
                         .introspect { editor in
-                            editor.textView.drawsBackground = false
+                            // Opaque, matching the card it sits on: see Color.editorSurface.
+                            editor.textView.drawsBackground = true
+                            editor.textView.backgroundColor = .textBackgroundColor
                             editor.textView.textContainerInset = .zero
-                            editor.scrollView?.drawsBackground = false
+                            editor.scrollView?.drawsBackground = true
+                            editor.scrollView?.backgroundColor = .textBackgroundColor
                             // No scroller at all: the frame grows with the text, so one only
                             // ever appeared for the instant between a line wrapping and the
                             // frame following — which is what the flicker was. Trackpad
@@ -413,11 +416,6 @@ struct ContentView: View {
                             editor.scrollView?.hasHorizontalScroller = false
                             editor.scrollView?.verticalScrollElasticity = .none
                             editor.scrollView?.horizontalScrollElasticity = .none
-                            // A transparent text view has no background to paint over the
-                            // pixels it vacates, so AppKit's scroll-by-copying left fragments
-                            // of the old lines behind. Copying off, and redraw the whole view.
-                            editor.scrollView?.contentView.copiesOnScroll = false
-                            editor.scrollView?.contentView.drawsBackground = false
                             editor.textView.needsDisplay = true
                             // Click the card, get a cursor: without this the text looks
                             // editable but nothing has focus.
@@ -454,6 +452,13 @@ struct ContentView: View {
                 #else
                 editTarget = .styled
                 #endif
+            }
+            // While editing the card is a solid sheet rather than glass, so the text view can
+            // be opaque and repaint cleanly as it grows.
+            .background {
+                if isEditingResult {
+                    RoundedRectangle(cornerRadius: 16).fill(Color.editorSurface)
+                }
             }
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }

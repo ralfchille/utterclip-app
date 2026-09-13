@@ -16,6 +16,17 @@ extension Color {
     }
 
     /// Flat fill for an unselected pill (the iOS `systemGray6`).
+    /// The surface the result sits on while it is being edited. Opaque on purpose: a
+    /// transparent text view has nothing to paint over the pixels it vacates, and left
+    /// fragments of old lines behind as the frame grew.
+    static var editorSurface: Color {
+        #if os(macOS)
+        Color(nsColor: .textBackgroundColor)
+        #else
+        Color(.secondarySystemGroupedBackground)
+        #endif
+    }
+
     static var pillFill: Color {
         #if os(macOS)
         Color.primary.opacity(0.07)
