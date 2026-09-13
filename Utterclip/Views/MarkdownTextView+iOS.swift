@@ -29,6 +29,22 @@ struct MarkdownTextView: UIViewRepresentable {
         MarkdownHighlighter.apply(to: textView.textStorage)
         textView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
+        // The bar the keyboard itself carries. SwiftUI's `.toolbar(placement: .keyboard)`
+        // attaches to SwiftUI's own focus, and this view takes focus through UIKit, so it
+        // never appeared. A UIToolbar with the system background is the same thing the
+        // keyboard shows for any other field.
+        let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 44))
+        let appearance = UIToolbarAppearance()
+        appearance.configureWithDefaultBackground()
+        toolbar.standardAppearance = appearance
+        toolbar.compactAppearance = appearance
+        toolbar.items = [
+            UIBarButtonItem(systemItem: .flexibleSpace),
+            UIBarButtonItem(title: "Done", style: .done, target: context.coordinator,
+                            action: #selector(Coordinator.finish)),
+        ]
+        toolbar.sizeToFit()
+        textView.inputAccessoryView = toolbar
         DispatchQueue.main.async {
             textView.becomeFirstResponder()
             textView.selectedRange = NSRange(location: (textView.text as NSString).length, length: 0)
@@ -63,6 +79,13 @@ struct MarkdownTextView: UIViewRepresentable {
 
         func textViewDidEndEditing(_ textView: UITextView) {
             parent.onCommit()
+        }
+
+        /// Done: give up focus, which takes the keyboard down and commits through
+        /// `textViewDidEndEditing`.
+        @objc func finish() {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                            to: nil, from: nil, for: nil)
         }
 
     }
