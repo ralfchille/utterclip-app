@@ -21,6 +21,10 @@ struct ContentView: View {
     @State private var editorHeight: CGFloat = 0
     @State private var editorCeiling: CGFloat = 0
     #if os(macOS)
+    /// Held so a keystroke can measure the text straight away, in the same beat as the edit.
+    @State private var editorTextView: NSTextView?
+    #endif
+    #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
     /// The result card is edited where it sits rather than in a panel; this holds the draft
@@ -403,6 +407,7 @@ struct ContentView: View {
                             editor.scrollView?.drawsBackground = false
                             // Click the card, get a cursor: without this the text looks
                             // editable but nothing has focus.
+                            if editorTextView !== editor.textView { editorTextView = editor.textView }
                             measureEditor(editor.textView)
                             if editor.textView.window?.firstResponder !== editor.textView {
                                 editor.textView.window?.makeFirstResponder(editor.textView)
@@ -564,6 +569,10 @@ struct ContentView: View {
     /// Each keystroke says "Writing…" and restarts the three-second wait; when it elapses the
     /// text goes back on the clipboard and the label says so. No save button anywhere.
     private func typedInResult() {
+        // Measured here, not on the next pass: a keystroke that wraps to a new line has to
+        // find the frame already tall enough, or the text view scrolls to keep the caret in
+        // view and then scrolls back once the frame catches up — which reads as a flicker.
+        if let editorTextView { measureEditor(editorTextView, deferred: false) }
         resultLabel = .writing
         copyAfterTyping?.cancel()
         copyAfterTyping = Task { @MainActor in
@@ -578,7 +587,7 @@ struct ContentView: View {
     #if os(macOS)
     /// The height the text actually needs, capped at what the window leaves and never
     /// falling back below what it already claimed during this edit.
-    private func measureEditor(_ textView: NSTextView) {
+    private func measureEditor(_ textView: NSTextView, deferred: Bool = true) {
         let width = textView.textContainer?.containerSize.width ?? textView.bounds.width
         guard width > 0 else { return }
         let used = textView.attributedString().boundingRect(
@@ -588,7 +597,11 @@ struct ContentView: View {
         // line of slack here left an empty one sitting under the cursor.
         let wanted = min(ceil(used) + 2, max(editorCeiling, ResultTypography.lineHeight * 3))
         guard wanted > editorHeight + 0.5 else { return }
-        Task { @MainActor in editorHeight = wanted } // never during a view update
+        if deferred {
+            Task { @MainActor in editorHeight = wanted } // introspect runs inside a view update
+        } else {
+            editorHeight = wanted
+        }
     }
     #endif
 
