@@ -10,8 +10,12 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var editTarget: EditTarget?
-    /// Flashes the result label after a manual re-copy.
-    @State private var justCopied = false
+    /// What the result card's label is saying: at rest it names the style, while you type it
+    /// says so, and it confirms each time the text goes back on the clipboard.
+    private enum ResultLabel { case idle, writing, copied }
+    @State private var resultLabel: ResultLabel = .idle
+    /// Copies three seconds after you stop typing, so an edit needs no button at all.
+    @State private var copyAfterTyping: Task<Void, Never>?
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -165,8 +169,19 @@ struct ContentView: View {
             // once its text is on the clipboard; anything else leaves the target alone.
             .onChange(of: viewModel.phase) { _, phase in
                 switch phase {
-                case .done: PasteBack.shared.offer()
-                case .idle, .error: PasteBack.shared.disarm()
+                case .done:
+                    PasteBack.shared.offer()
+                    // Straight into the text with a caret at the end: a rewrite is usually
+                    // read and tweaked, not admired. Skipped while a paste-back is waiting,
+                    // where Return belongs to the confirm bar rather than to the text.
+                    if pasteBack.offeredAppName == nil, styledDraft == nil,
+                       let styled = viewModel.styledText {
+                        styledDraft = styled
+                        resultLabel = .idle
+                    }
+                case .idle, .error:
+                    PasteBack.shared.disarm()
+                    styledDraft = nil
                 default: break
                 }
             }
@@ -321,17 +336,13 @@ struct ContentView: View {
                     // right after editing it.
                     Button {
                         viewModel.copyStyledAgain()
-                        withAnimation { justCopied = true }
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .seconds(1.6))
-                            withAnimation { justCopied = false }
-                        }
+                        flashCopied()
                     } label: {
-                        Label(justCopied ? "Copied again" : "Copied — \(viewModel.selectedStyle.name)",
-                              systemImage: justCopied ? "checkmark" : "doc.on.clipboard")
+                        Label(resultLabelText, systemImage: resultLabelIcon)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                             .contentShape(Rectangle())
+                            .animation(.easeInOut(duration: 0.15), value: resultLabelText)
                     }
                     .buttonStyle(.plain)
                     .help("Copy again")
@@ -358,10 +369,14 @@ struct ContentView: View {
                             // editable but nothing has focus.
                             if editor.textView.window?.firstResponder !== editor.textView {
                                 editor.textView.window?.makeFirstResponder(editor.textView)
+                                // Caret at the end, ready to carry on writing.
+                                let end = (editor.textView.string as NSString).length
+                                editor.textView.setSelectedRange(NSRange(location: end, length: 0))
                             }
                         }
                         // No Cancel or Done: clicking away is what finishes an edit, and it
                         // re-copies, exactly like the rewrite styles' own editor.
+                        .onTextChange { _ in typedInResult() }
                         .onCommit { commitStyledEdit() }
                         .frame(minHeight: 120)
                 } else {
@@ -487,13 +502,55 @@ struct ContentView: View {
     }
 
     #if os(macOS)
-    /// Applies whatever is in the card and puts it back on the clipboard.
+    /// Clicking away finishes the edit.
     private func commitStyledEdit() {
+        copyAfterTyping?.cancel()
         guard let draft = styledDraft else { return }
         styledDraft = nil
-        if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
+        if draft != viewModel.styledText {
+            viewModel.applyStyledEdit(draft)
+            flashCopied()
+        }
+    }
+
+    /// Each keystroke says "Writing…" and restarts the three-second wait; when it elapses the
+    /// text goes back on the clipboard and the label says so. No save button anywhere.
+    private func typedInResult() {
+        resultLabel = .writing
+        copyAfterTyping?.cancel()
+        copyAfterTyping = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled, let draft = styledDraft else { return }
+            if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
+            flashCopied()
+        }
     }
     #endif
+
+    /// Confirms a copy for a moment, then goes back to naming the style.
+    private func flashCopied() {
+        resultLabel = .copied
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.8))
+            if resultLabel == .copied { resultLabel = .idle }
+        }
+    }
+
+    private var resultLabelText: String {
+        switch resultLabel {
+        case .writing: "Writing…"
+        case .copied: "Copied"
+        case .idle: "Copied — \(viewModel.selectedStyle.name)"
+        }
+    }
+
+    private var resultLabelIcon: String {
+        switch resultLabel {
+        case .writing: "pencil"
+        case .copied: "checkmark"
+        case .idle: "doc.on.clipboard"
+        }
+    }
 
     /// Sticky copy-mode switch: off = plain text (markdown stripped), on = raw markdown.
     /// Toggling re-copies the current result and the mode persists across recordings.
