@@ -188,6 +188,9 @@ struct ContentView: View {
                     endEditing()
                 }
             }
+            .onChange(of: styledDraft == nil) { _, notEditing in
+                AppDelegate.shared?.setWindowDraggableByBackground(notEditing)
+            }
             // A re-style, a restore from History or a dictation claimed from the phone all
             // replace the result while the card may still be holding the previous one.
             .onChange(of: viewModel.styledText) { _, styled in

@@ -108,6 +108,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController?.applyPreferredSize()
     }
 
+    /// The window is dragged by its background, which is right for a small panel and wrong
+    /// over a text view: a drag there should select, not move the window. Switched off for as
+    /// long as the result is being edited.
+    func setWindowDraggableByBackground(_ draggable: Bool) {
+        windowController?.window?.isMovableByWindowBackground = draggable
+    }
+
     /// Back to the menu bar. The ✕ in the header, the red close button and ⌘W all land here.
     func hideWindow() {
         windowController?.hide()
