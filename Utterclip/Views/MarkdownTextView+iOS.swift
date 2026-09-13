@@ -29,14 +29,6 @@ struct MarkdownTextView: UIViewRepresentable {
         MarkdownHighlighter.apply(to: textView.textStorage)
         textView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
-        // A Done above the keyboard: on a phone there is often nothing outside the card left
-        // to tap once the keyboard is up.
-        let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 0, height: 44))
-        let done = UIBarButtonItem(title: "Done", style: .done, target: context.coordinator,
-                                   action: #selector(Coordinator.finish))
-        toolbar.items = [UIBarButtonItem(systemItem: .flexibleSpace), done]
-        toolbar.sizeToFit()
-        textView.inputAccessoryView = toolbar
         DispatchQueue.main.async {
             textView.becomeFirstResponder()
             textView.selectedRange = NSRange(location: (textView.text as NSString).length, length: 0)
@@ -73,9 +65,6 @@ struct MarkdownTextView: UIViewRepresentable {
             parent.onCommit()
         }
 
-        @objc func finish() {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        }
     }
 }
 

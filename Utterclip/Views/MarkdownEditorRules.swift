@@ -72,12 +72,12 @@ extension Sequence where Iterator.Element == HighlightRule {
     }
 }
 
-/// The same line height the rendered result uses, set exactly rather than as a multiple so
-/// the two cannot drift apart.
+/// Leading expressed exactly as SwiftUI expresses it — extra space between lines, on top of
+/// the font's natural height. Setting an absolute line height here instead was a hair off
+/// what `Text` produces, and the text shifted as the card turned from rendered to editable.
 let roomierLines: NSParagraphStyle = {
     let style = NSMutableParagraphStyle()
-    style.minimumLineHeight = ResultTypography.lineHeight
-    style.maximumLineHeight = ResultTypography.lineHeight
+    style.lineSpacing = ResultTypography.lineSpacing
     return style
 }()
 

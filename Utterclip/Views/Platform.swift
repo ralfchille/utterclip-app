@@ -383,8 +383,9 @@ enum ResultTypography {
     static let size: CGFloat = 16
     static let lineHeight: CGFloat = 24
     #else
-    static let size: CGFloat = 18
-    static let lineHeight: CGFloat = 26
+    // A third larger than the Mac's, which is what reads comfortably at arm's length.
+    static let size: CGFloat = 24
+    static let lineHeight: CGFloat = 34
     #endif
 
     static var font: Font { .system(size: size) }

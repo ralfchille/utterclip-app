@@ -410,6 +410,17 @@ struct ContentView: View {
                     )
                     .frame(minHeight: ResultTypography.lineHeight)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
+                    #if !os(macOS)
+                    // The system's own keyboard bar rather than a toolbar of our own sitting
+                    // on top of it: same tone, same height, flush with the keys.
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") { commitStyledEdit() }
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    #endif
                 } else {
                     MarkdownView(markdown: styled)
                 }
