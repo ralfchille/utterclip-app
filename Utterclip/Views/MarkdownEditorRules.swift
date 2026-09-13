@@ -64,10 +64,12 @@ extension Sequence where Iterator.Element == HighlightRule {
     }
 }
 
-/// The editor's line spacing: 1.2× the natural line height.
+/// The same line height the rendered result uses, set exactly rather than as a multiple so
+/// the two cannot drift apart.
 private let roomierLines: NSParagraphStyle = {
     let style = NSMutableParagraphStyle()
-    style.lineHeightMultiple = 1.2
+    style.minimumLineHeight = ResultTypography.lineHeight
+    style.maximumLineHeight = ResultTypography.lineHeight
     return style
 }()
 

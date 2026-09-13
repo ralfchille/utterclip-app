@@ -369,14 +369,17 @@ extension EnvironmentValues {
 /// the result (see `MarkdownEditorRules`).
 enum ResultTypography {
     #if os(macOS)
-    static let size: CGFloat = 15
-    static let lineSpacing: CGFloat = 5
+    static let size: CGFloat = 16
+    static let lineHeight: CGFloat = 24
     #else
     static let size: CGFloat = 18
-    static let lineSpacing: CGFloat = 5
+    static let lineHeight: CGFloat = 26
     #endif
 
     static var font: Font { .system(size: size) }
+    /// SwiftUI adds to the font's natural line height (about 1.2 × the size) rather than
+    /// setting it, so the extra is what gets us to `lineHeight`.
+    static var lineSpacing: CGFloat { max(0, lineHeight - size * 1.2) }
 }
 
 /// The record button and the two satellites beside it. A thumb needs 84 pt; a pointer does

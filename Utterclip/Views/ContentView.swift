@@ -29,17 +29,7 @@ struct ContentView: View {
             VStack(spacing: 16) {
                 #if os(macOS)
                 // The Mac window has no title bar; this row is its header.
-                MacHeader(title: styledDraft == nil ? "Utterclip" : "Edit \(viewModel.selectedStyle.name)") {
-                    if styledDraft != nil {
-                        Button("Cancel") { styledDraft = nil }
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                        Button("Done") {
-                            if let draft = styledDraft { viewModel.applyStyledEdit(draft) }
-                            styledDraft = nil
-                        }
-                        .font(.body.weight(.semibold))
-                    } else {
+                MacHeader(title: "Utterclip") {
                     Button {
                         showHistory = true
                     } label: {
@@ -68,7 +58,6 @@ struct ContentView: View {
                         Image(systemName: "xmark")
                     }
                     .accessibilityLabel("Close")
-                    }
                 }
                 #endif
                 resultArea
@@ -347,7 +336,15 @@ struct ContentView: View {
                             editor.textView.drawsBackground = false
                             editor.textView.textContainerInset = .zero
                             editor.scrollView?.drawsBackground = false
+                            // Click the card, get a cursor: without this the text looks
+                            // editable but nothing has focus.
+                            if editor.textView.window?.firstResponder !== editor.textView {
+                                editor.textView.window?.makeFirstResponder(editor.textView)
+                            }
                         }
+                        // No Cancel or Done: clicking away is what finishes an edit, and it
+                        // re-copies, exactly like the rewrite styles' own editor.
+                        .onCommit { commitStyledEdit() }
                         .frame(minHeight: 120)
                 } else {
                     MarkdownView(markdown: styled)
@@ -470,6 +467,15 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
     }
+
+    #if os(macOS)
+    /// Applies whatever is in the card and puts it back on the clipboard.
+    private func commitStyledEdit() {
+        guard let draft = styledDraft else { return }
+        styledDraft = nil
+        if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
+    }
+    #endif
 
     /// Sticky copy-mode switch: off = plain text (markdown stripped), on = raw markdown.
     /// Toggling re-copies the current result and the mode persists across recordings.
