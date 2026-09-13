@@ -415,7 +415,7 @@ struct ContentView: View {
                         // re-copies, exactly like the rewrite styles' own editor.
                         .onTextChange { _ in typedInResult() }
                         .onCommit { commitStyledEdit() }
-                        .frame(height: max(editorHeight, ResultTypography.lineHeight * 2))
+                        .frame(height: max(editorHeight, ResultTypography.lineHeight))
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                 } else {
                     MarkdownView(markdown: styled)
@@ -584,7 +584,9 @@ struct ContentView: View {
         let used = textView.attributedString().boundingRect(
             with: NSSize(width: width, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading]).height
-        let wanted = min(used + ResultTypography.lineHeight, max(editorCeiling, ResultTypography.lineHeight * 3))
+        // Just the text, plus a couple of points so the last line is never clipped. A whole
+        // line of slack here left an empty one sitting under the cursor.
+        let wanted = min(ceil(used) + 2, max(editorCeiling, ResultTypography.lineHeight * 3))
         guard wanted > editorHeight + 0.5 else { return }
         Task { @MainActor in editorHeight = wanted } // never during a view update
     }
