@@ -405,6 +405,14 @@ struct ContentView: View {
                             editor.textView.drawsBackground = false
                             editor.textView.textContainerInset = .zero
                             editor.scrollView?.drawsBackground = false
+                            // No scroller at all: the frame grows with the text, so one only
+                            // ever appeared for the instant between a line wrapping and the
+                            // frame following — which is what the flicker was. Trackpad
+                            // scrolling still works once the text passes the ceiling.
+                            editor.scrollView?.hasVerticalScroller = false
+                            editor.scrollView?.hasHorizontalScroller = false
+                            editor.scrollView?.verticalScrollElasticity = .none
+                            editor.scrollView?.horizontalScrollElasticity = .none
                             // Click the card, get a cursor: without this the text looks
                             // editable but nothing has focus.
                             if editorTextView !== editor.textView { editorTextView = editor.textView }
