@@ -16,10 +16,6 @@ struct ContentView: View {
     @State private var resultLabel: ResultLabel = .idle
     /// Copies a moment after you stop typing, so an edit needs no button at all.
     @State private var copyAfterTyping: Task<Void, Never>?
-    /// The editor grows with the text it holds, up to whatever the window leaves above the
-    /// pills; it never shrinks back while an edit is in progress, so lines do not jump.
-    @State private var editorHeight: CGFloat = 0
-    @State private var editorCeiling: CGFloat = 0
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -180,7 +176,6 @@ struct ContentView: View {
                     // where Return belongs to the confirm bar rather than to the text.
                     if pasteBack.offeredAppName == nil, styledDraft == nil,
                        let styled = viewModel.styledText {
-                        editorHeight = 0
                         styledDraft = styled
                         resultLabel = .idle
                     }
@@ -198,8 +193,7 @@ struct ContentView: View {
             .onChange(of: viewModel.styledText) { _, styled in
                 guard let styled, styledDraft != nil, styledDraft != styled else { return }
                 copyAfterTyping?.cancel()
-                editorHeight = 0
-                styledDraft = styled
+                        styledDraft = styled
                 resultLabel = .idle
             }
             #endif
@@ -265,15 +259,6 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: .infinity)
-            // How far the editor may grow before it starts scrolling inside itself: enough
-            // room is kept below for the raw transcript, which stays readable while editing.
-            .background {
-                GeometryReader { geometry in
-                    Color.clear.onChange(of: geometry.size.height, initial: true) { _, height in
-                        editorCeiling = max(ResultTypography.lineHeight * 4, height - 180)
-                    }
-                }
-            }
         }
     }
 
@@ -393,15 +378,13 @@ struct ContentView: View {
                 // markdown source in the same frame, so it reads as putting a cursor in the
                 // text rather than opening a screen.
                 if styledDraft != nil {
+                    // No height of its own here: the view reports what its text needs, so it
+                    // grows in the same pass as the keystroke.
                     MarkdownTextView(
                         text: Binding(get: { styledDraft ?? "" }, set: { styledDraft = $0 }),
-                        onChange: { textView in
-                            measureEditor(textView, deferred: false)
-                            typedInResult()
-                        },
+                        onChange: { typedInResult() },
                         onCommit: { commitStyledEdit() }
                     )
-                    .frame(height: max(editorHeight, ResultTypography.lineHeight))
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                 } else {
                     MarkdownView(markdown: styled)
@@ -416,8 +399,7 @@ struct ContentView: View {
             // tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
                 #if os(macOS)
-                editorHeight = 0
-                styledDraft = styled
+                        styledDraft = styled
                 #else
                 editTarget = .styled
                 #endif
@@ -539,7 +521,6 @@ struct ContentView: View {
         copyAfterTyping?.cancel()
         copyAfterTyping = nil
         styledDraft = nil
-        editorHeight = 0
         resultLabel = .idle
     }
 
@@ -568,27 +549,6 @@ struct ContentView: View {
     }
     #endif
 
-    #if os(macOS)
-    /// The height the text actually needs, capped at what the window leaves and never
-    /// falling back below what it already claimed during this edit.
-    private func measureEditor(_ textView: NSTextView, deferred: Bool = true) {
-        let width = textView.textContainer?.containerSize.width ?? textView.bounds.width
-        guard width > 0 else { return }
-        let used = textView.attributedString().boundingRect(
-            with: NSSize(width: width, height: .greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading]).height
-        // Just the text, plus a couple of points so the last line is never clipped. A whole
-        // line of slack here left an empty one sitting under the cursor.
-        let wanted = min(ceil(used) + 2, max(editorCeiling, ResultTypography.lineHeight * 3))
-        guard wanted > editorHeight + 0.5 else { return }
-        if deferred {
-            Task { @MainActor in editorHeight = wanted } // introspect runs inside a view update
-        } else {
-            editorHeight = wanted
-        }
-        textView.needsDisplay = true // the frame is about to change under it
-    }
-    #endif
 
     /// True only on the Mac, and only while the result is being typed into.
     private var isEditingResult: Bool {

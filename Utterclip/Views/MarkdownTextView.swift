@@ -12,15 +12,15 @@ import SwiftUI
 /// differs from what is on screen.
 struct MarkdownTextView: NSViewRepresentable {
     @Binding var text: String
-    /// Called on every keystroke with the view itself, so the caller can size its frame.
-    var onChange: (NSTextView) -> Void = { _ in }
+    /// Called on every keystroke, for the label and the delayed copy.
+    var onChange: () -> Void = {}
     /// Called when the view loses focus: an edit is finished by clicking away.
     var onCommit: () -> Void = {}
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeNSView(context: Context) -> NSScrollView {
-        let textView = NSTextView()
+    func makeNSView(context: Context) -> AutoGrowingTextView {
+        let textView = AutoGrowingTextView()
         textView.delegate = context.coordinator
         textView.isRichText = false
         textView.allowsUndo = true
@@ -29,39 +29,29 @@ struct MarkdownTextView: NSViewRepresentable {
         textView.textContainerInset = .zero
         textView.drawsBackground = true
         textView.backgroundColor = .textBackgroundColor
-        textView.isVerticallyResizable = true
-        textView.autoresizingMask = [.width]
+        textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
         textView.string = text
         Self.highlight(textView)
-
-        let scrollView = NSScrollView()
-        scrollView.documentView = textView
-        scrollView.drawsBackground = true
-        scrollView.backgroundColor = .textBackgroundColor
-        scrollView.hasVerticalScroller = false
-        scrollView.hasHorizontalScroller = false
-        scrollView.verticalScrollElasticity = .none
-        scrollView.horizontalScrollElasticity = .none
         // The caret belongs in the text the moment the card opens.
         DispatchQueue.main.async {
             guard textView.window?.firstResponder !== textView else { return }
             textView.window?.makeFirstResponder(textView)
             textView.setSelectedRange(NSRange(location: (textView.string as NSString).length, length: 0))
-            onChange(textView)
         }
-        return scrollView
+        return textView
     }
 
     /// Only for changes that came from somewhere else — a re-style, a restore from History.
     /// Typing never reaches here, which is the point.
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? NSTextView, textView.string != text else { return }
+    func updateNSView(_ textView: AutoGrowingTextView, context: Context) {
+        guard textView.string != text else { return }
         let selection = textView.selectedRange()
         textView.string = text
         Self.highlight(textView)
         let length = (textView.string as NSString).length
         textView.setSelectedRange(NSRange(location: min(selection.location, length), length: 0))
+        textView.invalidateIntrinsicContentSize()
     }
 
     /// Applies the markdown attributes to the storage in place, leaving the text untouched.
@@ -117,12 +107,42 @@ struct MarkdownTextView: NSViewRepresentable {
             MarkdownTextView.highlight(textView)
             textView.setSelectedRange(selection)
             parent.text = textView.string
-            parent.onChange(textView)
+            parent.onChange()
         }
 
         func textDidEndEditing(_ notification: Notification) {
             parent.onCommit()
         }
+    }
+}
+
+/// Reports the height its text needs, so the view grows in the same layout pass as the
+/// keystroke. Sizing it from SwiftUI state instead meant the frame arrived a pass late: the
+/// new line was drawn into a frame still one line short, the view scrolled to keep the caret
+/// visible, and then everything settled — which is what the flicker was.
+final class AutoGrowingTextView: NSTextView {
+    override var intrinsicContentSize: NSSize {
+        guard let container = textContainer, let manager = layoutManager else {
+            return super.intrinsicContentSize
+        }
+        manager.ensureLayout(for: container)
+        return NSSize(width: NSView.noIntrinsicMetric,
+                      height: ceil(manager.usedRect(for: container).height) + textContainerInset.height * 2)
+    }
+
+    /// The window is draggable by its background, which otherwise swallows a drag across the
+    /// text and moves the window instead of selecting.
+    override var mouseDownCanMoveWindow: Bool { false }
+
+    override func didChangeText() {
+        super.didChangeText()
+        invalidateIntrinsicContentSize()
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        let widthChanged = newSize.width != frame.width
+        super.setFrameSize(newSize)
+        if widthChanged { invalidateIntrinsicContentSize() } // rewrapping changes the height
     }
 }
 
