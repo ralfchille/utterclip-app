@@ -359,11 +359,17 @@ struct ContentView: View {
                         viewModel.copyStyledAgain()
                         flashCopied()
                     } label: {
-                        Label(resultLabelText, systemImage: resultLabelIcon)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .contentShape(Rectangle())
-                            .animation(.easeInOut(duration: 0.15), value: resultLabelText)
+                        // Not a Label: its three symbols are different widths, so the text
+                        // shifted every time the state changed. A fixed box holds the line.
+                        HStack(spacing: 5) {
+                            Image(systemName: resultLabelIcon)
+                                .frame(width: 15, alignment: .center)
+                            Text(resultLabelText)
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .contentShape(Rectangle())
+                        .animation(.easeInOut(duration: 0.15), value: resultLabelText)
                     }
                     .buttonStyle(.plain)
                     .help("Copy again")
