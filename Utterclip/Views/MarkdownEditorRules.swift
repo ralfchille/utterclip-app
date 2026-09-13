@@ -2,39 +2,39 @@ import HighlightedTextEditor
 import SwiftUI
 #if os(macOS)
 import AppKit
-private typealias EditorFont = NSFont
-private let secondaryLabel = NSColor.secondaryLabelColor
-private let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
-private let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
-private let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
-private let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
+typealias EditorFont = NSFont
+let secondaryLabel = NSColor.secondaryLabelColor
+let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
+let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
+let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
+let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
 private extension NSFont {
     var bolded: NSFont { NSFont(descriptor: fontDescriptor.withSymbolicTraits(.bold), size: pointSize) ?? self }
 }
 #else
 import UIKit
-private typealias EditorFont = UIFont
-private let secondaryLabel = UIColor.secondaryLabel
-private let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
-private let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
-private let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
-private let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
+typealias EditorFont = UIFont
+let secondaryLabel = UIColor.secondaryLabel
+let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
+let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
+let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
+let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
 private extension UIFont {
     var bolded: UIFont { fontDescriptor.withSymbolicTraits(.traitBold).map { UIFont(descriptor: $0, size: pointSize) } ?? self }
 }
 #endif
 
 /// Matches the whole document, so the paragraph style below reaches every line.
-private let everythingRegex = try! NSRegularExpression(pattern: "[\\s\\S]+", options: [])
-private let headingRegex = try! NSRegularExpression(pattern: "^#{1,6}\\s.*$", options: [.anchorsMatchLines])
-private let boldRegex = try! NSRegularExpression(pattern: "((\\*|_){2})((?!\\1).)+\\1", options: [])
-private let asteriskEmphasisRegex = try! NSRegularExpression(pattern: "(?<!\\*)(\\*)((?!\\1).)+\\1(?!\\*)", options: [])
-private let underscoreEmphasisRegex = try! NSRegularExpression(pattern: "(?<!_)_[^_]+_(?!\\*)", options: [])
-private let boldEmphasisRegex = try! NSRegularExpression(pattern: "(\\*){3}((?!\\1).)+\\1{3}", options: [])
-private let inlineCodeRegex = try! NSRegularExpression(pattern: "`[^`]*`", options: [])
-private let unorderedListRegex = try! NSRegularExpression(pattern: "^(\\-|\\*)\\s", options: [.anchorsMatchLines])
-private let orderedListRegex = try! NSRegularExpression(pattern: "^\\d+\\.\\s", options: [.anchorsMatchLines])
-private let linkRegex = try! NSRegularExpression(pattern: "!?\\[([^\\[\\]]*)\\]\\((.*?)\\)", options: [])
+let everythingRegex = try! NSRegularExpression(pattern: "[\\s\\S]+", options: [])
+let headingRegex = try! NSRegularExpression(pattern: "^#{1,6}\\s.*$", options: [.anchorsMatchLines])
+let boldRegex = try! NSRegularExpression(pattern: "((\\*|_){2})((?!\\1).)+\\1", options: [])
+let asteriskEmphasisRegex = try! NSRegularExpression(pattern: "(?<!\\*)(\\*)((?!\\1).)+\\1(?!\\*)", options: [])
+let underscoreEmphasisRegex = try! NSRegularExpression(pattern: "(?<!_)_[^_]+_(?!\\*)", options: [])
+let boldEmphasisRegex = try! NSRegularExpression(pattern: "(\\*){3}((?!\\1).)+\\1{3}", options: [])
+let inlineCodeRegex = try! NSRegularExpression(pattern: "`[^`]*`", options: [])
+let unorderedListRegex = try! NSRegularExpression(pattern: "^(\\-|\\*)\\s", options: [.anchorsMatchLines])
+let orderedListRegex = try! NSRegularExpression(pattern: "^\\d+\\.\\s", options: [.anchorsMatchLines])
+let linkRegex = try! NSRegularExpression(pattern: "!?\\[([^\\[\\]]*)\\]\\((.*?)\\)", options: [])
 
 extension Sequence where Iterator.Element == HighlightRule {
     /// Markdown highlighting that matches `MarkdownView`, so editing looks like the result:
@@ -72,7 +72,7 @@ extension Sequence where Iterator.Element == HighlightRule {
 
 /// The same line height the rendered result uses, set exactly rather than as a multiple so
 /// the two cannot drift apart.
-private let roomierLines: NSParagraphStyle = {
+let roomierLines: NSParagraphStyle = {
     let style = NSMutableParagraphStyle()
     style.minimumLineHeight = ResultTypography.lineHeight
     style.maximumLineHeight = ResultTypography.lineHeight
@@ -80,11 +80,11 @@ private let roomierLines: NSParagraphStyle = {
 }()
 
 #if os(macOS)
-private let boldTraitsOnly: NSFontDescriptor.SymbolicTraits = [.bold]
-private let italicTraitsOnly: NSFontDescriptor.SymbolicTraits = [.italic]
-private let boldItalicTraits: NSFontDescriptor.SymbolicTraits = [.bold, .italic]
+let boldTraitsOnly: NSFontDescriptor.SymbolicTraits = [.bold]
+let italicTraitsOnly: NSFontDescriptor.SymbolicTraits = [.italic]
+let boldItalicTraits: NSFontDescriptor.SymbolicTraits = [.bold, .italic]
 #else
-private let boldTraitsOnly: UIFontDescriptor.SymbolicTraits = [.traitBold]
-private let italicTraitsOnly: UIFontDescriptor.SymbolicTraits = [.traitItalic]
-private let boldItalicTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitItalic]
+let boldTraitsOnly: UIFontDescriptor.SymbolicTraits = [.traitBold]
+let italicTraitsOnly: UIFontDescriptor.SymbolicTraits = [.traitItalic]
+let boldItalicTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitItalic]
 #endif

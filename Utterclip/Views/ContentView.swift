@@ -12,7 +12,7 @@ struct ContentView: View {
     @State private var editTarget: EditTarget?
     /// What the result card's label is saying: at rest it names the style, while you type it
     /// says so, and it confirms each time the text goes back on the clipboard.
-    private enum ResultLabel { case idle, writing, copied }
+    private enum ResultLabel: Equatable { case idle, writing, copied }
     @State private var resultLabel: ResultLabel = .idle
     /// Copies a moment after you stop typing, so an edit needs no button at all.
     @State private var copyAfterTyping: Task<Void, Never>?
@@ -20,10 +20,6 @@ struct ContentView: View {
     /// pills; it never shrinks back while an edit is in progress, so lines do not jump.
     @State private var editorHeight: CGFloat = 0
     @State private var editorCeiling: CGFloat = 0
-    #if os(macOS)
-    /// Held so a keystroke can measure the text straight away, in the same beat as the edit.
-    @State private var editorTextView: NSTextView?
-    #endif
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -397,43 +393,16 @@ struct ContentView: View {
                 // markdown source in the same frame, so it reads as putting a cursor in the
                 // text rather than opening a screen.
                 if styledDraft != nil {
-                    HighlightedTextEditor(text: Binding(
-                        get: { styledDraft ?? "" },
-                        set: { styledDraft = $0 }
-                    ), highlightRules: .utterclipMarkdown)
-                        .introspect { editor in
-                            // Opaque, matching the card it sits on: see Color.editorSurface.
-                            editor.textView.drawsBackground = true
-                            editor.textView.backgroundColor = .textBackgroundColor
-                            editor.textView.textContainerInset = .zero
-                            editor.scrollView?.drawsBackground = true
-                            editor.scrollView?.backgroundColor = .textBackgroundColor
-                            // No scroller at all: the frame grows with the text, so one only
-                            // ever appeared for the instant between a line wrapping and the
-                            // frame following — which is what the flicker was. Trackpad
-                            // scrolling still works once the text passes the ceiling.
-                            editor.scrollView?.hasVerticalScroller = false
-                            editor.scrollView?.hasHorizontalScroller = false
-                            editor.scrollView?.verticalScrollElasticity = .none
-                            editor.scrollView?.horizontalScrollElasticity = .none
-                            editor.textView.needsDisplay = true
-                            // Click the card, get a cursor: without this the text looks
-                            // editable but nothing has focus.
-                            if editorTextView !== editor.textView { editorTextView = editor.textView }
-                            measureEditor(editor.textView)
-                            if editor.textView.window?.firstResponder !== editor.textView {
-                                editor.textView.window?.makeFirstResponder(editor.textView)
-                                // Caret at the end, ready to carry on writing.
-                                let end = (editor.textView.string as NSString).length
-                                editor.textView.setSelectedRange(NSRange(location: end, length: 0))
-                            }
-                        }
-                        // No Cancel or Done: clicking away is what finishes an edit, and it
-                        // re-copies, exactly like the rewrite styles' own editor.
-                        .onTextChange { _ in typedInResult() }
-                        .onCommit { commitStyledEdit() }
-                        .frame(height: max(editorHeight, ResultTypography.lineHeight))
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                    MarkdownTextView(
+                        text: Binding(get: { styledDraft ?? "" }, set: { styledDraft = $0 }),
+                        onChange: { textView in
+                            measureEditor(textView, deferred: false)
+                            typedInResult()
+                        },
+                        onCommit: { commitStyledEdit() }
+                    )
+                    .frame(height: max(editorHeight, ResultTypography.lineHeight))
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
                 } else {
                     MarkdownView(markdown: styled)
                 }
@@ -588,11 +557,7 @@ struct ContentView: View {
     /// Each keystroke says "Writing…" and restarts the three-second wait; when it elapses the
     /// text goes back on the clipboard and the label says so. No save button anywhere.
     private func typedInResult() {
-        // Measured here, not on the next pass: a keystroke that wraps to a new line has to
-        // find the frame already tall enough, or the text view scrolls to keep the caret in
-        // view and then scrolls back once the frame catches up — which reads as a flicker.
-        if let editorTextView { measureEditor(editorTextView, deferred: false) }
-        resultLabel = .writing
+        if resultLabel != .writing { resultLabel = .writing }
         copyAfterTyping?.cancel()
         copyAfterTyping = Task { @MainActor in
             try? await Task.sleep(for: .seconds(1.5))

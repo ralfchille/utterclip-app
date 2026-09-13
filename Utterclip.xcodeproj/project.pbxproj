@@ -17,6 +17,7 @@
 		1AB79A81350866B35ED1AF95 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EA603762F41B74D7D9CAF5 /* HistoryStore.swift */; };
 		1C17B05A6E14698115D4A786 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53061E11287017DB6ABBF28A /* TranscriptionService.swift */; };
 		1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */; };
+		2094FFFEF4E270A2354B60CB /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */; };
 		26774D83AC1D2BA1F4B1B83F /* RemoteZoneWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */; };
 		2874F95B0738FE1F1E562AB8 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05088FCC2F78975859846EEB /* AIProvider.swift */; };
 		2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 785D4834B39BC497D3590D82 /* MarkdownView.swift */; };
@@ -45,6 +46,7 @@
 		642F920655658016D53AAA68 /* TuistAssets+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */; };
 		665C98E2E3DE1555E4AB877A /* PhoneUpdateBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */; };
 		6DA5EEDD1729EA6D7554CD52 /* TuistBundle+UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */; };
+		737CC517E3D4E6E1458A2835 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */; };
 		752437F6A32A9131E43D0051 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD7150D49FA9A45186D978E /* ContentView.swift */; };
 		7A904563AEC74247A278502F /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 28BA344A91D20285EA0C68BD /* WhisperKit */; };
 		7CEE152E4AA4D07266F89C9F /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */; };
@@ -179,6 +181,7 @@
 		09681937E4E4FE184312126B /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 		09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipCore.swift"; sourceTree = "<group>"; };
 		0A87B8225AFA85570EB97D8C /* RecorderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderViewModel.swift; sourceTree = "<group>"; };
+		0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
 		0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteZoneWatcher.swift; sourceTree = "<group>"; };
 		108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipMacApp.swift; sourceTree = "<group>"; };
 		10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UtterclipCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -499,6 +502,7 @@
 				D21D8DFF607B93A631014902 /* GlassBackground.swift */,
 				9F87071BCF63570CD4B59C66 /* HistoryView.swift */,
 				C53979B6DA6AEE201336D298 /* MarkdownEditorRules.swift */,
+				0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */,
 				785D4834B39BC497D3590D82 /* MarkdownView.swift */,
 				03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */,
 				09681937E4E4FE184312126B /* Platform.swift */,
@@ -687,6 +691,7 @@
 				B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */,
 				C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */,
 				578A13156647CDE2C24B508D /* MarkdownEditorRules.swift in Sources */,
+				2094FFFEF4E270A2354B60CB /* MarkdownTextView.swift in Sources */,
 				2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */,
 				058B7E01AD2E18EC2BC616D7 /* PhoneUpdateBlob.swift in Sources */,
 				A40747530FA740BB5EE2839C /* Platform.swift in Sources */,
@@ -708,6 +713,7 @@
 				ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */,
 				35F8C573FF7CF61A34A9F445 /* HistoryView.swift in Sources */,
 				050F93BA754DC458FF4A1C82 /* MarkdownEditorRules.swift in Sources */,
+				737CC517E3D4E6E1458A2835 /* MarkdownTextView.swift in Sources */,
 				F3538B61CD797DDD9C32A093 /* MarkdownView.swift in Sources */,
 				665C98E2E3DE1555E4AB877A /* PhoneUpdateBlob.swift in Sources */,
 				5AD10B680721814DF3311E1C /* Platform.swift in Sources */,
