@@ -4,6 +4,7 @@ import SwiftUI
 import AppKit
 typealias EditorFont = NSFont
 let secondaryLabel = NSColor.secondaryLabelColor
+let primaryLabel = NSColor.labelColor
 let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
 let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
 let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
@@ -15,6 +16,7 @@ private extension NSFont {
 import UIKit
 typealias EditorFont = UIFont
 let secondaryLabel = UIColor.secondaryLabel
+let primaryLabel = UIColor.label
 let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
 let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
 let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
@@ -88,3 +90,79 @@ let boldTraitsOnly: UIFontDescriptor.SymbolicTraits = [.traitBold]
 let italicTraitsOnly: UIFontDescriptor.SymbolicTraits = [.traitItalic]
 let boldItalicTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitItalic]
 #endif
+
+
+/// Applies the markdown attributes to a text storage in place, leaving the characters alone.
+/// Shared by both platforms' in-place editors, so the phone and the Mac highlight identically.
+enum MarkdownHighlighter {
+    static func apply(to storage: NSTextStorage) {
+        let text = storage.string
+        let all = NSRange(location: 0, length: (text as NSString).length)
+        storage.beginEditing()
+        storage.setAttributes([
+            .font: bodyFont,
+            .foregroundColor: primaryLabel,
+            .paragraphStyle: roomierLines,
+        ], range: all)
+        for (pattern, apply) in rules {
+            pattern.enumerateMatches(in: text, options: [], range: all) { match, _, _ in
+                guard let match else { return }
+                apply(storage, match, text)
+            }
+        }
+        storage.endEditing()
+    }
+
+    private static let rules: [(NSRegularExpression, (NSTextStorage, NSTextCheckingResult, String) -> Void)] = [
+        (headingRegex, { storage, match, text in
+            let hashes = (text as NSString).substring(with: match.range).prefix { $0 == "#" }.count
+            storage.addAttribute(.font, value: hashes <= 1 ? headingLevel1 : hashes == 2 ? headingLevel2 : headingLevel3,
+                                 range: match.range)
+        }),
+        (boldEmphasisRegex, { storage, match, _ in storage.addTrait(boldItalicTraits, range: match.range) }),
+        (boldRegex, { storage, match, _ in storage.addTrait(boldTraitsOnly, range: match.range) }),
+        (asteriskEmphasisRegex, { storage, match, _ in storage.addTrait(italicTraitsOnly, range: match.range) }),
+        (underscoreEmphasisRegex, { storage, match, _ in storage.addTrait(italicTraitsOnly, range: match.range) }),
+        (inlineCodeRegex, { storage, match, _ in
+            storage.addAttribute(.font, value: EditorFont.monospacedSystemFont(ofSize: ResultTypography.size, weight: .regular),
+                                 range: match.range)
+        }),
+        (unorderedListRegex, { storage, match, _ in
+            storage.addAttribute(.foregroundColor, value: secondaryLabel, range: match.range)
+        }),
+        (orderedListRegex, { storage, match, _ in
+            storage.addAttribute(.foregroundColor, value: secondaryLabel, range: match.range)
+        }),
+        (linkRegex, { storage, match, _ in
+            storage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
+        }),
+    ]
+}
+
+private extension NSTextStorage {
+    /// Adds a trait to whatever font each run already has, so bold inside a heading stays a
+    /// heading.
+    func addTrait(_ traits: EditorFont.SymbolicTraitsType, range: NSRange) {
+        enumerateAttribute(.font, in: range) { value, subrange, _ in
+            let font = (value as? EditorFont) ?? bodyFont
+            #if os(macOS)
+            let descriptor = font.fontDescriptor.withSymbolicTraits(font.fontDescriptor.symbolicTraits.union(traits))
+            if let combined = NSFont(descriptor: descriptor, size: font.pointSize) {
+                addAttribute(.font, value: combined, range: subrange)
+            }
+            #else
+            if let descriptor = font.fontDescriptor.withSymbolicTraits(font.fontDescriptor.symbolicTraits.union(traits)) {
+                addAttribute(.font, value: UIFont(descriptor: descriptor, size: font.pointSize), range: subrange)
+            }
+            #endif
+        }
+    }
+}
+
+extension EditorFont {
+    #if os(macOS)
+    typealias SymbolicTraitsType = NSFontDescriptor.SymbolicTraits
+    #else
+    typealias SymbolicTraitsType = UIFontDescriptor.SymbolicTraits
+    #endif
+}

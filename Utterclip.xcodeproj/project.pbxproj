@@ -28,6 +28,7 @@
 		35F8C573FF7CF61A34A9F445 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
 		38056EDAFB87075550CEB900 /* LocalRewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F007D7E0E2D1031D583BED /* LocalRewriter.swift */; };
 		38221FAED67A250DFA1AEF01 /* TuistBundle+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */; };
+		386DAF4767F18E37926AFBA3 /* MarkdownTextView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */; };
 		3BBC257C63B356952D080E85 /* UtterclipCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		43BFF92680ADB6A92A6B9977 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E02D86E45BCDAFCC58CF7667 /* Styles.swift */; };
 		4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */; };
@@ -51,6 +52,7 @@
 		7A904563AEC74247A278502F /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 28BA344A91D20285EA0C68BD /* WhisperKit */; };
 		7CEE152E4AA4D07266F89C9F /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A013C4FAC68AE982BDEAFA35 /* AudioRecorder.swift */; };
 		7D12D45E622EC7096A6B47AC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B590ECC24C31E97E4D7E1421 /* Assets.xcassets */; };
+		81DD3B5F4533AB78A44F5501 /* MarkdownTextView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */; };
 		8459CA4C54484367CEC8B378 /* Dictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C093652C348BB70958F729A4 /* Dictation.swift */; };
 		8EFE7FE9E590E67A77A3BAE4 /* UtterclipApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362ACD5073A9A097201D6FBD /* UtterclipApp.swift */; };
 		924585F04823E691BFBB67B7 /* UtterclipWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6C63B96BDE6B1413255AC07A /* UtterclipWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -190,6 +192,7 @@
 		1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipWidgets.swift"; sourceTree = "<group>"; };
 		266C41CDA52548681C16CF3E /* UtterclipMac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipMac-Info.plist"; sourceTree = "<group>"; };
 		28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Utterclip.swift"; sourceTree = "<group>"; };
+		2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkdownTextView+iOS.swift"; sourceTree = "<group>"; };
 		3123A0639BF8CDA10A1480DE /* Utterclip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Utterclip.entitlements; sourceTree = "<group>"; };
 		319D09EB2560270E662093E7 /* StyleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleStore.swift; sourceTree = "<group>"; };
 		3405A7B6FD5848A2EDE6E83D /* FocusedField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedField.swift; sourceTree = "<group>"; };
@@ -503,6 +506,7 @@
 				9F87071BCF63570CD4B59C66 /* HistoryView.swift */,
 				C53979B6DA6AEE201336D298 /* MarkdownEditorRules.swift */,
 				0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */,
+				2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */,
 				785D4834B39BC497D3590D82 /* MarkdownView.swift */,
 				03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */,
 				09681937E4E4FE184312126B /* Platform.swift */,
@@ -691,6 +695,7 @@
 				B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */,
 				C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */,
 				578A13156647CDE2C24B508D /* MarkdownEditorRules.swift in Sources */,
+				81DD3B5F4533AB78A44F5501 /* MarkdownTextView+iOS.swift in Sources */,
 				2094FFFEF4E270A2354B60CB /* MarkdownTextView.swift in Sources */,
 				2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */,
 				058B7E01AD2E18EC2BC616D7 /* PhoneUpdateBlob.swift in Sources */,
@@ -713,6 +718,7 @@
 				ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */,
 				35F8C573FF7CF61A34A9F445 /* HistoryView.swift in Sources */,
 				050F93BA754DC458FF4A1C82 /* MarkdownEditorRules.swift in Sources */,
+				386DAF4767F18E37926AFBA3 /* MarkdownTextView+iOS.swift in Sources */,
 				737CC517E3D4E6E1458A2835 /* MarkdownTextView.swift in Sources */,
 				F3538B61CD797DDD9C32A093 /* MarkdownView.swift in Sources */,
 				665C98E2E3DE1555E4AB877A /* PhoneUpdateBlob.swift in Sources */,

@@ -54,47 +54,11 @@ struct MarkdownTextView: NSViewRepresentable {
         textView.invalidateIntrinsicContentSize()
     }
 
-    /// Applies the markdown attributes to the storage in place, leaving the text untouched.
+    /// Highlighting lives in MarkdownEditorRules, shared with the phone.
     static func highlight(_ textView: NSTextView) {
         guard let storage = textView.textStorage else { return }
-        let text = storage.string
-        let all = NSRange(location: 0, length: (text as NSString).length)
-        storage.beginEditing()
-        storage.setAttributes([
-            .font: bodyFont,
-            .foregroundColor: NSColor.labelColor,
-            .paragraphStyle: roomierLines,
-        ], range: all)
-        for (pattern, apply) in rules {
-            pattern.enumerateMatches(in: text, options: [], range: all) { match, _, _ in
-                guard let match else { return }
-                apply(storage, match, text)
-            }
-        }
-        storage.endEditing()
+        MarkdownHighlighter.apply(to: storage)
     }
-
-    /// Same appearance as the rendered result: see `MarkdownEditorRules`.
-    private static let rules: [(NSRegularExpression, (NSTextStorage, NSTextCheckingResult, String) -> Void)] = [
-        (headingRegex, { storage, match, text in
-            let hashes = (text as NSString).substring(with: match.range).prefix { $0 == "#" }.count
-            storage.addAttribute(.font, value: hashes <= 1 ? headingLevel1 : hashes == 2 ? headingLevel2 : headingLevel3,
-                                 range: match.range)
-        }),
-        (boldEmphasisRegex, { storage, match, _ in storage.addTrait([.bold, .italic], range: match.range) }),
-        (boldRegex, { storage, match, _ in storage.addTrait(.bold, range: match.range) }),
-        (asteriskEmphasisRegex, { storage, match, _ in storage.addTrait(.italic, range: match.range) }),
-        (underscoreEmphasisRegex, { storage, match, _ in storage.addTrait(.italic, range: match.range) }),
-        (inlineCodeRegex, { storage, match, _ in
-            storage.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: ResultTypography.size, weight: .regular),
-                                 range: match.range)
-        }),
-        (unorderedListRegex, { storage, match, _ in storage.addAttribute(.foregroundColor, value: secondaryLabel, range: match.range) }),
-        (orderedListRegex, { storage, match, _ in storage.addAttribute(.foregroundColor, value: secondaryLabel, range: match.range) }),
-        (linkRegex, { storage, match, _ in
-            storage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
-        }),
-    ]
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         private let parent: MarkdownTextView
@@ -146,17 +110,4 @@ final class AutoGrowingTextView: NSTextView {
     }
 }
 
-private extension NSTextStorage {
-    /// Adds a trait to whatever font each run already has, so bold inside a heading stays a
-    /// heading.
-    func addTrait(_ traits: NSFontDescriptor.SymbolicTraits, range: NSRange) {
-        enumerateAttribute(.font, in: range) { value, subrange, _ in
-            let font = (value as? NSFont) ?? bodyFont
-            let descriptor = font.fontDescriptor.withSymbolicTraits(font.fontDescriptor.symbolicTraits.union(traits))
-            if let combined = NSFont(descriptor: descriptor, size: font.pointSize) {
-                addAttribute(.font, value: combined, range: subrange)
-            }
-        }
-    }
-}
 #endif

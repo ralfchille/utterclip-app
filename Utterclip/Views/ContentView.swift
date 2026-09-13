@@ -16,12 +16,12 @@ struct ContentView: View {
     @State private var resultLabel: ResultLabel = .idle
     /// Copies a moment after you stop typing, so an edit needs no button at all.
     @State private var copyAfterTyping: Task<Void, Never>?
+    /// The result card is edited where it sits rather than in a sheet or a panel; this holds
+    /// the text while it is being typed.
+    @State private var styledDraft: String?
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
-    /// The result card is edited where it sits rather than in a panel; this holds the draft
-    /// until Done, so Cancel can leave the result untouched.
-    @State private var styledDraft: String?
     #endif
 
     /// Which text the editor is currently editing.
@@ -83,8 +83,11 @@ struct ContentView: View {
             #if os(macOS)
             .animation(.spring(duration: 0.35, bounce: 0.2), value: pasteBack.offeredAppName)
             #endif
-                // Always present: before a recording the highlighted pill is the style the
-                // recording will be rewritten in; afterwards tapping one re-runs the rewrite.
+                // Out of the way while the result is being typed into: on a phone the keyboard
+                // has already taken half the screen, and neither control is any use mid-edit.
+                if !isEditingResult {
+                // Before a recording the highlighted pill is the style the recording will be
+                // rewritten in; afterwards tapping one re-runs the rewrite.
                 StylePickerRow(
                     selected: viewModel.selectedStyle,
                     isDisabled: viewModel.isBusy
@@ -109,6 +112,7 @@ struct ContentView: View {
                 recordButton
                     .padding(.bottom, 24)
                 #endif
+                }
             }
             .ignoreHiddenTitleBar()
             .barChrome(title: "Utterclip") {
@@ -164,6 +168,23 @@ struct ContentView: View {
                 viewModel.startWatchingOtherDevices() // the indicator; the phone stays as it is
                 #endif
             }
+            #if !os(macOS)
+            // The phone never opens the editor by itself: a keyboard covering half the screen
+            // after every dictation is not what you want. It only follows a result that
+            // replaced the one being edited, and stops editing when new text is on its way.
+            .onChange(of: viewModel.styledText) { _, styled in
+                guard let styled, styledDraft != nil, styledDraft != styled else { return }
+                copyAfterTyping?.cancel()
+                styledDraft = styled
+                resultLabel = .idle
+            }
+            .onChange(of: viewModel.phase) { _, phase in
+                switch phase {
+                case .recording, .transcribing, .rewriting, .idle, .error: endEditing()
+                case .done: break
+                }
+            }
+            #endif
             #if os(macOS)
             // A dictation started with the global shortcut goes back to the app it came from
             // once its text is on the clipboard; anything else leaves the target alone.
@@ -518,7 +539,6 @@ struct ContentView: View {
         .padding(.top, 60)
     }
 
-    #if os(macOS)
     /// Drops the edit in progress, with nothing left to fire afterwards.
     private func endEditing() {
         copyAfterTyping?.cancel()
@@ -550,17 +570,9 @@ struct ContentView: View {
             flashCopied()
         }
     }
-    #endif
 
-
-    /// True only on the Mac, and only while the result is being typed into.
-    private var isEditingResult: Bool {
-        #if os(macOS)
-        styledDraft != nil
-        #else
-        false
-        #endif
-    }
+    /// True while the result is being typed into, on either platform.
+    private var isEditingResult: Bool { styledDraft != nil }
 
     /// Confirms a copy for a moment, then goes back to naming the style.
     private func flashCopied() {
