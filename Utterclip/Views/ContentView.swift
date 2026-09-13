@@ -397,10 +397,9 @@ struct ContentView: View {
                         markdownToggle
                     }
                 }
-                #if os(macOS)
-                // Edited where it sits: clicking the card turns the rendered result into its
-                // markdown source in the same frame, so it reads as putting a cursor in the
-                // text rather than opening a screen.
+                // Edited where it sits: a tap turns the rendered result into its markdown
+                // source in the same frame, so it reads as putting a cursor in the text rather
+                // than opening a screen.
                 if styledDraft != nil {
                     // No height of its own here: the view reports what its text needs, so it
                     // grows in the same pass as the keystroke.
@@ -414,9 +413,6 @@ struct ContentView: View {
                 } else {
                     MarkdownView(markdown: styled)
                 }
-                #else
-                MarkdownView(markdown: styled)
-                #endif
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .topLeading)
