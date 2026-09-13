@@ -46,7 +46,13 @@ extension Sequence where Iterator.Element == HighlightRule {
             // First, so the per-run font it re-applies is still the uniform base font:
             // 20 % more leading than the font's own, headings included (the multiple scales
             // with each line's font size).
-            HighlightRule(pattern: everythingRegex, formattingRule: TextFormattingRule(key: .paragraphStyle, value: roomierLines)),
+            // Both on the whole document, and first: the library seeds every run with the
+            // system body font, and each formatting rule re-applies whatever font it finds —
+            // so the body size has to be (re)stated here, before the heading rules run.
+            HighlightRule(pattern: everythingRegex, formattingRules: [
+                TextFormattingRule(key: .paragraphStyle, value: roomierLines),
+                TextFormattingRule(key: .font, value: bodyFont),
+            ]),
             HighlightRule(pattern: headingRegex, formattingRule: TextFormattingRule(key: .font, calculateValue: { content, _ in
                 let level = content.prefix(while: { $0 == "#" }).count
                 return level <= 1 ? headingLevel1 : level == 2 ? headingLevel2 : headingLevel3

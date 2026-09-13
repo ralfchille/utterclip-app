@@ -10,6 +10,8 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var editTarget: EditTarget?
+    /// Flashes the result label after a manual re-copy.
+    @State private var justCopied = false
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -315,9 +317,25 @@ struct ContentView: View {
         if let styled = viewModel.styledText, viewModel.phase == .done {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("Copied — \(viewModel.selectedStyle.name)", systemImage: "doc.on.clipboard")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                    // Also the way to put it back on the clipboard, which is what you want
+                    // right after editing it.
+                    Button {
+                        viewModel.copyStyledAgain()
+                        withAnimation { justCopied = true }
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .seconds(1.6))
+                            withAnimation { justCopied = false }
+                        }
+                    } label: {
+                        Label(justCopied ? "Copied again" : "Copied — \(viewModel.selectedStyle.name)",
+                              systemImage: justCopied ? "checkmark" : "doc.on.clipboard")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Copy again")
+                    .accessibilityLabel("Copy the result again")
                     Spacer()
                     if viewModel.selectedStyle.usesMarkdown {
                         markdownToggle

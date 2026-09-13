@@ -488,6 +488,14 @@ public final class RecorderViewModel {
     }
 
     /// Recovers the raw transcript onto the clipboard in case the rewrite isn't wanted.
+    /// Puts the result back on the clipboard — after an edit, or when the user is simply not
+    /// sure it is still there.
+    public func copyStyledAgain() {
+        guard let styled = styledText else { return }
+        copyStyled(styled)
+        haptic(.light)
+    }
+
     public func copyRaw() {
         guard let raw = rawTranscript else { return }
         Clipboard.copy(raw)
