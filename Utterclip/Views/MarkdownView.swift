@@ -10,6 +10,8 @@ struct MarkdownView: View {
         case bullet(String)
         case ordered(String, String) // marker ("1."), text
         case paragraph(String)
+        /// A line the writer left empty. Kept, because someone who put a gap there meant it.
+        case blank
     }
 
     var body: some View {
@@ -44,6 +46,8 @@ struct MarkdownView: View {
             }
         case .paragraph(let text):
             inline(text)
+        case .blank:
+            Color.clear.frame(height: ResultTypography.lineHeight / 2)
         }
     }
 
@@ -57,9 +61,25 @@ struct MarkdownView: View {
     }
 
     private var blocks: [Block] {
-        markdown.components(separatedBy: .newlines).compactMap { rawLine in
+        var result: [Block] = []
+        for rawLine in markdown.components(separatedBy: .newlines) {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
-            guard !line.isEmpty else { return nil }
+            // An empty line is a gap the writer put there. Dropping them made an edited
+            // result come back looking like one run-on block. Runs of them collapse to one,
+            // and a leading one is nothing to separate.
+            guard !line.isEmpty else {
+                if case .blank = result.last { continue }
+                if !result.isEmpty { result.append(.blank) }
+                continue
+            }
+            result.append(block(from: line))
+        }
+        if case .blank = result.last { result.removeLast() }
+        return result
+    }
+
+    private func block(from line: String) -> Block {
+        {
 
             if line.hasPrefix("#") {
                 let hashes = line.prefix { $0 == "#" }
@@ -77,6 +97,6 @@ struct MarkdownView: View {
                     String(line[range.upperBound...]))
             }
             return .paragraph(line)
-        }
+        }()
     }
 }
