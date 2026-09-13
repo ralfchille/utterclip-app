@@ -1,4 +1,5 @@
 import Combine
+import HighlightedTextEditor
 import SwiftUI
 import UtterclipCore
 
@@ -12,6 +13,9 @@ struct ContentView: View {
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
+    /// The result card is edited where it sits rather than in a panel; this holds the draft
+    /// until Done, so Cancel can leave the result untouched.
+    @State private var styledDraft: String?
     #endif
 
     /// Which text the editor is currently editing.
@@ -25,7 +29,17 @@ struct ContentView: View {
             VStack(spacing: 16) {
                 #if os(macOS)
                 // The Mac window has no title bar; this row is its header.
-                MacHeader(title: "Utterclip") {
+                MacHeader(title: styledDraft == nil ? "Utterclip" : "Edit \(viewModel.selectedStyle.name)") {
+                    if styledDraft != nil {
+                        Button("Cancel") { styledDraft = nil }
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                        Button("Done") {
+                            if let draft = styledDraft { viewModel.applyStyledEdit(draft) }
+                            styledDraft = nil
+                        }
+                        .font(.body.weight(.semibold))
+                    } else {
                     Button {
                         showHistory = true
                     } label: {
@@ -54,6 +68,7 @@ struct ContentView: View {
                         Image(systemName: "xmark")
                     }
                     .accessibilityLabel("Close")
+                    }
                 }
                 #endif
                 resultArea
@@ -319,14 +334,38 @@ struct ContentView: View {
                         markdownToggle
                     }
                 }
+                #if os(macOS)
+                // Edited where it sits: clicking the card turns the rendered result into its
+                // markdown source in the same frame, so it reads as putting a cursor in the
+                // text rather than opening a screen.
+                if styledDraft != nil {
+                    HighlightedTextEditor(text: Binding(
+                        get: { styledDraft ?? "" },
+                        set: { styledDraft = $0 }
+                    ), highlightRules: .utterclipMarkdown)
+                        .introspect { editor in
+                            editor.textView.drawsBackground = false
+                            editor.textView.textContainerInset = .zero
+                            editor.scrollView?.drawsBackground = false
+                        }
+                        .frame(minHeight: 120)
+                } else {
+                    MarkdownView(markdown: styled)
+                }
+                #else
                 MarkdownView(markdown: styled)
+                #endif
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            // The card itself is the edit affordance; selecting text happens in the editor.
-            // Applied inside the glass so the hover tint sits between glass and text.
+            // The card itself is the edit affordance. Applied inside the glass so the hover
+            // tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
+                #if os(macOS)
+                styledDraft = styled
+                #else
                 editTarget = .styled
+                #endif
             }
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }
