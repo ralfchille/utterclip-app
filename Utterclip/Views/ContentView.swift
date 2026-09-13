@@ -413,6 +413,12 @@ struct ContentView: View {
                             editor.scrollView?.hasHorizontalScroller = false
                             editor.scrollView?.verticalScrollElasticity = .none
                             editor.scrollView?.horizontalScrollElasticity = .none
+                            // A transparent text view has no background to paint over the
+                            // pixels it vacates, so AppKit's scroll-by-copying left fragments
+                            // of the old lines behind. Copying off, and redraw the whole view.
+                            editor.scrollView?.contentView.copiesOnScroll = false
+                            editor.scrollView?.contentView.drawsBackground = false
+                            editor.textView.needsDisplay = true
                             // Click the card, get a cursor: without this the text looks
                             // editable but nothing has focus.
                             if editorTextView !== editor.textView { editorTextView = editor.textView }
@@ -610,6 +616,7 @@ struct ContentView: View {
         } else {
             editorHeight = wanted
         }
+        textView.needsDisplay = true // the frame is about to change under it
     }
     #endif
 
