@@ -227,6 +227,14 @@ struct ContentView: View {
             .padding(.bottom, 8) // the style pills sit between the hint and the record button
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(.snappy, value: viewModel.transcription.state)
+        } else if isEditingResult {
+            // Writing: only the result, filling everything down to the pills. Nothing else
+            // shares the space, so nothing moves while the text grows.
+            VStack(alignment: .leading, spacing: 16) {
+                transcriptSection
+            }
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -324,7 +332,9 @@ struct ContentView: View {
 
     @ViewBuilder
     private var transcriptSection: some View {
-        noticeRow
+        if !isEditingResult {
+            noticeRow
+        }
         if viewModel.phase == .rewriting {
             progressRow("Rewriting as \(viewModel.selectedStyle.name)…")
         }
@@ -378,7 +388,10 @@ struct ContentView: View {
                         // re-copies, exactly like the rewrite styles' own editor.
                         .onTextChange { _ in typedInResult() }
                         .onCommit { commitStyledEdit() }
-                        .frame(minHeight: 120)
+                        // Fills the card, which fills the space down to the pills: a fixed
+                        // frame from the first keystroke, so the text never shifts under the
+                        // cursor as it grows.
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 } else {
                     MarkdownView(markdown: styled)
                 }
@@ -387,7 +400,7 @@ struct ContentView: View {
                 #endif
             }
             .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: isEditingResult ? .infinity : nil, alignment: .topLeading)
             // The card itself is the edit affordance. Applied inside the glass so the hover
             // tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
@@ -400,6 +413,7 @@ struct ContentView: View {
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }
 
+        if isEditingResult { EmptyView() } else {
         if viewModel.rewriteNeedsKey, viewModel.phase == .done {
             apiKeyInfoCard
         }
@@ -445,6 +459,7 @@ struct ContentView: View {
                 editTarget = .raw
             }
             .padding(.vertical, -10) // … without moving the block in the layout
+        }
         }
     }
 
@@ -519,13 +534,22 @@ struct ContentView: View {
         resultLabel = .writing
         copyAfterTyping?.cancel()
         copyAfterTyping = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: .seconds(1.5))
             guard !Task.isCancelled, let draft = styledDraft else { return }
             if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
             flashCopied()
         }
     }
     #endif
+
+    /// True only on the Mac, and only while the result is being typed into.
+    private var isEditingResult: Bool {
+        #if os(macOS)
+        styledDraft != nil
+        #else
+        false
+        #endif
+    }
 
     /// Confirms a copy for a moment, then goes back to naming the style.
     private func flashCopied() {
