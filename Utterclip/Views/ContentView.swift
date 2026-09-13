@@ -14,8 +14,12 @@ struct ContentView: View {
     /// says so, and it confirms each time the text goes back on the clipboard.
     private enum ResultLabel { case idle, writing, copied }
     @State private var resultLabel: ResultLabel = .idle
-    /// Copies three seconds after you stop typing, so an edit needs no button at all.
+    /// Copies a moment after you stop typing, so an edit needs no button at all.
     @State private var copyAfterTyping: Task<Void, Never>?
+    /// The editor grows with the text it holds, up to whatever the window leaves above the
+    /// pills; it never shrinks back while an edit is in progress, so lines do not jump.
+    @State private var editorHeight: CGFloat = 0
+    @State private var editorCeiling: CGFloat = 0
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -176,6 +180,7 @@ struct ContentView: View {
                     // where Return belongs to the confirm bar rather than to the text.
                     if pasteBack.offeredAppName == nil, styledDraft == nil,
                        let styled = viewModel.styledText {
+                        editorHeight = 0
                         styledDraft = styled
                         resultLabel = .idle
                     }
@@ -228,13 +233,19 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(.snappy, value: viewModel.transcription.state)
         } else if isEditingResult {
-            // Writing: only the result, filling everything down to the pills. Nothing else
-            // shares the space, so nothing moves while the text grows.
-            VStack(alignment: .leading, spacing: 16) {
-                transcriptSection
+            // Writing: only the result is on screen, and it grows downwards with the text
+            // until it reaches the pills. Nothing else shares the space, so nothing moves.
+            GeometryReader { geometry in
+                VStack(alignment: .leading, spacing: 16) {
+                    transcriptSection
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .onChange(of: geometry.size.height, initial: true) { _, height in
+                    // Minus the card's own padding and its label row.
+                    editorCeiling = max(0, height - 80)
+                }
             }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -377,6 +388,7 @@ struct ContentView: View {
                             editor.scrollView?.drawsBackground = false
                             // Click the card, get a cursor: without this the text looks
                             // editable but nothing has focus.
+                            measureEditor(editor.textView)
                             if editor.textView.window?.firstResponder !== editor.textView {
                                 editor.textView.window?.makeFirstResponder(editor.textView)
                                 // Caret at the end, ready to carry on writing.
@@ -388,10 +400,8 @@ struct ContentView: View {
                         // re-copies, exactly like the rewrite styles' own editor.
                         .onTextChange { _ in typedInResult() }
                         .onCommit { commitStyledEdit() }
-                        // Fills the card, which fills the space down to the pills: a fixed
-                        // frame from the first keystroke, so the text never shifts under the
-                        // cursor as it grows.
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .frame(height: max(editorHeight, ResultTypography.lineHeight * 2))
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
                 } else {
                     MarkdownView(markdown: styled)
                 }
@@ -400,11 +410,12 @@ struct ContentView: View {
                 #endif
             }
             .padding()
-            .frame(maxWidth: .infinity, maxHeight: isEditingResult ? .infinity : nil, alignment: .topLeading)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
             // The card itself is the edit affordance. Applied inside the glass so the hover
             // tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
                 #if os(macOS)
+                editorHeight = 0
                 styledDraft = styled
                 #else
                 editTarget = .styled
@@ -539,6 +550,21 @@ struct ContentView: View {
             if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
             flashCopied()
         }
+    }
+    #endif
+
+    #if os(macOS)
+    /// The height the text actually needs, capped at what the window leaves and never
+    /// falling back below what it already claimed during this edit.
+    private func measureEditor(_ textView: NSTextView) {
+        let width = textView.textContainer?.containerSize.width ?? textView.bounds.width
+        guard width > 0 else { return }
+        let used = textView.attributedString().boundingRect(
+            with: NSSize(width: width, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]).height
+        let wanted = min(used + ResultTypography.lineHeight, max(editorCeiling, ResultTypography.lineHeight * 3))
+        guard wanted > editorHeight + 0.5 else { return }
+        Task { @MainActor in editorHeight = wanted } // never during a view update
     }
     #endif
 
