@@ -232,20 +232,6 @@ struct ContentView: View {
             .padding(.bottom, 8) // the style pills sit between the hint and the record button
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(.snappy, value: viewModel.transcription.state)
-        } else if isEditingResult {
-            // Writing: only the result is on screen, and it grows downwards with the text
-            // until it reaches the pills. Nothing else shares the space, so nothing moves.
-            GeometryReader { geometry in
-                VStack(alignment: .leading, spacing: 16) {
-                    transcriptSection
-                }
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .onChange(of: geometry.size.height, initial: true) { _, height in
-                    // Minus the card's own padding and its label row.
-                    editorCeiling = max(0, height - 80)
-                }
-            }
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -267,6 +253,15 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: .infinity)
+            // How far the editor may grow before it starts scrolling inside itself: enough
+            // room is kept below for the raw transcript, which stays readable while editing.
+            .background {
+                GeometryReader { geometry in
+                    Color.clear.onChange(of: geometry.size.height, initial: true) { _, height in
+                        editorCeiling = max(ResultTypography.lineHeight * 4, height - 180)
+                    }
+                }
+            }
         }
     }
 
@@ -343,9 +338,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private var transcriptSection: some View {
-        if !isEditingResult {
-            noticeRow
-        }
+        noticeRow
         if viewModel.phase == .rewriting {
             progressRow("Rewriting as \(viewModel.selectedStyle.name)…")
         }
@@ -434,7 +427,6 @@ struct ContentView: View {
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }
 
-        if isEditingResult { EmptyView() } else {
         if viewModel.rewriteNeedsKey, viewModel.phase == .done {
             apiKeyInfoCard
         }
@@ -480,7 +472,6 @@ struct ContentView: View {
                 editTarget = .raw
             }
             .padding(.vertical, -10) // … without moving the block in the layout
-        }
         }
     }
 
