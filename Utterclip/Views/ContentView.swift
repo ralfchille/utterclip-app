@@ -409,6 +409,7 @@ struct ContentView: View {
                         onChange: { typedInResult() },
                         onCommit: { commitStyledEdit() }
                     )
+                    .frame(minHeight: ResultTypography.lineHeight)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                 } else {
                     MarkdownView(markdown: styled)
@@ -422,11 +423,7 @@ struct ContentView: View {
             // The card itself is the edit affordance. Applied inside the glass so the hover
             // tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
-                #if os(macOS)
-                        styledDraft = styled
-                #else
-                editTarget = .styled
-                #endif
+                styledDraft = styled
             }
             // While editing the card is a solid sheet rather than glass, so the text view can
             // be opaque and repaint cleanly as it grows.

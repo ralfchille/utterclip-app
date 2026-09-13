@@ -27,6 +27,8 @@ struct MarkdownTextView: UIViewRepresentable {
         textView.smartDashesType = .no
         textView.text = text
         MarkdownHighlighter.apply(to: textView.textStorage)
+        textView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        textView.setContentCompressionResistancePriority(.required, for: .vertical)
         // A Done above the keyboard: on a phone there is often nothing outside the card left
         // to tap once the keyboard is up.
         let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 0, height: 44))
@@ -80,10 +82,15 @@ struct MarkdownTextView: UIViewRepresentable {
 /// Reports the height its text needs, so the card grows with the typing instead of chasing it.
 final class AutoGrowingTextView: UITextView {
     override var intrinsicContentSize: CGSize {
-        let width = bounds.width > 0 ? bounds.width : UIView.noIntrinsicMetric
-        guard width > 0 else { return super.intrinsicContentSize }
+        // Before the first layout there is no width to wrap against. Guessing one is far
+        // better than reporting nothing: a zero height makes the view invisible, and SwiftUI
+        // has no reason to ask again.
+        let width = bounds.width > 0
+            ? bounds.width
+            : max(120, (window?.bounds.width ?? UIScreen.main.bounds.width) - 64)
         let fitted = sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
-        return CGSize(width: UIView.noIntrinsicMetric, height: ceil(fitted.height))
+        return CGSize(width: UIView.noIntrinsicMetric,
+                      height: max(ceil(fitted.height), ResultTypography.lineHeight))
     }
 
     override func layoutSubviews() {
