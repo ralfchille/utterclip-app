@@ -363,6 +363,22 @@ extension EnvironmentValues {
     }
 }
 
+/// The rewritten result — the thing the app is for, and the text you actually read back
+/// before sending it somewhere. It gets a size of its own rather than the system body, and
+/// enough leading to read as prose. The editor uses the same numbers so editing looks like
+/// the result (see `MarkdownEditorRules`).
+enum ResultTypography {
+    #if os(macOS)
+    static let size: CGFloat = 15
+    static let lineSpacing: CGFloat = 5
+    #else
+    static let size: CGFloat = 18
+    static let lineSpacing: CGFloat = 5
+    #endif
+
+    static var font: Font { .system(size: size) }
+}
+
 /// The record button and the two satellites beside it. A thumb needs 84 pt; a pointer does
 /// not, and at that size they swallowed a small Mac window — so the Mac runs them at
 /// two-thirds, keeping every proportion between them.

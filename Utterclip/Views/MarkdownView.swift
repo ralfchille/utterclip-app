@@ -18,14 +18,19 @@ struct MarkdownView: View {
                 render(block)
             }
         }
+        .font(ResultTypography.font)
+        .lineSpacing(ResultTypography.lineSpacing)
     }
 
     @ViewBuilder
     private func render(_ block: Block) -> some View {
         switch block {
         case .heading(let level, let text):
+            // Headings step up from the body size rather than from the system's, so the
+            // whole block scales together.
             inline(text)
-                .font(level <= 1 ? .title3.bold() : level == 2 ? .headline : .subheadline.bold())
+                .font(.system(size: ResultTypography.size + (level <= 1 ? 4 : level == 2 ? 1 : 0),
+                              weight: level == 2 ? .semibold : .bold))
                 .padding(.top, 2)
         case .bullet(let text):
             HStack(alignment: .firstTextBaseline, spacing: 6) {

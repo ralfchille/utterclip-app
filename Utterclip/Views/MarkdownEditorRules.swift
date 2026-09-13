@@ -4,10 +4,10 @@ import SwiftUI
 import AppKit
 private typealias EditorFont = NSFont
 private let secondaryLabel = NSColor.secondaryLabelColor
-private let headingLevel1 = EditorFont.preferredFont(forTextStyle: .title3).bolded
-private let headingLevel2 = EditorFont.preferredFont(forTextStyle: .headline)
-private let headingLevel3 = EditorFont.preferredFont(forTextStyle: .subheadline).bolded
-private let bodyFont = EditorFont.preferredFont(forTextStyle: .body)
+private let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
+private let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
+private let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
+private let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
 private extension NSFont {
     var bolded: NSFont { NSFont(descriptor: fontDescriptor.withSymbolicTraits(.bold), size: pointSize) ?? self }
 }
@@ -15,10 +15,10 @@ private extension NSFont {
 import UIKit
 private typealias EditorFont = UIFont
 private let secondaryLabel = UIColor.secondaryLabel
-private let headingLevel1 = EditorFont.preferredFont(forTextStyle: .title3).bolded
-private let headingLevel2 = EditorFont.preferredFont(forTextStyle: .headline)
-private let headingLevel3 = EditorFont.preferredFont(forTextStyle: .subheadline).bolded
-private let bodyFont = EditorFont.preferredFont(forTextStyle: .body)
+private let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
+private let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
+private let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
+private let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
 private extension UIFont {
     var bolded: UIFont { fontDescriptor.withSymbolicTraits(.traitBold).map { UIFont(descriptor: $0, size: pointSize) } ?? self }
 }
