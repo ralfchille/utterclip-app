@@ -29,22 +29,8 @@ struct MarkdownTextView: UIViewRepresentable {
         MarkdownHighlighter.apply(to: textView.textStorage)
         textView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
-        // The bar the keyboard itself carries. SwiftUI's `.toolbar(placement: .keyboard)`
-        // attaches to SwiftUI's own focus, and this view takes focus through UIKit, so it
-        // never appeared. A UIToolbar with the system background is the same thing the
-        // keyboard shows for any other field.
-        let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 44))
-        let appearance = UIToolbarAppearance()
-        appearance.configureWithDefaultBackground()
-        toolbar.standardAppearance = appearance
-        toolbar.compactAppearance = appearance
-        toolbar.items = [
-            UIBarButtonItem(systemItem: .flexibleSpace),
-            UIBarButtonItem(title: "Done", style: .done, target: context.coordinator,
-                            action: #selector(Coordinator.finish)),
-        ]
-        toolbar.sizeToFit()
-        textView.inputAccessoryView = toolbar
+        textView.inputAccessoryView = Self.doneButton(target: context.coordinator,
+                                                      action: #selector(Coordinator.finish))
         DispatchQueue.main.async {
             textView.becomeFirstResponder()
             textView.selectedRange = NSRange(location: (textView.text as NSString).length, length: 0)
@@ -64,6 +50,40 @@ struct MarkdownTextView: UIViewRepresentable {
         textView.invalidateIntrinsicContentSize()
     }
 
+    /// One round button floating above the keyboard, right-aligned: the app's own language —
+    /// label-primary fill, inverted glyph, like the selected style pill — rather than a grey
+    /// system bar stuck to the keys. The transparent strip below it holds it clear of them.
+    private static func doneButton(target: Any, action: Selector) -> UIView {
+        let diameter: CGFloat = 48
+        let gapAboveKeyboard: CGFloat = 14
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width,
+                                             height: diameter + gapAboveKeyboard))
+        container.backgroundColor = .clear
+
+        var configuration = UIButton.Configuration.filled()
+        configuration.cornerStyle = .capsule
+        configuration.baseBackgroundColor = .label
+        configuration.baseForegroundColor = .systemBackground
+        configuration.image = UIImage(systemName: "checkmark",
+                                      withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold))
+        let button = UIButton(configuration: configuration)
+        button.addTarget(target, action: action, for: .touchUpInside)
+        button.accessibilityLabel = "Done editing"
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.18
+        button.layer.shadowRadius = 10
+        button.layer.shadowOffset = CGSize(width: 0, height: 3)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: diameter),
+            button.heightAnchor.constraint(equalToConstant: diameter),
+            button.topAnchor.constraint(equalTo: container.topAnchor),
+            button.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+        ])
+        return container
+    }
+
     final class Coordinator: NSObject, UITextViewDelegate {
         private let parent: MarkdownTextView
 
@@ -81,8 +101,8 @@ struct MarkdownTextView: UIViewRepresentable {
             parent.onCommit()
         }
 
-        /// Done: give up focus, which takes the keyboard down and commits through
-        /// `textViewDidEndEditing`.
+        /// The check button: give up focus, which lowers the keyboard and commits through
+        /// `textViewDidEndEditing`. Return still inserts a newline.
         @objc func finish() {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil)
