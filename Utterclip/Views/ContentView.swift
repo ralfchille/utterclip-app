@@ -590,7 +590,8 @@ struct ContentView: View {
         switch resultLabel {
         case .writing: "Writing…"
         case .copied: "Copied"
-        case .idle: "Copied — \(viewModel.selectedStyle.name)"
+        // Not the style name: the highlighted pill below already says which one it is.
+        case .idle: "Copied"
         }
     }
 
