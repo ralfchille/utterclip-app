@@ -186,9 +186,21 @@ struct ContentView: View {
                     }
                 case .idle, .error:
                     PasteBack.shared.disarm()
-                    styledDraft = nil
-                default: break
+                    endEditing()
+                case .recording, .transcribing, .rewriting:
+                    // New text is on its way: stop editing the old, and make sure the
+                    // pending copy cannot write the old draft over it.
+                    endEditing()
                 }
+            }
+            // A re-style, a restore from History or a dictation claimed from the phone all
+            // replace the result while the card may still be holding the previous one.
+            .onChange(of: viewModel.styledText) { _, styled in
+                guard let styled, styledDraft != nil, styledDraft != styled else { return }
+                copyAfterTyping?.cancel()
+                editorHeight = 0
+                styledDraft = styled
+                resultLabel = .idle
             }
             #endif
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowSettings)) { _ in
@@ -529,6 +541,15 @@ struct ContentView: View {
     }
 
     #if os(macOS)
+    /// Drops the edit in progress, with nothing left to fire afterwards.
+    private func endEditing() {
+        copyAfterTyping?.cancel()
+        copyAfterTyping = nil
+        styledDraft = nil
+        editorHeight = 0
+        resultLabel = .idle
+    }
+
     /// Clicking away finishes the edit.
     private func commitStyledEdit() {
         copyAfterTyping?.cancel()
