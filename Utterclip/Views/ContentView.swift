@@ -361,11 +361,15 @@ struct ContentView: View {
                     } label: {
                         // Not a Label: its three symbols are different widths, so the text
                         // shifted every time the state changed. A fixed box holds the line.
-                        HStack(spacing: 5) {
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            // The box fixes the layout in both directions: the three symbols
+                            // differ in height as well as width, so a width-only frame still
+                            // let the row grow and the text ride up and down with it.
                             Image(systemName: resultLabelIcon)
-                                .frame(width: 15, alignment: .center)
+                                .frame(width: 15, height: 12, alignment: .center)
                             Text(resultLabelText)
                         }
+                        .frame(height: 14, alignment: .center)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .contentShape(Rectangle())
