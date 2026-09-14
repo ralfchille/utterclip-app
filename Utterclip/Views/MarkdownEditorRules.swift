@@ -72,12 +72,19 @@ extension Sequence where Iterator.Element == HighlightRule {
     }
 }
 
-/// Leading expressed exactly as SwiftUI expresses it — extra space between lines, on top of
-/// the font's natural height. Setting an absolute line height here instead was a hair off
-/// what `Text` produces, and the text shifted as the card turned from rendered to editable.
+/// Leading as extra space between lines, on top of the font's natural height — the way both
+/// SwiftUI and TextKit express it. What they disagree on is the natural height itself: at 16 pt
+/// TextKit lays a line out 18 pt tall where SwiftUI reckons a little over 19, so handing
+/// TextKit the spacing `Text` was given left the editor's lines 1.2 pt tighter than the
+/// rendered card's, and the text moved as the card turned editable. Ask each for the gap that
+/// gets it to the same line height instead.
 let roomierLines: NSParagraphStyle = {
     let style = NSMutableParagraphStyle()
+    #if os(macOS)
+    style.lineSpacing = max(0, ResultTypography.lineHeight - NSLayoutManager().defaultLineHeight(for: bodyFont))
+    #else
     style.lineSpacing = ResultTypography.lineSpacing
+    #endif
     return style
 }()
 

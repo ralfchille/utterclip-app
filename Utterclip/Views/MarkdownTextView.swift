@@ -27,6 +27,9 @@ struct MarkdownTextView: NSViewRepresentable {
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.textContainerInset = .zero
+        // NSTextView pads each line fragment by 5 pt unless told otherwise, which shifted the
+        // text right the moment the card turned editable. The phone's half already zeroes it.
+        textView.textContainer?.lineFragmentPadding = 0
         textView.drawsBackground = true
         textView.backgroundColor = .textBackgroundColor
         textView.isHorizontallyResizable = false
