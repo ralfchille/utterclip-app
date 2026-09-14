@@ -139,6 +139,14 @@ struct ContentView: View {
             .panel(isPresented: $showHistory) {
                 HistoryView(viewModel: viewModel)
             }
+            #if os(iOS)
+            // The Action button's shortcut may have run before this view was listening.
+            .task {
+                guard #available(iOS 18.0, *), PendingDictation.take(),
+                      !viewModel.recorder.isRecording, !recordUnavailable else { return }
+                await viewModel.record()
+            }
+            #endif
             .onOpenURL { url in
                 // utterclip://record — from the Home Screen widget or the Control Center button.
                 // (The Mac app receives URLs in its AppDelegate and posts the notification above.)

@@ -126,7 +126,9 @@ let project = Project(
                     ["CFBundleURLName": "com.ralfchille.voicer.mac", "CFBundleURLSchemes": ["utterclip"]],
                 ],
             ]),
-            sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift"],
+            sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift",
+                      // The notification names the menus post; the intents beside them are iOS-only.
+                      "Utterclip/Intents/**/*.swift"],
             resources: ["UtterclipMac/Resources/**"],
             // Not sandboxed, deliberately. The global shortcut's two useful halves — reading
             // which text field another app has focused, and handing the text back with a ⌘V —
@@ -170,7 +172,10 @@ let project = Project(
                 "CFBundleDisplayName": "Utterclip",
                 "NSExtension": ["NSExtensionPointIdentifier": "com.apple.widgetkit-extension"],
             ]),
-            sources: ["UtterclipWidgets/**/*.swift"],
+            // The record intent is shared source with the app: the control runs it here, and
+            // the app's AppShortcutsProvider offers the same intent to Shortcuts, Siri and
+            // the Action button.
+            sources: ["UtterclipWidgets/**/*.swift", "Utterclip/Intents/**/*.swift"],
             resources: ["UtterclipWidgets/Resources/**"]
         ),
     ]

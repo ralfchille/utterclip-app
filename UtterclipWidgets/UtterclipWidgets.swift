@@ -2,20 +2,10 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-/// Deep link the app answers by starting a recording (see `ContentView`'s `onOpenURL`).
+/// The Home Screen widget opens the app with this and `ContentView`'s `onOpenURL` starts the
+/// recording. A widget's URL may use a custom scheme; `OpenURLIntent`, which the control used
+/// to go through, may not — hence the two different routes to the same place.
 private let recordURL = URL(string: "utterclip://record")!
-
-/// Opens Utterclip straight into a recording — the action behind the Control Center /
-/// Lock Screen / Action button control.
-struct StartRecordingIntent: AppIntent {
-    static let title: LocalizedStringResource = "Start dictating"
-    static let description = IntentDescription("Opens Utterclip and starts recording.")
-    static let openAppWhenRun = true
-
-    func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(recordURL))
-    }
-}
 
 /// The round button: Control Center, Lock Screen, Action button.
 struct RecordControl: ControlWidget {

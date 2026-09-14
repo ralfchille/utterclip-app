@@ -450,17 +450,6 @@ enum RecordingState {
     @MainActor static var isRecording = false
 }
 
-/// App-level commands (menu items and keyboard shortcuts on macOS) reach the main view
-/// through notifications, so the view owns the view model and the scene owns the menus.
-extension Notification.Name {
-    static let utterclipToggleRecording = Notification.Name("utterclip.toggleRecording")
-    /// Start only (never stop): the URL scheme's meaning on both platforms.
-    static let utterclipStartRecording = Notification.Name("utterclip.startRecording")
-    static let utterclipContinueRecording = Notification.Name("utterclip.continueRecording")
-    static let utterclipShowHistory = Notification.Name("utterclip.showHistory")
-    static let utterclipShowSettings = Notification.Name("utterclip.showSettings")
-}
-
 /// Text roles whose size differs between the platforms: the Mac window is denser, so its
 /// history rows read at body size while the raw transcript steps down to caption
 /// (matched to the Figma spec, page "Mac app"); iOS keeps callout for both.
