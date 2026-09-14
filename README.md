@@ -29,11 +29,11 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/result.png" width="300" alt="iPhone: a dictation rewritten as a Slack message, already copied, with the raw transcript below and style pills to re-run it">
+  <img src="docs/screenshots/result.png" width="300" alt="iPhone: a spoken note about being late to standup, rewritten as a Slack message and already copied, with the raw transcript below and style pills to re-run it">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/mac-result.png" width="340" alt="Mac: a dictation rewritten as a Slack message in the menu bar app's window, floating above other apps">
+  <img src="docs/screenshots/mac-result.png" width="300" alt="Mac: the same dictation rewritten as a Slack message in the menu bar app's window, floating above other apps">
 </p>
-<p align="center"><sub>Left: iPhone. Right: the Mac app, one window that floats above whatever you write in.</sub></p>
+<p align="center"><sub>The same dictation on both. Left: iPhone. Right: the Mac app, one window that floats above whatever you write in.</sub></p>
 
 ---
 
@@ -338,9 +338,9 @@ What is different, and only because the platform is:
 | — | **From the phone:** while you dictate on the iPhone, a small capsule at the top of the Mac window says so ("iPhone · Recording…"); when the result has synced it reads "New from iPhone" with the first words. Click it and the dictation lands in the Mac window, copied to the Mac clipboard — the fallback for the days Universal Clipboard doesn't feel like it |
 
 <p align="center">
-  <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window: title, History and Settings in its own header, style pills and the mic at the bottom">
+  <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window waiting: History, Settings, the size toggle and close in its own header, style pills and the mic at the bottom — and a capsule saying a dictation just arrived from the iPhone">
   &nbsp;
-  <img src="docs/screenshots/mac-result.png" width="360" alt="A dictation rewritten as a Slack message in the Mac window, raw transcript below, continue-dictating button beside the mic; click the card to edit">
+  <img src="docs/screenshots/mac-result.png" width="360" alt="A dictation rewritten as a Slack message in the Mac window, raw transcript below, continue-dictating button beside the mic; click the card to edit it where it sits">
 </p>
 
 Requirements: macOS 14 or later; Apple Intelligence needs macOS 26 on an Apple silicon Mac.
