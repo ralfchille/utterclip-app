@@ -14,14 +14,20 @@ struct EditorView: View {
     let onSave: (String) -> Void
 
     @State private var text: String
+    @State private var isConfirmingDiscard = false
+    /// What was there when the editor opened, so closing can tell whether anything is at stake.
+    private let original: String
     @Environment(\.dismiss) private var dismiss
     @Environment(\.panelDismiss) private var panelDismiss
 
     init(title: String, initialText: String, onSave: @escaping (String) -> Void) {
         self.title = title
         self.onSave = onSave
+        self.original = initialText
         _text = State(initialValue: initialText)
     }
+
+    private var hasChanges: Bool { text != original }
 
     var body: some View {
         SheetNavigation {
@@ -68,14 +74,28 @@ struct EditorView: View {
             }
         }
         .tint(.primary)
+        // The close button is a bare symbol now, so it no longer says what it does. Typed
+        // work does not disappear behind it without a word.
+        .confirmationDialog("Discard your changes?", isPresented: $isConfirmingDiscard,
+                            titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismissNow() }
+            Button("Keep Editing", role: .cancel) {}
+        }
+        // A swipe down would go around the question, so it waits while there is something
+        // to lose; the close button is then the way out, and it asks.
+        .interactiveDismissDisabled(hasChanges)
     }
 
     private func close() {
+        if hasChanges { isConfirmingDiscard = true } else { dismissNow() }
+    }
+
+    private func dismissNow() {
         if let panelDismiss { panelDismiss() } else { dismiss() }
     }
 
     private func save() {
         onSave(text.trimmingCharacters(in: .whitespacesAndNewlines))
-        close()
+        dismissNow()   // confirming is not discarding; it never asks
     }
 }
