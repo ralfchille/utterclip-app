@@ -31,7 +31,7 @@
   .dark { background:#0B0B0B; color:#FBFBFA; }
   .nav { display:flex; align-items:center; gap:26px; padding-top:44px; padding-bottom:30px; }   /* a page header needs more air than an artboard edge */
   .nav a { font-size:15px !important; text-decoration:none; }   /* beats the inline 13px */
-  .hero { display:flex; gap:24px; }
+  .hero { display:flex; gap:24px; padding-top:104px; }   /* the artboard's value; the class rewrite had dropped it */
   .hero-copy { width:700px; }
   .hero-art { width:524px; display:flex; align-items:flex-start; justify-content:flex-end; }
   .split { display:flex; gap:24px; }
@@ -56,6 +56,7 @@
     .page h1 { font-size:58px !important; }
   }
   @media (max-width:880px) {
+    .hero { padding-top:72px; }
     .hero, .split, .syncs, .device { flex-direction:column; align-items:flex-start; }
     .hero-art { justify-content:flex-start; }
     .g2, .g3, .cases, .spec { grid-template-columns:minmax(0,1fr); }
@@ -70,7 +71,8 @@
   }
   @media (max-width:620px) {
     .sec { padding-left:24px; padding-right:24px; }
-    .nav { flex-wrap:wrap; gap:14px; }
+    .nav { flex-wrap:wrap; gap:14px; padding-top:32px !important; padding-bottom:24px !important; }
+    .hero { padding-top:52px; }
     .card, .page [style*="padding:32px 40px"] { padding:24px !important; }
     .page h1 { font-size:38px !important; }
     .page h2 { font-size:25px !important; }
