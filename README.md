@@ -97,12 +97,14 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
 - **Privacy redaction** (cloud engine, on by default): emails, phone numbers, links and addresses
   are swapped for placeholders before the text is sent, and restored in the result.
 - **History** of past dictations with one-tap restore and re-copy.
-- **Editor** for quick fixes. Fix the result and it is re-copied; fix the transcript and the
-  rewrite re-runs on the corrected text.
+- **Edit in place.** Tap (or click) the result and the card turns into a text field where it
+  sits — no screen change, same type size. A pause puts the corrected text back on the clipboard
+  by itself; there is no save button. Editing the raw transcript instead re-runs the rewrite on
+  the corrected text.
 - **Markdown or plain text** copy mode, sticky until you switch it back.
-- **Widget and Control**: a Home Screen widget, a circular Lock Screen widget, and an iOS 18
-  Control Center control (also assignable to the Action button) that open the app straight into
-  a recording.
+- **Widget, Control and Action button**: a Home Screen widget, a circular Lock Screen widget, an
+  iOS 18 Control Center control, and a **"Start dictating" shortcut** for the Action button, the
+  Shortcuts app and Siri. All of them open the app straight into a recording.
 - **Minimal, monochrome, native.** Black and white, system fonts and symbols, Liquid Glass on
   iOS 26 with a material fallback on iOS 17 to 25. Dark Mode follows the system.
 
@@ -123,7 +125,7 @@ cents a month. The on-device engine costs nothing at all.
 |---|---|
 | **iPhone** | iOS 17 or later |
 | **On-device rewriting** | iOS 26 with Apple Intelligence enabled (iPhone 15 Pro or later) |
-| **Control Center control** | iOS 18 or later |
+| **Control Center control / Action button control** | iOS 18 or later |
 | **Cloud rewriting** | An API key from Anthropic, OpenAI, Google Gemini, or Groq |
 | **First launch** | Internet access to download the Whisper model once (about 220 MB, Wi-Fi recommended) |
 | **Sync between devices** | Optional. An iCloud account signed in on each device; iCloud Keychain on for the API key to travel. Works even where iCloud Drive is switched off |
@@ -139,8 +141,9 @@ cents a month. The on-device engine costs nothing at all.
    With iCloud sync on, a key entered on one device shows up on your others.
 3. **Pick your starting style** under **One-tap rewrite**. Plain is the default; the pills above
    the mic change it for any recording.
-4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, or the **Dictate**
-   control to Control Center or the Action button (iOS 18).
+4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, the **Dictate**
+   control to Control Center (iOS 18), or give the Action button a dictation — **Settings →
+   Action button → Controls → Dictate**, or **→ Shortcut → Start dictating**.
 
 ### Getting an API key
 
@@ -294,11 +297,13 @@ three seconds. Utterclip itself keeps about 220 MB of model plus that cache.
 It needs iOS 26, an iPhone that supports Apple Intelligence (iPhone 15 Pro or later), and Apple
 Intelligence turned on in Settings. The app shows the specific reason under the toggle.
 
-**Where is the widget / control?**
+**Where is the widget / control / Action button?**
 Widgets: long-press the Home Screen or Lock Screen, tap **+**, search *Utterclip*. Control:
 open Control Center, long-press, **Add a Control**, search *Dictate*. The control needs iOS 18.
-If a freshly installed build does not show up in the gallery, restart the phone; iOS caches the
-gallery per app version.
+Action button: **Settings → Action button**, then either **Controls → Dictate** or
+**Shortcut → Start dictating** — both start a recording as the app opens. If a freshly installed
+build does not show up in any of these, restart the phone; iOS caches the gallery per app
+version.
 
 **Can I use it on iPad or Mac?**
 Mac, yes: the repository builds a native macOS app from the same code (see
@@ -310,8 +315,9 @@ building it. iPad is not supported; the iPhone app is portrait-only.
 ## Utterclip for Mac
 
 The same app, living in the **menu bar**: a small Utterclip mark at the top right of the screen.
-Click it and one compact window opens (420 × 720 by default, resizable) that **floats above other
-applications**, so it can sit next to Slack, Mail or a browser while you dictate into them.
+Click it and one compact window opens (340 × 560, with a header button that swaps to a roomier
+510 × 840 for reading and editing) that **floats above other applications**, so it can sit next to
+Slack, Mail or a browser while you dictate into them.
 Close the window and the app is back to just the icon; there is no Dock tile and no entry in the
 app switcher. Same features, same engines, same API calls, same monochrome look; the views are
 literally the same SwiftUI files as the iPhone app.
@@ -321,11 +327,12 @@ What is different, and only because the platform is:
 | iPhone | Mac |
 |---|---|
 | Tap the app icon, tap the mic | **Click the menu bar icon**: the window drops down right under it and a recording starts; click again to stop it and get the rewrite; click once more, with nothing running, and the window hides. **Right-click** opens a menu: Start / Stop Dictation, Continue Dictating, Show/Hide, History, Settings, Float on Top, Quit |
-| Home Screen / Lock Screen widget, Control Center control | Keyboard shortcuts while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
-| Settings and History as sheets | They open **in the same window** — no second window, no sheet; Done, ✕ or Escape bring the main screen back |
-| Full-screen editor | The editor opens in the same window too, Cancel or Done to return |
+| Home Screen / Lock Screen widget, Control Center control, Action button | **A global shortcut** (**⌃⌥⌘Space** by default, three alternatives in Settings) that works from any app: the window opens beside the text field you were typing in and starts recording straight away. Plus, while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
+| Paste from the clipboard yourself | **Paste back where you came from.** A dictation started with the global shortcut waits under the record button — "Paste into Mail" — and **Return** sends it into the field you were in. It waits rather than pasting by itself, so a transcript that came out wrong can be fixed or re-styled first; ✕ leaves it on the clipboard |
+| Settings and History as sheets | They **slide up from the bottom of the same window** — no second window, no sheet; the caret at the top sends them back down |
+| Full-screen editor | **Click the result and it becomes editable where it sits**, at the size you were reading it. The record button's place becomes a black ✓ while you type, **⌘Return** does the same, and **Escape** throws the edit away and puts back what was there. Nothing to save: a pause puts the text back on the clipboard by itself |
 | Always fills the screen | **Float on Top** (right-click menu, or **⌥⌘T**) keeps the window above other apps, on every Space and over full-screen apps; on by default |
-| Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
+| Swipe to go home | **✕ in the header** hides the window, as does the red close button; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
 | iCloud sync | The same: dictate on the Mac, it is in the iPhone's History a moment later, and the other way round. Universal Clipboard covers the copy itself: copy on one device, paste on the other |
 | — | **From the phone:** while you dictate on the iPhone, a small capsule at the top of the Mac window says so ("iPhone · Recording…"); when the result has synced it reads "New from iPhone" with the first words. Click it and the dictation lands in the Mac window, copied to the Mac clipboard — the fallback for the days Universal Clipboard doesn't feel like it |
@@ -406,12 +413,18 @@ UtterclipCore/                     # framework, iOS + macOS: everything below th
 
 Utterclip/                         # the iPhone app
 ├─ UtterclipApp.swift              # @main; warms the Whisper model at launch
+├─ UtterclipShortcuts.swift        # the "Start dictating" App Shortcut (Action button, Siri)
+├─ Intents/                        # built into the app *and* the widget extension:
+│                                  # StartRecordingIntent + the app's notification names
 └─ Views/                          # ContentView, StylePickerRow, HistoryView, SettingsView,
                                    # EditorView, WaveformView, MarkdownView, GlassBackground;
+                                   # MarkdownTextView(+iOS) is the in-place editor, its
+                                   # highlighting shared through MarkdownEditorRules;
                                    # Platform.swift holds every iOS/macOS difference
 
 UtterclipMac/                      # the Mac app: menu bar status item, the one hide-on-close
-                                   # window, menu commands; compiles the same Utterclip/Views/
+                                   # window, menu commands, the global hotkey, caret lookup
+                                   # and paste-back; compiles the same Utterclip/Views/
 UtterclipWidgets/                  # widget extension: Home/Lock Screen widget + Control
 ```
 
@@ -425,7 +438,9 @@ Design notes from the original build live in [`plan/`](plan/).
 ### Dependencies
 
 - [WhisperKit](https://github.com/argmaxinc/WhisperKit) by Argmax: on-device Whisper on Core ML.
-- [HighlightedTextEditor](https://github.com/kyle-n/HighlightedTextEditor): the in-app editor.
+- [HighlightedTextEditor](https://github.com/kyle-n/HighlightedTextEditor): the full-screen
+  transcript editor, and the markdown highlighting rules the in-place editor reuses. The
+  in-place editor itself is hand-written — see the note at the top of `MarkdownTextView.swift`.
 
 ### Contributing
 
