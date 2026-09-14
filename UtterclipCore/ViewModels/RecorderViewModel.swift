@@ -321,6 +321,9 @@ public final class RecorderViewModel {
             return
         }
         phase = .rewriting
+        /// Whether a result actually arrived, as opposed to a missing key or a failed rewrite,
+        /// both of which also end at `.done`.
+        var landed = false
         do {
             // A stored on-device preference on a device that can't run the model (restored
             // backup, older phone) falls back to the cloud — the option is hidden there, so
@@ -341,6 +344,7 @@ public final class RecorderViewModel {
                 entry.styledText = styled
                 entry.styleID = style.id
             }
+            landed = true
         } catch is CancellationError {
             return // `cancel()` already restored the visible state.
         } catch AppError.noApiKey {
@@ -352,6 +356,10 @@ public final class RecorderViewModel {
         // the other device can only show it if both records travel in the same export.
         commitCurrentEntry()
         phase = .done
+        // The result arriving is the moment the whole dictation was for, and it was the one
+        // thing that happened without a word. The same tap as confirming an edit, and only on
+        // a result: a missing key or a failed rewrite also ends here, and neither is good news.
+        if landed { successHaptic() }
     }
 
     /// Whether the microphone delivered nothing at all, or simply caught no speech. A muted
