@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private static let pushLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "push")
+    private static let anchorLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "anchor")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
@@ -56,19 +57,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showWindowOnceAnchored()
     }
 
-    /// The status item only gets its place in the menu bar a few run-loop turns after it is
-    /// created — until then its window reports a placeholder frame at the screen origin, and
-    /// anchoring to that would pin the app window to the bottom-left corner. Wait (up to
-    /// three seconds) for a frame that sits in a menu bar, then show the window under it.
+    /// The status item takes a few run-loop turns to reach its place in the menu bar, and it
+    /// is not one jump but several. Polled every 50 ms on this Mac it reads: an empty
+    /// placeholder, then a frame below the screen, then 200 ms parked near the right-hand
+    /// edge, and only then a slide left into its real slot. Anchoring to any of those put the
+    /// window in the top-right corner instead of under the icon.
+    ///
+    /// So wait for a frame that sits in a menu bar and has stopped moving — the same frame
+    /// `stillPolls` times running. Two was not enough: the right-edge position held for
+    /// exactly two polls here, which is the shape of the bug rather than a safe margin.
+    /// Up to three seconds, then show it wherever it has got to.
     private func showWindowOnceAnchored(attempt: Int = 0) {
-        if statusItemFrame != nil || attempt >= 60 {
-            showWindow()
-        } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                self.showWindowOnceAnchored(attempt: attempt + 1)
+        let frame = statusItemFrame
+        Self.anchorLogger.debug("attempt \(attempt, privacy: .public) frame=\(String(describing: frame), privacy: .public) still=\(self.statusItemFrameRepeats, privacy: .public)")
+        if frame != nil, frame == lastSeenStatusItemFrame {
+            statusItemFrameRepeats += 1
+            if statusItemFrameRepeats >= Self.stillPolls {
+                Self.anchorLogger.notice("settled after \(attempt, privacy: .public) polls at \(String(describing: frame), privacy: .public)")
+                showWindow()
+                return
             }
+        } else {
+            statusItemFrameRepeats = 1
+        }
+        lastSeenStatusItemFrame = frame
+        guard attempt < 60 else { showWindow(); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.showWindowOnceAnchored(attempt: attempt + 1)
         }
     }
+
+    /// Identical readings that count as settled — 150 ms of stillness on top of the first one.
+    private static let stillPolls = 4
+    /// The previous poll's frame and how often it has now repeated, for the test above.
+    private var lastSeenStatusItemFrame: NSRect?
+    private var statusItemFrameRepeats = 0
 
     /// Menu-bar apps keep running with no windows; that is the point.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
