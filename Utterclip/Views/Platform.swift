@@ -1,5 +1,10 @@
 import SwiftUI
 import UtterclipCore
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 // The views are shared by the iPhone app and the Mac app. Everything that differs
 // between the two platforms is funneled through this file, so the views themselves
@@ -399,9 +404,37 @@ enum ResultTypography {
 
     /// The identity face, not the system one: this is the text the app exists to produce.
     static var font: Font { IdentityFont.text(size: size, relativeTo: .body) }
-    /// SwiftUI adds to the font's natural line height (about 1.2 × the size) rather than
-    /// setting it, so the extra is what gets us to `lineHeight`.
-    static var lineSpacing: CGFloat { max(0, lineHeight - size * 1.2) }
+
+    /// The height one line takes before any leading is added. Asked of the font rather than
+    /// guessed at: the old rule multiplied the point size by 1.2, which was true enough of
+    /// SF Pro and wrong by 0.8 pt for the face that replaced it — the rendered text and the
+    /// editable text then disagreed by that much on every line.
+    ///
+    /// Both sides read this one number, so they cannot drift apart again. Measured: at 16 pt
+    /// Schibsted Grotesk lays out at 20 in SwiftUI and 20 in TextKit; at 24 pt, 29 and 29.
+    static let naturalLineHeight: CGFloat = {
+        #if os(macOS)
+        let font = IdentityFont.nsFont(size: size)
+        #else
+        let font = IdentityFont.uiFont(size: size)
+        #endif
+        // Laid out rather than derived: AppKit has defaultLineHeight(for:) and UIKit does not,
+        // and the arithmetic they would replace it with is wrong for both — ascender minus
+        // descender comes to 19.75 at 16 pt where the engine actually uses 20. So ask the
+        // engine, the same one the editor lays its text out in.
+        let layout = NSLayoutManager()
+        let container = NSTextContainer(size: CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                     height: CGFloat.greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        layout.addTextContainer(container)
+        let storage = NSTextStorage(string: "Hxg", attributes: [.font: font])
+        storage.addLayoutManager(layout)
+        layout.ensureLayout(for: container)
+        return layout.usedRect(for: container).height
+    }()
+
+    /// Leading is extra space on top of that, which is how both SwiftUI and TextKit express it.
+    static var lineSpacing: CGFloat { max(0, lineHeight - naturalLineHeight) }
 }
 
 /// The record button and the two satellites beside it. A thumb needs 84 pt; a pointer does
