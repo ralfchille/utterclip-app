@@ -49,18 +49,26 @@ struct EditorView: View {
             }
             .background(Color.appBackground)
             .ignoreHiddenTitleBar()
-            // Apple's toolbar guidance: the close button is a symbol on the leading edge and
-            // carries no "Close" label, and there is exactly one primary action, prominent,
-            // on the trailing edge. Text buttons on both sides was the shape before that.
+            // The same places History and Settings put theirs — both trailing on iOS — with
+            // the primary action furthest out, and symbols rather than words.
             .barChrome(title: title) {
-                ToolbarItem(placement: .cancellationAction) {
-                    if #available(iOS 26.0, macOS 26.0, *) {
-                        Button(role: .close) { close() }
-                    } else {
-                        Button("Cancel") { close() }
+                ToolbarItem(placement: .sheetCancel) {
+                    Group {
+                        if #available(iOS 26.0, macOS 26.0, *) {
+                            Button(role: .close) { close() }
+                        } else {
+                            Button("Cancel") { close() }
+                        }
+                    }
+                    // Anchored to the button, like History's Clear, so it rises from there
+                    // rather than arriving in the middle of the screen.
+                    .confirmationDialog("Discard your changes?", isPresented: $isConfirmingDiscard,
+                                        titleVisibility: .visible) {
+                        Button("Discard Changes", role: .destructive) { dismissNow() }
+                        Button("Keep Editing", role: .cancel) {}
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .sheetConfirm) {
                     if #available(iOS 26.0, macOS 26.0, *) {
                         Button { save() } label: {
                             Label("Done", systemImage: "checkmark")
@@ -74,13 +82,6 @@ struct EditorView: View {
             }
         }
         .tint(.primary)
-        // The close button is a bare symbol now, so it no longer says what it does. Typed
-        // work does not disappear behind it without a word.
-        .confirmationDialog("Discard your changes?", isPresented: $isConfirmingDiscard,
-                            titleVisibility: .visible) {
-            Button("Discard Changes", role: .destructive) { dismissNow() }
-            Button("Keep Editing", role: .cancel) {}
-        }
         // A swipe down would go around the question, so it waits while there is something
         // to lose; the close button is then the way out, and it asks.
         .interactiveDismissDisabled(hasChanges)
