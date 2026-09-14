@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import os
 
 /// Where the text cursor is in the app you are typing in, so the window can open next to it
 /// instead of wherever it last sat.
@@ -22,27 +23,34 @@ enum FocusedField {
     /// coordinates. Nil when access is missing or the focus is not a text input.
     static func caretRect() -> CGRect? {
         guard isAllowed else { return nil }
+        enableAccessibilityForFrontmostApp()
         let system = AXUIElementCreateSystemWide()
         var focusedValue: CFTypeRef?
         guard AXUIElementCopyAttributeValue(system, kAXFocusedUIElementAttribute as CFString, &focusedValue) == .success,
               CFGetTypeID(focusedValue) == AXUIElementGetTypeID() else { return nil }
         let element = unsafeBitCast(focusedValue, to: AXUIElement.self)
 
+        // Behaviour first, role second. Gating on the role rejected anything that names
+        // itself unusually — an Electron composer among them — even though it answers every
+        // text question correctly. Carrying a selected text range is the honest test.
+        var rangeValue: CFTypeRef?
+        let hasSelection = AXUIElementCopyAttributeValue(
+            element, kAXSelectedTextRangeAttribute as CFString, &rangeValue) == .success
+
         var roleValue: CFTypeRef?
         AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleValue)
         let role = roleValue as? String ?? ""
-        // Web text fields and editors report AXTextArea or AXTextField too; a content-editable
-        // div shows up as AXWebArea with a selection, which the range check below catches.
         let textRoles: Set<String> = [
             kAXTextFieldRole as String, kAXTextAreaRole as String,
-            kAXComboBoxRole as String, "AXSearchField", "AXWebArea",
+            kAXComboBoxRole as String, "AXSearchField", "AXWebArea", "AXTextView",
         ]
-        guard textRoles.contains(role) else { return nil }
+        guard hasSelection || textRoles.contains(role) else {
+            logger.notice("Focused element is not a text input (role \(role, privacy: .public)).")
+            return nil
+        }
 
         // The caret: the bounds of the (empty) selected range.
-        var rangeValue: CFTypeRef?
-        if AXUIElementCopyAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, &rangeValue) == .success,
-           let range = rangeValue {
+        if hasSelection, let range = rangeValue {
             var boundsValue: CFTypeRef?
             if AXUIElementCopyParameterizedAttributeValue(
                 element, kAXBoundsForRangeParameterizedAttribute as CFString, range, &boundsValue) == .success,
@@ -70,6 +78,22 @@ enum FocusedField {
               size.height > 0 else { return nil }
         return cocoaRect(fromAccessibility: CGRect(origin: origin, size: size))
     }
+
+    /// Chromium — and so every Electron app, Claude's own included — keeps its accessibility
+    /// tree switched off until an assistive client asks for it. Setting `AXManualAccessibility`
+    /// on the application element is the documented way to ask. Harmless elsewhere.
+    private static var accessibilityEnabledFor: Set<pid_t> = []
+
+    private static func enableAccessibilityForFrontmostApp() {
+        guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier,
+              !accessibilityEnabledFor.contains(pid) else { return }
+        accessibilityEnabledFor.insert(pid)
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+        AXUIElementSetAttributeValue(app, "AXEnhancedUserInterface" as CFString, kCFBooleanTrue)
+    }
+
+    private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "focused-field")
 
     /// Accessibility measures from the top-left of the primary display; Cocoa from the
     /// bottom-left.
