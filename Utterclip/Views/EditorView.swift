@@ -7,8 +7,8 @@ import HighlightedTextEditor
 /// Uses HighlightedTextEditor with our own rules (`utterclipMarkdown`) so headings and
 /// emphasis show at the same sizes as in the result view, while the content remains
 /// plain, editable markdown — which keeps the rest of the pipeline (clipboard,
-/// `MarkdownStripper`) working on the same string the user sees. The edit is only committed on "Done"; "Cancel"
-/// discards it, so a mistaken tap never destroys the result.
+/// `MarkdownStripper`) working on the same string the user sees. The edit is only committed by
+/// the confirming action; closing discards it, so a mistaken tap never destroys the result.
 struct EditorView: View {
     let title: String
     let onSave: (String) -> Void
@@ -43,13 +43,27 @@ struct EditorView: View {
             }
             .background(Color.appBackground)
             .ignoreHiddenTitleBar()
+            // Apple's toolbar guidance: the close button is a symbol on the leading edge and
+            // carries no "Close" label, and there is exactly one primary action, prominent,
+            // on the trailing edge. Text buttons on both sides was the shape before that.
             .barChrome(title: title) {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { close() }
+                    if #available(iOS 26.0, macOS 26.0, *) {
+                        Button(role: .close) { close() }
+                    } else {
+                        Button("Cancel") { close() }
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { save() }
-                        .fontWeight(.semibold)
+                    if #available(iOS 26.0, macOS 26.0, *) {
+                        Button { save() } label: {
+                            Label("Done", systemImage: "checkmark")
+                        }
+                        .buttonStyle(.glassProminent)
+                    } else {
+                        Button("Done") { save() }
+                            .fontWeight(.semibold)
+                    }
                 }
             }
         }
