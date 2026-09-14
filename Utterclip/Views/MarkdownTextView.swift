@@ -16,6 +16,8 @@ struct MarkdownTextView: NSViewRepresentable {
     var onChange: () -> Void = {}
     /// Called when the view loses focus: an edit is finished by clicking away.
     var onCommit: () -> Void = {}
+    /// Called on Esc: the edit is dropped rather than kept.
+    var onCancel: () -> Void = {}
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -35,6 +37,8 @@ struct MarkdownTextView: NSViewRepresentable {
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
         textView.string = text
+        textView.onCancel = onCancel
+        textView.onSubmit = onCommit
         Self.highlight(textView)
         // The caret belongs in the text the moment the card opens.
         DispatchQueue.main.async {
@@ -88,6 +92,29 @@ struct MarkdownTextView: NSViewRepresentable {
 /// new line was drawn into a frame still one line short, the view scrolled to keep the caret
 /// visible, and then everything settled — which is what the flicker was.
 final class AutoGrowingTextView: NSTextView {
+    /// Esc. NSTextView's own `cancelOperation` opens autocompletion, which is not what the
+    /// key means in a card being edited in place — here it throws the edit away.
+    var onCancel: (() -> Void)?
+    /// ⌘Return, the other way to finish without reaching for the mouse.
+    var onSubmit: (() -> Void)?
+
+    override func cancelOperation(_ sender: Any?) {
+        onCancel?()
+    }
+
+    override func keyDown(with event: NSEvent) {
+        // ⌘ rather than ⇧: Return breaks the line here, and AppKit already gives ⇧Return its
+        // own meaning in a text view — a line break inside the paragraph. ⌘Return is free,
+        // and is what the rest of the Mac uses to send a piece of text on its way.
+        let enterKeys: Set<String> = ["\r", "\u{3}"] // Return, and the keypad's Enter
+        if event.modifierFlags.contains(.command), let onSubmit,
+           let key = event.charactersIgnoringModifiers, enterKeys.contains(key) {
+            onSubmit()
+            return
+        }
+        super.keyDown(with: event)
+    }
+
     override var intrinsicContentSize: NSSize {
         guard let container = textContainer, let manager = layoutManager else {
             return super.intrinsicContentSize

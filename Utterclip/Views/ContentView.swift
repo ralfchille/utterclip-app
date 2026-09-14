@@ -19,6 +19,8 @@ struct ContentView: View {
     /// The result card is edited where it sits rather than in a sheet or a panel; this holds
     /// the text while it is being typed.
     @State private var styledDraft: String?
+    /// The result as it stood when the edit opened, so Esc can put it back.
+    @State private var styledOriginal: String?
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -83,23 +85,29 @@ struct ContentView: View {
             #if os(macOS)
             .animation(.spring(duration: 0.35, bounce: 0.2), value: pasteBack.offeredAppName)
             #endif
-                // Out of the way while the result is being typed into: on a phone the keyboard
-                // has already taken half the screen, and neither control is any use mid-edit.
+                // The pills go while the result is being typed into: re-running the rewrite
+                // would throw the edit away.
                 if !isEditingResult {
-                // Before a recording the highlighted pill is the style the recording will be
-                // rewritten in; afterwards tapping one re-runs the rewrite.
-                StylePickerRow(
-                    selected: viewModel.selectedStyle,
-                    isDisabled: viewModel.isBusy
-                ) { style in
-                    viewModel.select(style)
+                    // Before a recording the highlighted pill is the style the recording will
+                    // be rewritten in; afterwards tapping one re-runs the rewrite.
+                    StylePickerRow(
+                        selected: viewModel.selectedStyle,
+                        isDisabled: viewModel.isBusy
+                    ) { style in
+                        viewModel.select(style)
+                    }
+                    .padding(.bottom, 10) // sit a touch higher above the record button
                 }
-                .padding(.bottom, 10) // sit a touch higher above the record button
                 #if os(macOS)
+                // Editing borrows the record button's place rather than adding a control:
+                // the eye is already there, and nothing else on screen moves.
+                Group {
+                    if isEditingResult { doneEditingButton } else { recordButton }
+                }
+                .padding(.bottom, pasteBack.offeredAppName == nil ? 24 : 16)
                 // A dictation started with the shortcut waits under the record button until it
-                // is sent on, so the result can be read, edited or re-styled first.
-                recordButton
-                    .padding(.bottom, pasteBack.offeredAppName == nil ? 24 : 16)
+                // is sent on — through the edit too, so text fixed here still lands in the
+                // field it was dictated into.
                 if let appName = pasteBack.offeredAppName {
                     PasteBackBar(appName: appName,
                                  paste: { pasteBack.paste() },
@@ -109,10 +117,13 @@ struct ContentView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 #else
-                recordButton
-                    .padding(.bottom, 24)
-                #endif
+                // On a phone the keyboard has already taken half the screen, and the check
+                // button rides above it; the record button would be behind it anyway.
+                if !isEditingResult {
+                    recordButton
+                        .padding(.bottom, 24)
                 }
+                #endif
             }
             .ignoreHiddenTitleBar()
             .barChrome(title: "Utterclip") {
@@ -183,7 +194,7 @@ struct ContentView: View {
             .onChange(of: viewModel.styledText) { _, styled in
                 guard let styled, styledDraft != nil, styledDraft != styled else { return }
                 copyAfterTyping?.cancel()
-                styledDraft = styled
+                beginEditing(styled)
                 resultLabel = .idle
             }
             .onChange(of: viewModel.phase) { _, phase in
@@ -205,7 +216,7 @@ struct ContentView: View {
                     // where Return belongs to the confirm bar rather than to the text.
                     if pasteBack.offeredAppName == nil, styledDraft == nil,
                        let styled = viewModel.styledText {
-                        styledDraft = styled
+                        beginEditing(styled)
                         resultLabel = .idle
                     }
                 case .idle, .error:
@@ -225,7 +236,7 @@ struct ContentView: View {
             .onChange(of: viewModel.styledText) { _, styled in
                 guard let styled, styledDraft != nil, styledDraft != styled else { return }
                 copyAfterTyping?.cancel()
-                        styledDraft = styled
+                beginEditing(styled)
                 resultLabel = .idle
             }
             #endif
@@ -414,7 +425,8 @@ struct ContentView: View {
                     MarkdownTextView(
                         text: Binding(get: { styledDraft ?? "" }, set: { styledDraft = $0 }),
                         onChange: { typedInResult() },
-                        onCommit: { commitStyledEdit() }
+                        onCommit: { commitStyledEdit() },
+                        onCancel: { discardStyledEdit() }
                     )
                     .frame(minHeight: ResultTypography.lineHeight)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -428,7 +440,7 @@ struct ContentView: View {
             // The card itself is the edit affordance. Applied inside the glass so the hover
             // tint sits between glass and text.
             .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
-                styledDraft = styled
+                beginEditing(styled)
             }
             // While editing the card is a solid sheet rather than glass, so the text view can
             // be opaque and repaint cleanly as it grows.
@@ -541,17 +553,40 @@ struct ContentView: View {
         .padding(.top, 60)
     }
 
+    /// Opens the editor on `text`, keeping a copy of what it replaces for Esc.
+    private func beginEditing(_ text: String) {
+        styledOriginal = text
+        styledDraft = text
+    }
+
     /// Drops the edit in progress, with nothing left to fire afterwards.
     private func endEditing() {
         copyAfterTyping?.cancel()
         copyAfterTyping = nil
         styledDraft = nil
+        styledOriginal = nil
+        resultLabel = .idle
+    }
+
+    /// Esc throws the edit away. What was typed has usually been applied already — the pause
+    /// after typing copies it — so this puts the old text back the way an edit goes in rather
+    /// than only closing the card: clipboard, history entry and style cache all follow.
+    private func discardStyledEdit() {
+        copyAfterTyping?.cancel()
+        copyAfterTyping = nil
+        let original = styledOriginal
+        styledDraft = nil
+        styledOriginal = nil
+        if let original, viewModel.styledText != original {
+            viewModel.applyStyledEdit(original)
+        }
         resultLabel = .idle
     }
 
     /// Clicking away finishes the edit.
     private func commitStyledEdit() {
         copyAfterTyping?.cancel()
+        styledOriginal = nil
         guard let draft = styledDraft else { return }
         styledDraft = nil
         if draft != viewModel.styledText {
@@ -560,13 +595,13 @@ struct ContentView: View {
         }
     }
 
-    /// Each keystroke says "Writing…" and restarts the three-second wait; when it elapses the
-    /// text goes back on the clipboard and the label says so. No save button anywhere.
+    /// Each keystroke says "Writing…" and restarts the wait; when it elapses the text goes
+    /// back on the clipboard and the label says so. No save button anywhere.
     private func typedInResult() {
         if resultLabel != .writing { resultLabel = .writing }
         copyAfterTyping?.cancel()
         copyAfterTyping = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.5))
+            try? await Task.sleep(for: .seconds(0.75))
             guard !Task.isCancelled, let draft = styledDraft else { return }
             if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
             flashCopied()
@@ -718,6 +753,28 @@ struct ContentView: View {
             icon.glassBackground(shape: Circle()).contentShape(Circle())
         }
     }
+
+#if os(macOS)
+    /// The way out of an in-place edit. It takes the record button's place while the edit is
+    /// open — recording is not what that button is for mid-edit — and is filled like the stop
+    /// state rather than glass, so the check reads white against it. Clicking away and Esc
+    /// still commit; this is the one that can be seen.
+    private var doneEditingButton: some View {
+        Button {
+            commitStyledEdit()
+        } label: {
+            Image(systemName: "checkmark")
+                .font(.system(size: ControlMetrics.recordGlyph, weight: .semibold))
+                .foregroundStyle(Color.appBackground)
+                .frame(width: ControlMetrics.record, height: ControlMetrics.record)
+                .background(Circle().fill(.primary))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help("Finish editing (⌘↩)")
+        .accessibilityLabel("Finish editing")
+    }
+    #endif
 
     /// Abandons the recording, transcription or rewrite in progress; visible while any is.
     private var cancelButton: some View {

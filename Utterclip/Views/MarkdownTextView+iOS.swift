@@ -12,6 +12,8 @@ struct MarkdownTextView: UIViewRepresentable {
     var onChange: () -> Void = {}
     /// Called when the field gives up focus: Done, or a tap outside.
     var onCommit: () -> Void = {}
+    /// Esc on a hardware keyboard; the phone's own keyboard has no such key.
+    var onCancel: () -> Void = {}
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -26,6 +28,7 @@ struct MarkdownTextView: UIViewRepresentable {
         textView.smartQuotesType = .no
         textView.smartDashesType = .no
         textView.text = text
+        textView.onCancel = onCancel
         MarkdownHighlighter.apply(to: textView.textStorage)
         textView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -113,6 +116,16 @@ struct MarkdownTextView: UIViewRepresentable {
 
 /// Reports the height its text needs, so the card grows with the typing instead of chasing it.
 final class AutoGrowingTextView: UITextView {
+    /// Esc on a hardware keyboard, the same as on the Mac. The on-screen keyboard has no
+    /// such key, so on a phone this never fires and the check button is the way out.
+    var onCancel: (() -> Void)?
+
+    override var keyCommands: [UIKeyCommand]? {
+        [UIKeyCommand(input: UIKeyCommand.inputEscape, modifierFlags: [], action: #selector(cancelEdit))]
+    }
+
+    @objc private func cancelEdit() { onCancel?() }
+
     override var intrinsicContentSize: CGSize {
         // Before the first layout there is no width to wrap against. Guessing one is far
         // better than reporting nothing: a zero height makes the view invisible, and SwiftUI
