@@ -21,6 +21,8 @@ struct ContentView: View {
     @State private var styledDraft: String?
     /// The result as it stood when the edit opened, so Esc can put it back.
     @State private var styledOriginal: String?
+    /// Where the tap that opened the editor landed, so the caret can start there.
+    @State private var caretHint: CGPoint?
     #if os(macOS)
     @State private var pasteBack = PasteBack.shared
     @State private var mac = MacPreferences.shared
@@ -426,7 +428,8 @@ struct ContentView: View {
                         text: Binding(get: { styledDraft ?? "" }, set: { styledDraft = $0 }),
                         onChange: { typedInResult() },
                         onCommit: { commitStyledEdit() },
-                        onCancel: { discardStyledEdit() }
+                        onCancel: { discardStyledEdit() },
+                        caretHint: caretHint
                     )
                     .frame(minHeight: ResultTypography.lineHeight)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -439,7 +442,8 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, alignment: .topLeading)
             // The card itself is the edit affordance. Applied inside the glass so the hover
             // tint sits between glass and text.
-            .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) {
+            .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) { point in
+                caretHint = point
                 beginEditing(styled)
             }
             // While editing the card is a solid sheet rather than glass, so the text view can
@@ -493,8 +497,8 @@ struct ContentView: View {
             }
             .padding(.horizontal) // align with the styled card's inner content
             .padding(.vertical, 10) // air inside the hover tint …
-            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 12), tint: 0.03) {
-                editTarget = .raw
+            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 12), tint: 0.03) { _ in
+                editTarget = .raw   // a sheet, with its own caret
             }
             .padding(.vertical, -10) // … without moving the block in the layout
         }
@@ -559,8 +563,13 @@ struct ContentView: View {
         styledDraft = text
     }
 
+    /// Cleared whenever the editor closes, so a later open that carries no point — the phone
+    /// opening it by itself after a rewrite — starts at the end rather than at a stale tap.
+    private func forgetCaretHint() { caretHint = nil }
+
     /// Drops the edit in progress, with nothing left to fire afterwards.
     private func endEditing() {
+        forgetCaretHint()
         copyAfterTyping?.cancel()
         copyAfterTyping = nil
         styledDraft = nil
@@ -572,6 +581,7 @@ struct ContentView: View {
     /// after typing copies it — so this puts the old text back the way an edit goes in rather
     /// than only closing the card: clipboard, history entry and style cache all follow.
     private func discardStyledEdit() {
+        forgetCaretHint()
         copyAfterTyping?.cancel()
         copyAfterTyping = nil
         let original = styledOriginal
@@ -585,6 +595,7 @@ struct ContentView: View {
 
     /// Clicking away finishes the edit.
     private func commitStyledEdit() {
+        forgetCaretHint()
         copyAfterTyping?.cancel()
         styledOriginal = nil
         guard let draft = styledDraft else { return }

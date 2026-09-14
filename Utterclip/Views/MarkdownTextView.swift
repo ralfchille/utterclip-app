@@ -18,6 +18,10 @@ struct MarkdownTextView: NSViewRepresentable {
     var onCommit: () -> Void = {}
     /// Called on Esc: the edit is dropped rather than kept.
     var onCancel: () -> Void = {}
+    /// Accepted so the call site is the same on both platforms. Unused here: AppKit windows
+    /// measure from the bottom left where SwiftUI's global space measures from the top, and
+    /// that flip is worth handling deliberately rather than in passing.
+    var caretHint: CGPoint?
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 

@@ -270,7 +270,9 @@ struct TapToEdit<S: Shape>: ViewModifier {
     let shape: S
     /// Hover tint strength: 6 % on the glass card, 3 % on the bare raw transcript.
     var tint: Double = 0.06
-    let action: () -> Void
+    /// Carries where the tap landed, in global coordinates, so the editor that opens can put
+    /// the caret there instead of at the end.
+    let action: (CGPoint) -> Void
     @State private var hovering = false
 
     func body(content: Content) -> some View {
@@ -278,7 +280,7 @@ struct TapToEdit<S: Shape>: ViewModifier {
             // Behind the content, not over it: a tint on top of the text dulls it.
             .background(shape.fill(.primary.opacity(hovering ? tint : 0)))
             .contentShape(shape)
-            .onTapGesture(perform: action)
+            .onTapGesture(coordinateSpace: .global) { action($0) }
             #if os(macOS)
             .onHover { inside in
                 hovering = inside
@@ -288,13 +290,15 @@ struct TapToEdit<S: Shape>: ViewModifier {
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(.isButton)
             .accessibilityHint(label)
-            .accessibilityAction(named: label, action)
+            // No point to offer from a VoiceOver action; the caret falls back to the end.
+            .accessibilityAction(named: label) { action(.zero) }
     }
 }
 
 extension View {
     /// Opens the editor when the block is tapped; see `TapToEdit`.
-    func tapToEdit<S: Shape>(_ label: String, shape: S, tint: Double = 0.06, action: @escaping () -> Void) -> some View {
+    func tapToEdit<S: Shape>(_ label: String, shape: S, tint: Double = 0.06,
+                             action: @escaping (CGPoint) -> Void) -> some View {
         modifier(TapToEdit(label: label, shape: shape, tint: tint, action: action))
     }
 

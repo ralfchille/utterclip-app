@@ -14,6 +14,9 @@ struct MarkdownTextView: UIViewRepresentable {
     var onCommit: () -> Void = {}
     /// Esc on a hardware keyboard; the phone's own keyboard has no such key.
     var onCancel: () -> Void = {}
+    /// Where the tap that opened the editor landed, in global coordinates. The caret goes
+    /// there rather than to the end, so a tap in the middle of a sentence lands mid-sentence.
+    var caretHint: CGPoint?
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -36,7 +39,14 @@ struct MarkdownTextView: UIViewRepresentable {
                                                       action: #selector(Coordinator.finish))
         DispatchQueue.main.async {
             textView.becomeFirstResponder()
-            textView.selectedRange = NSRange(location: (textView.text as NSString).length, length: 0)
+            // closestPosition works in the view's own coordinates, and it clamps to the
+            // nearest character, so a tap past the last line still lands somewhere sensible.
+            if let hint = caretHint,
+               let position = textView.closestPosition(to: textView.convert(hint, from: nil)) {
+                textView.selectedTextRange = textView.textRange(from: position, to: position)
+            } else {
+                textView.selectedRange = NSRange(location: (textView.text as NSString).length, length: 0)
+            }
         }
         return textView
     }
