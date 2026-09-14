@@ -614,10 +614,14 @@ struct ContentView: View {
         styledOriginal = nil
         guard let draft = styledDraft else { return }
         styledDraft = nil
+        // Either way the edit has been taken, and either way it should feel taken. Whether
+        // the pause got there first is this view's business, not something to feel.
         if draft != viewModel.styledText {
             viewModel.applyStyledEdit(draft)
-            flashCopied()
+        } else {
+            viewModel.acknowledgeEdit()
         }
+        flashCopied()
     }
 
     /// Each keystroke says "Writing…" and restarts the wait; when it elapses the text goes

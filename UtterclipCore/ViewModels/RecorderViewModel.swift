@@ -478,6 +478,11 @@ public final class RecorderViewModel {
         if confirmed { successHaptic() }
     }
 
+    /// The tap that says an edit was taken, for when there is nothing left to apply: the pause
+    /// while typing has already put this exact text on the clipboard, so `applyStyledEdit`
+    /// would find no change and say nothing. Confirming should still feel like confirming.
+    public func acknowledgeEdit() { successHaptic() }
+
     /// Applies a user-edited raw transcript the same way a fresh recording lands: the
     /// plain text is copied right away, then the current style re-runs on it so the styled
     /// result (and its history entry) never lags behind the transcript. Saving the text
