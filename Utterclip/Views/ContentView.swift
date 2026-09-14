@@ -578,7 +578,7 @@ struct ContentView: View {
         styledDraft = nil
         styledOriginal = nil
         if let original, viewModel.styledText != original {
-            viewModel.applyStyledEdit(original)
+            viewModel.applyStyledEdit(original, confirmed: false)
         }
         resultLabel = .idle
     }
@@ -603,7 +603,7 @@ struct ContentView: View {
         copyAfterTyping = Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.75))
             guard !Task.isCancelled, let draft = styledDraft else { return }
-            if draft != viewModel.styledText { viewModel.applyStyledEdit(draft) }
+            if draft != viewModel.styledText { viewModel.applyStyledEdit(draft, confirmed: false) }
             flashCopied()
         }
     }

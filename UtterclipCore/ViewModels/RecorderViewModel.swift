@@ -457,14 +457,17 @@ public final class RecorderViewModel {
     /// Applies a user-edited version of the styled result and re-copies it in the
     /// current copy mode. Empty edits are ignored so a stray clear can't wipe the
     /// result out from under the copy that's already on the clipboard.
-    public func applyStyledEdit(_ edited: String) {
+    /// - Parameter confirmed: whether to mark it with a tap. The pause while typing puts the
+    ///   text back on the clipboard every few seconds, and a tap each time reads as random
+    ///   buzzing — the label already says what happened. Only finishing an edit is confirmed.
+    public func applyStyledEdit(_ edited: String, confirmed: Bool = true) {
         let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         styledText = trimmed
         copyStyled(trimmed)
         rewriteCache[selectedStyle] = trimmed // keep the edit when switching pills and back
         updateCurrentEntry { $0.styledText = trimmed }
-        successHaptic()
+        if confirmed { successHaptic() }
     }
 
     /// Applies a user-edited raw transcript the same way a fresh recording lands: the
