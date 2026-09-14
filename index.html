@@ -22,13 +22,15 @@
   img, svg { max-width:100%; height:auto; }
   .mono { font-family:"JetBrains Mono",ui-monospace,Menlo,monospace; }
   .serif { font-family:"Source Serif 4",Georgia,serif; }
-  .lbl { font-family:"JetBrains Mono",ui-monospace,Menlo,monospace; font-size:11px;
-         letter-spacing:0.14em; text-transform:uppercase; color:#6B6B6B; }
+  .lbl { font-family:"JetBrains Mono",ui-monospace,Menlo,monospace; font-size:12px;
+         letter-spacing:normal; text-transform:uppercase; color:#6B6B6B; }
+  .page [style*="letter-spacing:0.12em"], .page [style*="letter-spacing:0.14em"] { letter-spacing:normal !important; }
 
   .page { width:100%; max-width:1440px; margin:0 auto; background:#FBFBFA; }
   .sec { padding-left:96px; padding-right:96px; }
   .dark { background:#0B0B0B; color:#FBFBFA; }
-  .nav { display:flex; align-items:center; gap:24px; }
+  .nav { display:flex; align-items:center; gap:26px; padding-top:28px; padding-bottom:28px; }
+  .nav a { font-size:15px !important; text-decoration:none; }   /* beats the inline 13px */
   .hero { display:flex; gap:24px; }
   .hero-copy { width:700px; }
   .hero-art { width:524px; display:flex; align-items:flex-start; justify-content:flex-end; }
@@ -357,7 +359,7 @@
     </div>
   </div>
 
-  <div class="nav foot sec" style="border-top:1px solid #E4E4E1; padding-top:32px; padding-bottom:32px;">
+  <div class="nav foot sec" style="border-top:1px solid #E4E4E1; padding-top:32px !important; padding-bottom:32px !important;">
     <div class="lbl">Utterclip · MIT · © 2026 Ralf Chille</div>
     <div style="flex-grow:1;"></div>
     <a href="https://github.com/ralfchille/utterclip-app" class="lbl" style="text-decoration:none;">GitHub</a>
