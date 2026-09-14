@@ -5,10 +5,12 @@ import AppKit
 typealias EditorFont = NSFont
 let secondaryLabel = NSColor.secondaryLabelColor
 let primaryLabel = NSColor.labelColor
-let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
-let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
-let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
-let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
+// The identity face, matching `MarkdownView`: the text must not change typeface the
+// moment you tap it to edit.
+let headingLevel1 = identityFont(ResultTypography.size + 4, .bold)
+let headingLevel2 = identityFont(ResultTypography.size + 1, .semibold)
+let headingLevel3 = identityFont(ResultTypography.size, .bold)
+let bodyFont = identityFont(ResultTypography.size)
 private extension NSFont {
     var bolded: NSFont { NSFont(descriptor: fontDescriptor.withSymbolicTraits(.bold), size: pointSize) ?? self }
 }
@@ -17,14 +19,26 @@ import UIKit
 typealias EditorFont = UIFont
 let secondaryLabel = UIColor.secondaryLabel
 let primaryLabel = UIColor.label
-let headingLevel1 = EditorFont.systemFont(ofSize: ResultTypography.size + 4, weight: .bold)
-let headingLevel2 = EditorFont.systemFont(ofSize: ResultTypography.size + 1, weight: .semibold)
-let headingLevel3 = EditorFont.systemFont(ofSize: ResultTypography.size, weight: .bold)
-let bodyFont = EditorFont.systemFont(ofSize: ResultTypography.size)
+// The identity face, matching `MarkdownView`: the text must not change typeface the
+// moment you tap it to edit.
+let headingLevel1 = identityFont(ResultTypography.size + 4, .bold)
+let headingLevel2 = identityFont(ResultTypography.size + 1, .semibold)
+let headingLevel3 = identityFont(ResultTypography.size, .bold)
+let bodyFont = identityFont(ResultTypography.size)
 private extension UIFont {
     var bolded: UIFont { fontDescriptor.withSymbolicTraits(.traitBold).map { UIFont(descriptor: $0, size: pointSize) } ?? self }
 }
 #endif
+
+
+/// One spelling for both platforms; falls back to the system font if the resource is missing.
+func identityFont(_ size: CGFloat, _ weight: IdentityFont.Weight = .regular) -> EditorFont {
+    #if os(macOS)
+    IdentityFont.nsFont(size: size, weight: weight)
+    #else
+    IdentityFont.uiFont(size: size, weight: weight)
+    #endif
+}
 
 /// Matches the whole document, so the paragraph style below reaches every line.
 let everythingRegex = try! NSRegularExpression(pattern: "[\\s\\S]+", options: [])

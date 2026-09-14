@@ -11,6 +11,7 @@
 		058B7E01AD2E18EC2BC616D7 /* PhoneUpdateBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03677BBA2415AACD636F7499 /* PhoneUpdateBlob.swift */; };
 		0AA7198CA3560459E7301860 /* StartRecordingIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA269D6026FF3C616370F3A /* StartRecordingIntent.swift */; };
 		0B337B9FA74802B4BBC86A4B /* UtterclipCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; };
+		0DCADE33572E5B1444FCE5BF /* SchibstedGrotesk-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = C60950E105FA24B5E6105340 /* SchibstedGrotesk-Italic[wght].ttf */; };
 		14E3AC7AAC9D96319A616985 /* Utterclip.icon in Resources */ = {isa = PBXBuildFile; fileRef = 6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */; };
 		1764ECD612707055DC8A0B33 /* TuistBundle+UtterclipCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */; };
 		1A5779D9150131FADB1002E5 /* Rewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2590D1835ECF00E098B159 /* Rewriter.swift */; };
@@ -21,6 +22,7 @@
 		1F2A57C64B7A0E4E6CB9047B /* StylePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD1E1F1FB4F8A2314DE3357 /* StylePickerRow.swift */; };
 		2094FFFEF4E270A2354B60CB /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */; };
 		26774D83AC1D2BA1F4B1B83F /* RemoteZoneWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E65B62B4B18321A298D9346 /* RemoteZoneWatcher.swift */; };
+		277650B9F2F0CC886B255197 /* TuistFonts+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250FDA4EFBF8BD21028470AE /* TuistFonts+Utterclip.swift */; };
 		2874F95B0738FE1F1E562AB8 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05088FCC2F78975859846EEB /* AIProvider.swift */; };
 		2B5DEFF4055DCB36AAD3594B /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 785D4834B39BC497D3590D82 /* MarkdownView.swift */; };
 		2B95AEDE3EBA7BDD6C635A6F /* UtterclipMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108EDFC8ED3A4C8A802620B3 /* UtterclipMacApp.swift */; };
@@ -32,9 +34,12 @@
 		38221FAED67A250DFA1AEF01 /* TuistBundle+Utterclip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895478C0BBB0C2B3E5239695 /* TuistBundle+Utterclip.swift */; };
 		386DAF4767F18E37926AFBA3 /* MarkdownTextView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */; };
 		3BBC257C63B356952D080E85 /* UtterclipCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10CB6F665CB89E425D7F06DB /* UtterclipCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		3FE1F9C732424ADC26E0B74E /* SchibstedGrotesk[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 18FA82F8E81B8B7731C00C5D /* SchibstedGrotesk[wght].ttf */; };
+		41EB145806A3CF92E060B697 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = DC547F662DD4EFCA58080AEE /* OFL.txt */; };
 		43BFF92680ADB6A92A6B9977 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E02D86E45BCDAFCC58CF7667 /* Styles.swift */; };
 		4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */; };
 		480626F9116B78E1BE4E5610 /* MessageStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4DBE7EB74EB995CEDA2C54 /* MessageStyle.swift */; };
+		4A229DEB0A862FB1ACCBCC5A /* IdentityFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 190A6F244177B1336A2F4B65 /* IdentityFont.swift */; };
 		4C7F2C7284C1D5DE36A260CB /* HighlightedTextEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 1C8F61B05683C77B25B40782 /* HighlightedTextEditor */; };
 		4D8F7ABF6B558C8F20E79EEA /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */; };
 		4E74951E6813606D46ED8B59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
@@ -42,8 +47,10 @@
 		578A13156647CDE2C24B508D /* MarkdownEditorRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53979B6DA6AEE201336D298 /* MarkdownEditorRules.swift */; };
 		5892FC19F5ED59CFAE513E2D /* MacPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D02D86274CB92A92FF84D9 /* MacPreferences.swift */; };
 		5AD10B680721814DF3311E1C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09681937E4E4FE184312126B /* Platform.swift */; };
+		5C867799FA3F58328FE4F9F0 /* SchibstedGrotesk[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 18FA82F8E81B8B7731C00C5D /* SchibstedGrotesk[wght].ttf */; };
 		5CB3EE2E32D2FA0371B88F59 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E888A7E0D3E7AD6CDC81E54 /* WaveformView.swift */; };
 		5E0F5480E1CEADA3D83FC904 /* KeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D60E1DBE5AE6B60EDF10BF /* KeyProvider.swift */; };
+		6005AD75348EA52B4C2FC981 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = DC547F662DD4EFCA58080AEE /* OFL.txt */; };
 		61567AFD2F6E493BB1F620D2 /* CloudStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD88E4F3F2B892FB31863BD /* CloudStore.swift */; };
 		62098162588084269266CDD7 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */; };
 		642F920655658016D53AAA68 /* TuistAssets+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */; };
@@ -57,6 +64,7 @@
 		81DD3B5F4533AB78A44F5501 /* MarkdownTextView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */; };
 		8459CA4C54484367CEC8B378 /* Dictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C093652C348BB70958F729A4 /* Dictation.swift */; };
 		8EFE7FE9E590E67A77A3BAE4 /* UtterclipApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362ACD5073A9A097201D6FBD /* UtterclipApp.swift */; };
+		920C2EDBC7861A57F3844AEC /* SchibstedGrotesk-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = C60950E105FA24B5E6105340 /* SchibstedGrotesk-Italic[wght].ttf */; };
 		924585F04823E691BFBB67B7 /* UtterclipWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6C63B96BDE6B1413255AC07A /* UtterclipWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		95705DE3FF34F661315EF837 /* CloudRewriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53BA8DC76FB99AEEAC98B7A7 /* CloudRewriter.swift */; };
 		9CE253477E69E4AE72555392 /* TuistAssets+UtterclipWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82755A9F185981EBA7A3594 /* TuistAssets+UtterclipWidgets.swift */; };
@@ -71,6 +79,7 @@
 		ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
 		B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21D8DFF607B93A631014902 /* GlassBackground.swift */; };
 		B1DCF7BC97B87CD0CF241CA5 /* PasteBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D489A38614FBC3F0C60A8FDC /* PasteBack.swift */; };
+		B3575E623256A6E114B19FA6 /* IdentityFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 190A6F244177B1336A2F4B65 /* IdentityFont.swift */; };
 		B4267352E2341CDDF8DABECE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */; };
 		B5B49810AA6AFC7BE9C30C2C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 753112FFBC0496CDE6B924D2 /* PrivacyInfo.xcprivacy */; };
 		B76B8B0B17FF7364F09209ED /* AppNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EFD379C109A8F1628A10314 /* AppNotifications.swift */; };
@@ -81,6 +90,7 @@
 		C376C899C0A0D4F59ED1C7FB /* PasteBackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49B57140C869943C61F0CE7 /* PasteBackBar.swift */; };
 		C4FE87BC3DAC0BAD4506D75F /* StartRecordingIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA269D6026FF3C616370F3A /* StartRecordingIntent.swift */; };
 		C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F87071BCF63570CD4B59C66 /* HistoryView.swift */; };
+		C8D9DC3B2AC8738304CBB140 /* TuistFonts+UtterclipMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DAB40FB6A6CADA83D10790C /* TuistFonts+UtterclipMac.swift */; };
 		CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319D09EB2560270E662093E7 /* StyleStore.swift */; };
 		D2E079B1639B91C06EF6BDD6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
 		D42CC0AE195701AEE9ED2258 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 522F02B53CA00542B940B288 /* Assets.xcassets */; };
@@ -198,7 +208,10 @@
 		148FE024A5C1767A16F68DBF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		153DB0140CE6FA2E4DBDE6D6 /* UtterclipShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtterclipShortcuts.swift; sourceTree = "<group>"; };
 		1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistBundle+UtterclipWidgets.swift"; sourceTree = "<group>"; };
+		18FA82F8E81B8B7731C00C5D /* SchibstedGrotesk[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SchibstedGrotesk[wght].ttf"; sourceTree = "<group>"; };
+		190A6F244177B1336A2F4B65 /* IdentityFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityFont.swift; sourceTree = "<group>"; };
 		1EFD379C109A8F1628A10314 /* AppNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNotifications.swift; sourceTree = "<group>"; };
+		250FDA4EFBF8BD21028470AE /* TuistFonts+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistFonts+Utterclip.swift"; sourceTree = "<group>"; };
 		266C41CDA52548681C16CF3E /* UtterclipMac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipMac-Info.plist"; sourceTree = "<group>"; };
 		28B04CD1DA081168648A7C80 /* TuistAssets+Utterclip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+Utterclip.swift"; sourceTree = "<group>"; };
 		2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MarkdownTextView+iOS.swift"; sourceTree = "<group>"; };
@@ -215,6 +228,7 @@
 		53061E11287017DB6ABBF28A /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
 		53BA8DC76FB99AEEAC98B7A7 /* CloudRewriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudRewriter.swift; sourceTree = "<group>"; };
 		5549F4613006277DBA3D15C3 /* RewritePrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewritePrompt.swift; sourceTree = "<group>"; };
+		5DAB40FB6A6CADA83D10790C /* TuistFonts+UtterclipMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistFonts+UtterclipMac.swift"; sourceTree = "<group>"; };
 		669869C3385DA0D2ACBDDEFC /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		69B26581CC6B790DA328B331 /* UtterclipWidgets-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "UtterclipWidgets-Info.plist"; sourceTree = "<group>"; };
 		6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */ = {isa = PBXFileReference; path = Utterclip.icon; sourceTree = "<group>"; };
@@ -250,12 +264,14 @@
 		BD69E9EECA18572B51DE59B1 /* WarmUpScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarmUpScheduler.swift; sourceTree = "<group>"; };
 		C093652C348BB70958F729A4 /* Dictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dictation.swift; sourceTree = "<group>"; };
 		C53979B6DA6AEE201336D298 /* MarkdownEditorRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorRules.swift; sourceTree = "<group>"; };
+		C60950E105FA24B5E6105340 /* SchibstedGrotesk-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SchibstedGrotesk-Italic[wght].ttf"; sourceTree = "<group>"; };
 		CCCD6C3F4866B3D97F995002 /* TuistAssets+UtterclipMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TuistAssets+UtterclipMac.swift"; sourceTree = "<group>"; };
 		CD5C0A65E890EB32371EC03D /* GlobalHotkey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkey.swift; sourceTree = "<group>"; };
 		CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		CED60BD402FCD9AC33ADBAFF /* UtterclipMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UtterclipMac.entitlements; sourceTree = "<group>"; };
 		D21D8DFF607B93A631014902 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 		D489A38614FBC3F0C60A8FDC /* PasteBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBack.swift; sourceTree = "<group>"; };
+		DC547F662DD4EFCA58080AEE /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
 		E02D86E45BCDAFCC58CF7667 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatus.swift; sourceTree = "<group>"; };
@@ -323,6 +339,7 @@
 		1789AE79853DA94EAEA0DB93 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				E3F1874A7EB7331A5DE2978B /* Fonts */,
 				7D2F3D13FCB07C6D3599F3DF /* Assets.xcassets */,
 				378E96F9E34A221DEE5D96D5 /* PrivacyInfo.xcprivacy */,
 				6AF0353EEEE8EF86BDBC8253 /* Utterclip.icon */,
@@ -379,6 +396,8 @@
 				09FDE8C978FCE04A01913D60 /* TuistBundle+UtterclipCore.swift */,
 				92B90F7198CD313B27B6305C /* TuistBundle+UtterclipMac.swift */,
 				1608529F4905745FE7D61906 /* TuistBundle+UtterclipWidgets.swift */,
+				250FDA4EFBF8BD21028470AE /* TuistFonts+Utterclip.swift */,
+				5DAB40FB6A6CADA83D10790C /* TuistFonts+UtterclipMac.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -510,6 +529,16 @@
 			path = InfoPlists;
 			sourceTree = "<group>";
 		};
+		E3F1874A7EB7331A5DE2978B /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				DC547F662DD4EFCA58080AEE /* OFL.txt */,
+				C60950E105FA24B5E6105340 /* SchibstedGrotesk-Italic[wght].ttf */,
+				18FA82F8E81B8B7731C00C5D /* SchibstedGrotesk[wght].ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 		E4DC10C3F347E206698F38E9 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -525,6 +554,7 @@
 				CDF0CF5B36F81DE3CDCB586F /* EditorView.swift */,
 				D21D8DFF607B93A631014902 /* GlassBackground.swift */,
 				9F87071BCF63570CD4B59C66 /* HistoryView.swift */,
+				190A6F244177B1336A2F4B65 /* IdentityFont.swift */,
 				C53979B6DA6AEE201336D298 /* MarkdownEditorRules.swift */,
 				0D6AAD70AD364F72212DCE3F /* MarkdownTextView.swift */,
 				2AAF90AA1762FA0B5D6DA897 /* MarkdownTextView+iOS.swift */,
@@ -678,6 +708,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4673B38724AC1FB05901E559 /* Assets.xcassets in Resources */,
+				41EB145806A3CF92E060B697 /* OFL.txt in Resources */,
+				920C2EDBC7861A57F3844AEC /* SchibstedGrotesk-Italic[wght].ttf in Resources */,
+				3FE1F9C732424ADC26E0B74E /* SchibstedGrotesk[wght].ttf in Resources */,
 				F0D25DF95C58334F3ED3CD2F /* PrivacyInfo.xcprivacy in Resources */,
 				14E3AC7AAC9D96319A616985 /* Utterclip.icon in Resources */,
 			);
@@ -687,6 +720,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6005AD75348EA52B4C2FC981 /* OFL.txt in Resources */,
+				0DCADE33572E5B1444FCE5BF /* SchibstedGrotesk-Italic[wght].ttf in Resources */,
+				5C867799FA3F58328FE4F9F0 /* SchibstedGrotesk[wght].ttf in Resources */,
 				7D12D45E622EC7096A6B47AC /* Assets.xcassets in Resources */,
 				B4267352E2341CDDF8DABECE /* PrivacyInfo.xcprivacy in Resources */,
 				EF0D73EA9FF8E12D40DFBA81 /* Utterclip.icon in Resources */,
@@ -710,6 +746,7 @@
 			files = (
 				E1DB7CABDCD93565DF8EF385 /* TuistAssets+Utterclip.swift in Sources */,
 				38221FAED67A250DFA1AEF01 /* TuistBundle+Utterclip.swift in Sources */,
+				277650B9F2F0CC886B255197 /* TuistFonts+Utterclip.swift in Sources */,
 				ACBB387AB691C395BE56B350 /* AppNotifications.swift in Sources */,
 				C4FE87BC3DAC0BAD4506D75F /* StartRecordingIntent.swift in Sources */,
 				8EFE7FE9E590E67A77A3BAE4 /* UtterclipApp.swift in Sources */,
@@ -718,6 +755,7 @@
 				4D8F7ABF6B558C8F20E79EEA /* EditorView.swift in Sources */,
 				B1A3C49B5F4192213D5CAFBE /* GlassBackground.swift in Sources */,
 				C705B0D920218D9B4B4CBB1D /* HistoryView.swift in Sources */,
+				B3575E623256A6E114B19FA6 /* IdentityFont.swift in Sources */,
 				578A13156647CDE2C24B508D /* MarkdownEditorRules.swift in Sources */,
 				81DD3B5F4533AB78A44F5501 /* MarkdownTextView+iOS.swift in Sources */,
 				2094FFFEF4E270A2354B60CB /* MarkdownTextView.swift in Sources */,
@@ -737,12 +775,14 @@
 			files = (
 				642F920655658016D53AAA68 /* TuistAssets+UtterclipMac.swift in Sources */,
 				ACC4FC8670FAA7F631A6F72C /* TuistBundle+UtterclipMac.swift in Sources */,
+				C8D9DC3B2AC8738304CBB140 /* TuistFonts+UtterclipMac.swift in Sources */,
 				B76B8B0B17FF7364F09209ED /* AppNotifications.swift in Sources */,
 				EC658DBE107D8BD15635D694 /* StartRecordingIntent.swift in Sources */,
 				752437F6A32A9131E43D0051 /* ContentView.swift in Sources */,
 				62098162588084269266CDD7 /* EditorView.swift in Sources */,
 				ACEA1D1323B85281D3BBEA5E /* GlassBackground.swift in Sources */,
 				35F8C573FF7CF61A34A9F445 /* HistoryView.swift in Sources */,
+				4A229DEB0A862FB1ACCBCC5A /* IdentityFont.swift in Sources */,
 				050F93BA754DC458FF4A1C82 /* MarkdownEditorRules.swift in Sources */,
 				386DAF4767F18E37926AFBA3 /* MarkdownTextView+iOS.swift in Sources */,
 				737CC517E3D4E6E1458A2835 /* MarkdownTextView.swift in Sources */,

@@ -208,7 +208,9 @@ struct MacHeader<Actions: View>: View {
                 .keyboardShortcut(.cancelAction)
             }
             Text(title)
-                .font(.headline)
+                // The wordmark, so it carries the identity face; the buttons beside it stay
+                // on the system font with the symbols they sit against.
+                .font(IdentityFont.text(size: 13, weight: .semibold, relativeTo: .headline))
             Spacer()
             actions
         }
@@ -308,8 +310,15 @@ extension View {
         #if os(macOS)
         self.toolbar(.hidden, for: .windowToolbar)
         #else
-        navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
+        // A principal item rather than navigationTitle, so the wordmark can carry the
+        // identity face without reaching for a global UINavigationBar appearance override.
+        navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(title)
+                        .font(IdentityFont.text(size: 17, weight: .semibold, relativeTo: .headline))
+                }
+            }
             .toolbar(content: toolbar)
         #endif
     }
@@ -388,7 +397,8 @@ enum ResultTypography {
     static let lineHeight: CGFloat = 34
     #endif
 
-    static var font: Font { .system(size: size) }
+    /// The identity face, not the system one: this is the text the app exists to produce.
+    static var font: Font { IdentityFont.text(size: size, relativeTo: .body) }
     /// SwiftUI adds to the font's natural line height (about 1.2 × the size) rather than
     /// setting it, so the extra is what gets us to `lineHeight`.
     static var lineSpacing: CGFloat { max(0, lineHeight - size * 1.2) }

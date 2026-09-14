@@ -31,8 +31,8 @@ struct MarkdownView: View {
             // Headings step up from the body size rather than from the system's, so the
             // whole block scales together.
             inline(text)
-                .font(.system(size: ResultTypography.size + (level <= 1 ? 4 : level == 2 ? 1 : 0),
-                              weight: level == 2 ? .semibold : .bold))
+                .font(IdentityFont.text(size: ResultTypography.size + (level <= 1 ? 4 : level == 2 ? 1 : 0),
+                                        weight: level == 2 ? .semibold : .bold, relativeTo: .body))
                 .padding(.top, 2)
         case .bullet(let text):
             HStack(alignment: .firstTextBaseline, spacing: 6) {

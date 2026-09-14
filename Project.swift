@@ -129,7 +129,9 @@ let project = Project(
             sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift",
                       // The notification names the menus post; the intents beside them are iOS-only.
                       "Utterclip/Intents/**/*.swift"],
-            resources: ["UtterclipMac/Resources/**"],
+            // The identity typeface lives with the iPhone app's resources and is shared,
+            // the same way the views are.
+            resources: ["UtterclipMac/Resources/**", "Utterclip/Resources/Fonts/**"],
             // Not sandboxed, deliberately. The global shortcut's two useful halves — reading
             // which text field another app has focused, and handing the text back with a ⌘V —
             // are Accessibility APIs, and the sandbox blocks those against other processes

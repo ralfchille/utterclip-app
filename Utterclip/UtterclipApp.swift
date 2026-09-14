@@ -7,6 +7,8 @@ struct UtterclipApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // Before any view asks for it.
+        IdentityFont.register()
         // Always-warm: load Whisper once at launch and keep it resident (plan Phase 3).
         TranscriptionService.shared.warmUp()
         // Ask iOS to wake us occasionally so the model is already loaded when the app is
