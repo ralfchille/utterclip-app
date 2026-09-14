@@ -24,11 +24,7 @@ enum FocusedField {
     static func caretRect() -> CGRect? {
         guard isAllowed else { return nil }
         enableAccessibilityForFrontmostApp()
-        let system = AXUIElementCreateSystemWide()
-        var focusedValue: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(system, kAXFocusedUIElementAttribute as CFString, &focusedValue) == .success,
-              CFGetTypeID(focusedValue) == AXUIElementGetTypeID() else { return nil }
-        let element = unsafeBitCast(focusedValue, to: AXUIElement.self)
+        guard let element = focusedElement() else { return nil }
 
         // Behaviour first, role second. Gating on the role rejected anything that names
         // itself unusually — an Electron composer among them — even though it answers every
@@ -79,6 +75,27 @@ enum FocusedField {
         return cocoaRect(fromAccessibility: CGRect(origin: origin, size: size))
     }
 
+    /// The element with the keyboard focus. The system-wide handle answers for most apps but
+    /// comes back empty for some — Electron among them — so the frontmost application is asked
+    /// directly as well before giving up.
+    private static func focusedElement() -> AXUIElement? {
+        if let element = focusedElement(of: AXUIElementCreateSystemWide()) { return element }
+        guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier else {
+            logger.notice("No frontmost application to ask.")
+            return nil
+        }
+        if let element = focusedElement(of: AXUIElementCreateApplication(pid)) { return element }
+        logger.notice("Neither the system nor the frontmost app reported a focused element.")
+        return nil
+    }
+
+    private static func focusedElement(of parent: AXUIElement) -> AXUIElement? {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(parent, kAXFocusedUIElementAttribute as CFString, &value) == .success,
+              let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        return unsafeBitCast(value, to: AXUIElement.self)
+    }
+
     /// Chromium — and so every Electron app, Claude's own included — keeps its accessibility
     /// tree switched off until an assistive client asks for it. Setting `AXManualAccessibility`
     /// on the application element is the documented way to ask. Harmless elsewhere.
@@ -91,6 +108,7 @@ enum FocusedField {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
         AXUIElementSetAttributeValue(app, "AXEnhancedUserInterface" as CFString, kCFBooleanTrue)
+        logger.notice("Asked \(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?", privacy: .public) to switch its accessibility on.")
     }
 
     private static let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "focused-field")
