@@ -194,7 +194,14 @@ struct ContentView: View {
             // after every dictation is not what you want. It only follows a result that
             // replaced the one being edited, and stops editing when new text is on its way.
             .onChange(of: viewModel.styledText) { _, styled in
-                guard let styled, styledDraft != nil, styledDraft != styled else { return }
+                // Trimmed, because the pause while typing puts the text on the clipboard
+                // without its trailing whitespace — so a draft ending in a space comes back
+                // here looking like a change from elsewhere. It is not: it is this view's own
+                // echo, and acting on it ate the space and moved the caret. Anything that
+                // genuinely differs — a re-style, a restore, a dictation from the phone —
+                // still replaces the draft.
+                guard let styled, let draft = styledDraft,
+                      draft.trimmingCharacters(in: .whitespacesAndNewlines) != styled else { return }
                 copyAfterTyping?.cancel()
                 beginEditing(styled)
                 resultLabel = .idle
@@ -236,7 +243,14 @@ struct ContentView: View {
             // A re-style, a restore from History or a dictation claimed from the phone all
             // replace the result while the card may still be holding the previous one.
             .onChange(of: viewModel.styledText) { _, styled in
-                guard let styled, styledDraft != nil, styledDraft != styled else { return }
+                // Trimmed, because the pause while typing puts the text on the clipboard
+                // without its trailing whitespace — so a draft ending in a space comes back
+                // here looking like a change from elsewhere. It is not: it is this view's own
+                // echo, and acting on it ate the space and moved the caret. Anything that
+                // genuinely differs — a re-style, a restore, a dictation from the phone —
+                // still replaces the draft.
+                guard let styled, let draft = styledDraft,
+                      draft.trimmingCharacters(in: .whitespacesAndNewlines) != styled else { return }
                 copyAfterTyping?.cancel()
                 beginEditing(styled)
                 resultLabel = .idle
