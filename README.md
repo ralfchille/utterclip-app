@@ -29,9 +29,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/result.png" width="300" alt="iPhone: a spoken note about being late to standup, rewritten as a Slack message and already copied, with the raw transcript below and style pills to re-run it">
+  <img src="docs/screenshots/result.png" width="300" align="middle" alt="iPhone: a spoken note about being late to standup, rewritten as a Slack message and already copied, with the raw transcript below and style pills to re-run it">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/mac-result.png" width="300" alt="Mac: the same dictation rewritten as a Slack message in the menu bar app's window, floating above other apps">
+  <img src="docs/screenshots/mac-result.png" width="360" align="middle" alt="Mac: the same dictation rewritten as a Slack message in the menu bar app's window, floating above other apps">
 </p>
 <p align="center"><sub>The same dictation on both. Left: iPhone. Right: the Mac app, one window that floats above whatever you write in.</sub></p>
 
