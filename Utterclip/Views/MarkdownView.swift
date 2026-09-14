@@ -15,7 +15,10 @@ struct MarkdownView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // The editor lays this same text out as one run of lines, each a line advance apart.
+        // To match it the gap between blocks has to be the leading, not a round number —
+        // a Text's own last line carries no trailing spacing, so the stack supplies it.
+        VStack(alignment: .leading, spacing: ResultTypography.lineSpacing) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
                 render(block)
             }
@@ -33,7 +36,6 @@ struct MarkdownView: View {
             inline(text)
                 .font(IdentityFont.text(size: ResultTypography.size + (level <= 1 ? 4 : level == 2 ? 1 : 0),
                                         weight: level == 2 ? .semibold : .bold, relativeTo: .body))
-                .padding(.top, 2)
         case .bullet(let text):
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("•")
@@ -47,7 +49,9 @@ struct MarkdownView: View {
         case .paragraph(let text):
             inline(text)
         case .blank:
-            Color.clear.frame(height: ResultTypography.lineHeight / 2)
+            // One empty line, exactly as the editor treats it — half a line put the text
+            // below it 5 pt out of step the moment the card turned editable.
+            Color.clear.frame(height: ResultTypography.naturalLineHeight)
         }
     }
 

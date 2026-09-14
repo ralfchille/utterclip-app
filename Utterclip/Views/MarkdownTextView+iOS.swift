@@ -96,6 +96,11 @@ struct MarkdownTextView: UIViewRepresentable {
             let selection = textView.selectedRange
             MarkdownHighlighter.apply(to: textView.textStorage)
             textView.selectedRange = selection
+            // A line more or less changes the height the view needs, and nothing else asks.
+            // The Mac's half of this does it in didChangeText, which UITextView does not have,
+            // so it was only ever invalidating on a width change — the new line then arrived
+            // in a frame still the old height, and the text jumped as it settled.
+            textView.invalidateIntrinsicContentSize()
             parent.text = textView.text
             parent.onChange()
         }
