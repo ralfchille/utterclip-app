@@ -208,8 +208,15 @@ struct SettingsView: View {
             }
             .ignoreHiddenTitleBar()
             .barChrome(title: "Settings") {
+                // Settings saves as you go, so there is nothing for a Done to commit: leaving
+                // is plain navigation, and gets the same close glyph History has.
                 ToolbarItem(placement: .sheetCancel) {
-                    Button("Done") { close() }
+                    Button {
+                        close()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("Close")
                 }
             }
         }
