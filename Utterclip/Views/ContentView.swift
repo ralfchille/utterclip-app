@@ -184,6 +184,10 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowHistory)) { _ in
                 showHistory = true
             }
+            #if DEBUG
+            // `utterclip://demo`, for looking at the result card without dictating one.
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipDebugResult)) { showDebugResult($0) }
+            #endif
             .task {
                 #if os(macOS)
                 viewModel.startWatchingOtherDevices() // the indicator; the phone stays as it is
@@ -570,6 +574,26 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
     }
+
+    #if DEBUG
+    /// `utterclip://demo`: a fixed result, shown rendered — and then, with `edit=1`, opened
+    /// for editing the way a click on the card opens it, so the two states can be compared.
+    private func showDebugResult(_ note: Notification) {
+        guard let text = note.object as? String else { return }
+        viewModel.restore(HistoryEntry(rawTranscript: note.userInfo?["raw"] as? String ?? text,
+                                       styledText: text, styleID: note.userInfo?["style"] as? String))
+        if note.userInfo?["phone"] as? Bool == false { viewModel.dismissPhoneUpdate() }
+        // The Mac opens a fresh result for editing by itself; the rendered card comes first here.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            endEditing()
+            guard note.userInfo?["edit"] as? Bool == true else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                caretHint = note.userInfo?["point"] as? CGPoint
+                beginEditing(text)
+            }
+        }
+    }
+    #endif
 
     /// Opens the editor on `text`, keeping a copy of what it replaces for Esc.
     private func beginEditing(_ text: String) {

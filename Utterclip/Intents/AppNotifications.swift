@@ -13,4 +13,9 @@ extension Notification.Name {
     static let utterclipContinueRecording = Notification.Name("utterclip.continueRecording")
     static let utterclipShowHistory = Notification.Name("utterclip.showHistory")
     static let utterclipShowSettings = Notification.Name("utterclip.showSettings")
+    #if DEBUG
+    /// Debug builds only: puts a fixed result on screen without dictating one, so a layout
+    /// question can be looked at the same way twice. See `DebugSeed`.
+    static let utterclipDebugResult = Notification.Name("utterclip.debugResult")
+    #endif
 }

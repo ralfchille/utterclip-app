@@ -102,7 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
-    /// `utterclip://record` from a launcher or automation; `utterclip://snapshot` in Debug.
+    /// `utterclip://record` from a launcher or automation; `utterclip://snapshot` and
+    /// `utterclip://demo` in Debug.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             switch url.host {
@@ -111,6 +112,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "snapshot":
                 #if DEBUG
                 DebugSnapshot.handle(url)
+                #endif
+            case "demo":
+                #if DEBUG
+                DebugSeed.handle(url)
                 #endif
             case "show":
                 #if DEBUG

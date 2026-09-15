@@ -94,6 +94,7 @@
 		CEF8E25B8070F06268EA5DF3 /* StyleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319D09EB2560270E662093E7 /* StyleStore.swift */; };
 		D2E079B1639B91C06EF6BDD6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F8FC0D69899DCD01DB5B80 /* SettingsView.swift */; };
 		D42CC0AE195701AEE9ED2258 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 522F02B53CA00542B940B288 /* Assets.xcassets */; };
+		D4507CC3E2EDAC8EE2BB1AA0 /* DebugSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36DF2F49617833DE6FB25B7 /* DebugSeed.swift */; };
 		DAAA2AB3BC4A8DF741F5E20E /* FocusedField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3405A7B6FD5848A2EDE6E83D /* FocusedField.swift */; };
 		DD0A1FE32345E9C9A69ED3A4 /* Redactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A87D9C7543EC8DFB48425596 /* Redactor.swift */; };
 		DD29B7820D003A6F82D7C686 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83AD0C5C528141821CBE816D /* DeviceIdentity.swift */; };
@@ -275,6 +276,7 @@
 		DEC82BA669BED232CA2FAFA8 /* HistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEntry.swift; sourceTree = "<group>"; };
 		E02D86E45BCDAFCC58CF7667 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 		E62D1B68C6F6FD6E2C799D5E /* SyncStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatus.swift; sourceTree = "<group>"; };
+		F36DF2F49617833DE6FB25B7 /* DebugSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSeed.swift; sourceTree = "<group>"; };
 		F371DCE7FFFF2BF874588E3C /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		F53BB115D04214EDB23D0AD7 /* SyncedDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncedDefaults.swift; sourceTree = "<group>"; };
 		F7F006F06790EC7AE64C846D /* Utterclip-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Utterclip-Info.plist"; sourceTree = "<group>"; };
@@ -498,6 +500,7 @@
 			children = (
 				064C9059947CEE2880D59BE8 /* Resources */,
 				B1B12CC3654AF81819CC78A6 /* AppDelegate.swift */,
+				F36DF2F49617833DE6FB25B7 /* DebugSeed.swift */,
 				42C3F87BED6C2BC519B414B3 /* DebugSnapshot.swift */,
 				3405A7B6FD5848A2EDE6E83D /* FocusedField.swift */,
 				CD5C0A65E890EB32371EC03D /* GlobalHotkey.swift */,
@@ -793,6 +796,7 @@
 				F33BCA87B0DFFD068C9E5E5A /* StylePickerRow.swift in Sources */,
 				4E74951E6813606D46ED8B59 /* WaveformView.swift in Sources */,
 				BBDF502CD8914F2939B1B24C /* AppDelegate.swift in Sources */,
+				D4507CC3E2EDAC8EE2BB1AA0 /* DebugSeed.swift in Sources */,
 				E1EFB99FFE667063120F3E97 /* DebugSnapshot.swift in Sources */,
 				DAAA2AB3BC4A8DF741F5E20E /* FocusedField.swift in Sources */,
 				A0E1DB9FACB728E92378A9FA /* GlobalHotkey.swift in Sources */,
