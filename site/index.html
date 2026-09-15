@@ -245,6 +245,42 @@
   .promptstage .composer .to { }
   .promptstage .composer .field { min-height:150px; white-space:pre-line; font-size:13px; line-height:1.5; }
 
+  /* ---- make it yours: three small live panels ---- */
+  .yours { padding-top:120px; }
+  .yours h2 { margin:0; font-size:44px; line-height:1.08; font-weight:600; letter-spacing:-0.025em; }
+  .trio { display:grid; grid-template-columns:repeat(3, 1fr); gap:40px; margin-top:52px; }
+  .trio .frame.mini { aspect-ratio:340 / 300; max-width:340px; }
+  .trio .mono { color:var(--mute); margin-top:24px; }
+  .trio p { margin:8px 0 0; font-size:17px; line-height:1.45; max-width:340px; }
+  .panel { width:340px; height:300px; }
+  .sheet { position:absolute; left:0; right:0; background:var(--white); border-radius:16px; box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 30px rgba(0,0,0,.06); padding:16px; }
+  .sheet .head { font-size:13px; font-weight:600; }
+  .sheet .lab { font-size:11px; color:var(--mute); margin-top:14px; }
+  .mini-pills { display:flex; gap:8px; flex-wrap:wrap; }
+  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .45s ease, color .45s ease; }
+  .mini-pills span.on { background:var(--ink); color:var(--paper); }
+  .mini-pills span.add { background:transparent; box-shadow:inset 0 0 0 1.5px var(--rule); color:var(--mute); }
+  .p-styles .mini-pills { flex-wrap:nowrap; }
+  .p-styles .sheet { top:48px; }
+  .p-styles .inst { margin-top:6px; font-size:13px; line-height:1.55; min-height:82px; }
+  .p-styles .caret { height:14px; vertical-align:-2px; opacity:1; animation:blink 1.1s steps(1) infinite; }
+  .p-model .sheet { top:16px; }
+  .p-model .row + .row { margin-top:14px; padding-top:14px; border-top:1px solid var(--rule); }
+  .p-model .mini-pills { margin-top:8px; }
+  .p-model .mini-pills span { height:26px; padding:0 11px; font-size:11.5px; }
+  .p-model .key { margin-top:8px; display:flex; align-items:center; gap:10px; height:34px; padding:0 12px; border-radius:10px; background:var(--fill); font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.02em; }
+  .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; }
+  .p-model .kept { margin-top:8px; font-size:11px; color:var(--mute); }
+  .p-history .sheet { top:16px; padding-bottom:8px; }
+  .p-history .rows { margin-top:8px; }
+  .p-history .row { display:flex; gap:12px; align-items:baseline; padding:10px 0; border-top:1px solid var(--rule); font-size:13px; line-height:1.35; transition:opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
+  .p-history .row:first-child { border-top:0; }
+  .p-history .row .when { flex:none; width:64px; font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:11px; color:var(--mute); }
+  .p-history .row .what { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .p-history .row.in { opacity:0; transform:translateY(-10px); }
+  .p-history .row.out { opacity:0; transform:translateY(6px); }
+  @media (max-width: 900px) { .trio { grid-template-columns:1fr; gap:44px; } }
+
   /* ---- sync scene ---- */
   .sync { padding-top:120px; }
   .scene { width:1200px; height:780px; }
@@ -459,13 +495,44 @@
     </div>
   </section>
 
-  <section class="sync band">
+  <section class="yours band">
+    <h2>Make it yours.</h2>
+    <div class="trio">
+      <div>
+        <div class="frame mini" data-w="340"><div class="panel p-styles">
+          <div class="mini-pills"><span>Plain</span><span class="on">Slack</span><span>WhatsApp</span><span class="add">+ Add</span></div>
+          <div class="sheet"><div class="head">Slack</div><div class="lab">Instruction</div><div class="inst"><span class="base"></span><span class="extra"></span><i class="caret"></i></div></div>
+        </div></div>
+        <div class="mono">Styles</div>
+        <p>Adjust the rewrite instructions, or add your own.</p>
+      </div>
+      <div>
+        <div class="frame mini" data-w="340"><div class="panel p-model">
+          <div class="sheet">
+            <div class="row"><div class="head">Rewrite with</div><div class="mini-pills"><span>Apple Intelligence</span><span class="on">Anthropic</span><span>OpenAI</span><span>Gemini</span><span>Groq</span></div></div>
+            <div class="row"><div class="head">API key</div><div class="key">sk-ant-••••••••••••••••3f9a<svg><use href="#i-check"/></svg></div><div class="kept">Stored in your Keychain. Never on a server of ours.</div></div>
+          </div>
+        </div></div>
+        <div class="mono">Your model</div>
+        <p>Connect the LLM you prefer with your own API key — or stay on the device with Apple Intelligence.</p>
+      </div>
+      <div>
+        <div class="frame mini" data-w="340"><div class="panel p-history">
+          <div class="sheet"><div class="head">History</div><div class="rows"></div></div>
+        </div></div>
+        <div class="mono">History</div>
+        <p>Every rewrite kept, and synced to your other device.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sync">
     <h2>One clipboard.</h2>
     <p class="sub">Dictate on the phone; it is waiting on the Mac.</p>
     <div class="frame wide"><div class="scene" id="scene" data-phase="p-record"></div></div>
   </section>
 
-  <section class="privacy" id="privacy">
+  <section class="privacy band" id="privacy">
     <h2>Your voice never leaves the device.</h2>
     <div class="facts">
       <div><div class="mono">Transcription</div><p>On the device, with Whisper. The audio file is deleted straight after.</p></div>
@@ -475,7 +542,7 @@
     </div>
   </section>
 
-  <section class="close band">
+  <section class="close">
     <h2>Stop typing what<br>you could just say.</h2>
     <div class="ctarow">
       <a class="cta" href="https://apps.apple.com/app/id6809807393"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· App Store</span></a>
@@ -491,7 +558,7 @@
   // Scale each design box to the width its frame gets; below 860 px the sync pair stacks.
   function fit() {
     document.querySelectorAll('.frame').forEach(function (f) {
-      var box = f.firstElementChild, w = 600;
+      var box = f.firstElementChild, w = +f.dataset.w || 600;
       if (f.classList.contains('wide')) { var stack = f.clientWidth < 860; f.classList.toggle('stack', stack); w = stack ? 400 : 1200; }
       if (!f.clientWidth) return;
       var k = Math.min(1, f.clientWidth / w);
@@ -578,7 +645,7 @@
     ['transcribing', 2, 1200, null],
     ['writing', 3, 1900, function () { cancels.push(typeInto(stage, STYLED, 78)); }],
     ['copied', 3, 1800, function () { setText(stage, '.result', STYLED); pop(stage); }],
-    ['paste', 4, 3000, function () { setTimeout(function () { stage.querySelector('.composer .txt').textContent = STYLED; stage.classList.add('pasted'); }, 900); }]
+    ['paste', 4, 6500, function () { setTimeout(function () { stage.querySelector('.composer .txt').textContent = STYLED; stage.classList.add('pasted'); }, 900); }]   // the finished state is the one worth looking at
   ];
   var idx = -1, next;
   function advance() {
@@ -625,7 +692,7 @@
     ['e-edit', 900, null],
     ['e-type', 1700, function () { later(250, function () { setWord('1'); }); later(480, function () { setWord(''); }); later(820, function () { setWord('1'); }); later(1080, function () { setWord('15'); }); }],
     ['e-done', 1000, function () { later(320, function () { pop(ePhone); }); }],
-    ['e-hold', 2000, null]
+    ['e-hold', 3000, null]
   ];
   var eIdx = -1;
   function eAdvance() {
@@ -675,7 +742,7 @@
       blocks.forEach(function (b, i) { pLater(150 + i * 230, function () { b.classList.add('show'); }); });
     }],
     ['copied', 1800, function () { pop(pStage); }],
-    ['paste', 3200, function () { pLater(900, function () { pStage.querySelector('.composer .txt').textContent = PROMPT_MD; pStage.classList.add('pasted'); }); }]
+    ['paste', 5000, function () { pLater(900, function () { pStage.querySelector('.composer .txt').textContent = PROMPT_MD; pStage.classList.add('pasted'); }); }]
   ];
   var pIdx = -1;
   function pAdvance() {
@@ -686,6 +753,42 @@
     setTimeout(pAdvance, s[1]);
   }
   if (reduced) { pStage.dataset.phase = 'copied'; buildBlocks().forEach(function (b) { b.classList.add('show'); }); } else { pAdvance(); }
+
+  /* ---------- make it yours ---------- */
+  (function () {
+    // styles: the Slack instruction, with one more rule typed in and taken out again
+    var base = document.querySelector('.p-styles .base'), extra = document.querySelector('.p-styles .extra');
+    base.textContent = 'Rewrite the transcript as a clear, concise Slack message to colleagues. Professional but friendly. Keep it brief, no greeting or sign-off.';
+    var add = ' No emoji.', i = 0, dir = 1;
+    if (!reduced) (function step() {
+      i += dir; extra.textContent = add.slice(0, i);
+      var wait = dir > 0 ? (i >= add.length ? (dir = -1, 2200) : 85) : (i <= 0 ? (dir = 1, 1600) : 45);
+      setTimeout(step, wait);
+    })(); else extra.textContent = add;
+    // model: the choice moves along the providers
+    var provs = document.querySelectorAll('.p-model .mini-pills span'), pi = 1;
+    if (!reduced) setInterval(function () { provs[pi].classList.remove('on'); pi = (pi + 1) % provs.length; provs[pi].classList.add('on'); }, 1700);
+    // history: a new dictation arrives on top, the oldest leaves
+    var items = [
+      ['09:41', 'Running about 10 minutes late to standup. Go ahead and…'],
+      ['Yesterday', 'Rewrite the release notes for 1.1 — the current draft is too…'],
+      ['Mon', 'Can you summarise the thread for the team, keep it short…'],
+      ['Mon', 'Thanks for the review, I took the two points about the…'],
+      ['Sun', 'Reminder to move the planning call to Thursday afternoon…'],
+      ['Sat', 'Draft: three options for the onboarding copy, keep the…']
+    ];
+    var rows = document.querySelector('.p-history .rows'), head = 0, VISIBLE = 4;
+    function row(it) { var r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span class="when">' + it[0] + '</span><span class="what">' + it[1] + '</span>'; return r; }
+    for (var k = 0; k < VISIBLE; k++) rows.appendChild(row(items[k]));
+    if (!reduced) setInterval(function () {
+      head = (head + 1) % items.length;
+      var fresh = row(items[(head + items.length - 1) % items.length]); fresh.classList.add('in');
+      rows.insertBefore(fresh, rows.firstChild);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { fresh.classList.remove('in'); }); });
+      var last = rows.lastElementChild; last.classList.add('out');
+      setTimeout(function () { last.remove(); }, 520);
+    }, 2600);
+  })();
 
   /* ---------- sync scene: dictate on the phone, it arrives on the Mac ---------- */
   var scene = document.getElementById('scene');
