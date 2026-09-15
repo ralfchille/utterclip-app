@@ -18,9 +18,8 @@ struct MarkdownTextView: NSViewRepresentable {
     var onCommit: () -> Void = {}
     /// Called on Esc: the edit is dropped rather than kept.
     var onCancel: () -> Void = {}
-    /// Accepted so the call site is the same on both platforms. Unused here: AppKit windows
-    /// measure from the bottom left where SwiftUI's global space measures from the top, and
-    /// that flip is worth handling deliberately rather than in passing.
+    /// Where the click that opened the editor landed, in SwiftUI's global space, so the caret
+    /// starts under the pointer rather than at the end of the text.
     var caretHint: CGPoint?
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -48,9 +47,31 @@ struct MarkdownTextView: NSViewRepresentable {
         DispatchQueue.main.async {
             guard textView.window?.firstResponder !== textView else { return }
             textView.window?.makeFirstResponder(textView)
-            textView.setSelectedRange(NSRange(location: (textView.string as NSString).length, length: 0))
+            textView.setSelectedRange(caretRange(in: textView))
         }
         return textView
+    }
+
+    /// Where to put the caret when the editor opens: under the click that opened it, or at the
+    /// end when there was no click (the keyboard shortcut, VoiceOver).
+    ///
+    /// SwiftUI hands the point over in its global space: the window's content rectangle,
+    /// measured down from its top left. The content view here is SwiftUI's own hosting view,
+    /// which counts the same way, so the point goes straight in; a plain AppKit content view
+    /// would count up from the bottom left instead, and gets the flip. Measured before
+    /// trusting it — flipping the hosting view's point landed 200 pt below the text, and the
+    /// clamp then put every caret at the end.
+    private func caretRange(in textView: NSTextView) -> NSRange {
+        let end = NSRange(location: (textView.string as NSString).length, length: 0)
+        guard let hint = caretHint, let content = textView.window?.contentView else { return end }
+        let inContent = content.isFlipped ? NSPoint(x: hint.x, y: hint.y)
+                                          : NSPoint(x: hint.x, y: content.bounds.height - hint.y)
+        let local = textView.convert(inContent, from: content)
+        // The whole card opens the editor, so a click can land in the padding around the text
+        // or on the label above it: the nearest place inside is what was meant.
+        let clamped = NSPoint(x: min(max(local.x, textView.bounds.minX), textView.bounds.maxX),
+                              y: min(max(local.y, textView.bounds.minY), textView.bounds.maxY))
+        return NSRange(location: textView.characterIndexForInsertion(at: clamped), length: 0)
     }
 
     /// Only for changes that came from somewhere else — a re-style, a restore from History.
