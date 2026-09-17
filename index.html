@@ -77,10 +77,14 @@
   .stage[data-phase="paste"] .mac { transform:translate(-50%,-50%) translateX(-140px) scale(1.05); }
 
   /* the message field the text is pasted into */
-  .composer { position:absolute; left:50%; top:50%; width:270px; transform:translate(45px,-50%) translateY(16px); opacity:0; transition:opacity .6s ease, transform .8s cubic-bezier(.3,.7,.15,1); }
-  .stage[data-phase="paste"] .composer { opacity:1; transform:translate(45px,-50%); transition-delay:.35s; }
+  /* It arrives where it will stay: a window that slides as it fades reads as a jump, and
+     there is nothing for the movement to say. Only the text inside it changes. */
+  .composer { position:absolute; left:50%; top:50%; width:270px; transform:translate(45px,-50%); opacity:0; transition:opacity .45s ease; }
+  .stage[data-phase="paste"] .composer { opacity:1; transition-delay:.35s; }
   .composer .to { font-size:13px; color:var(--mute); margin:0 0 10px 2px; }
-  .composer .field { min-height:120px; border:1px solid var(--rule); border-radius:14px; background:var(--white); padding:14px 16px 44px; font-size:15px; line-height:1.45; position:relative; }
+  /* A fixed height, not a minimum: the text landing must not change the box, or the window
+     re-centres and jumps up by the difference. An empty composer has room in it anyway. */
+  .composer .field { height:152px; border:1px solid var(--rule); border-radius:14px; background:var(--white); padding:14px 16px 44px; font-size:15px; line-height:1.45; position:relative; }
   .composer .ph { color:var(--faint); }
   .composer .txt { display:none; border-radius:4px; }
   .stage.pasted .composer .ph { display:none; }
