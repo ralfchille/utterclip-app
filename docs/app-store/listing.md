@@ -43,7 +43,7 @@ DICTATION
 • The raw transcript is on your clipboard before any rewrite starts.
 • Hands-free: five seconds of silence ends the recording.
 • Continue dictating to append to what you just said.
-• Language is detected automatically; English and German are the tested ones.
+• Language is detected automatically; English, German and French are the tested ones.
 
 REWRITING
 • Five built-in styles: Plain, Slack, WhatsApp, Prompt, Email.
