@@ -61,6 +61,7 @@
   .cta { display:inline-flex; align-items:center; gap:10px; height:52px; padding:0 22px; border-radius:12px; background:var(--ink); color:var(--paper); font-size:16px; font-weight:500; }
   .cta svg { width:17px; height:17px; }
   .cta.quiet { background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--ink); }
+  .cta.soon { background:var(--fill); color:var(--mute); cursor:default; }
   .cta .sub { font-weight:400; color:inherit; opacity:.7; margin-left:2px; }
   .ctarow { display:flex; align-items:center; gap:12px; margin-top:64px; flex-wrap:wrap; }
   .ctarow .mono { margin-left:10px; }
@@ -148,7 +149,7 @@
   .mac { width:340px; }
   .menubar { display:none; }
   .stagebar { position:absolute; left:-40px; right:-40px; top:88px; height:24px; display:flex; justify-content:center; align-items:center; border-bottom:1px solid var(--rule); background:rgba(255,255,255,.6); opacity:0; transition:opacity .5s ease; }
-  .stagebar svg { width:18px; height:14px; }
+  .stagebar img { display:block; width:17px; height:18px; }
   .hero[data-device="mac"] .stagebar { opacity:1; }
   .win { position:relative; height:560px; border-radius:20px; background:var(--white); box-shadow:0 0 0 1px rgba(0,0,0,.06), 0 24px 56px rgba(11,11,11,.16); overflow:hidden; }
   .mac-head { display:flex; align-items:center; padding:12px 16px 0 20px; height:44px; }
@@ -225,12 +226,15 @@
   .pills { transition:opacity .45s ease, transform .5s cubic-bezier(.2,.7,.2,1); }
   .editstage[data-phase="e-edit"] .pills, .editstage[data-phase="e-type"] .pills, .editstage[data-phase="e-done"] .pills { opacity:0; transform:translateY(8px); }
   .editstage[data-phase="e-edit"] .sat, .editstage[data-phase="e-type"] .sat, .editstage[data-phase="e-done"] .sat { opacity:0; transform:translateX(-50%) scale(.85); }
-  .editstage[data-phase="e-edit"] .record, .editstage[data-phase="e-type"] .record, .editstage[data-phase="e-done"] .record { background:var(--ink); }
-  .editstage[data-phase="e-edit"] .record svg.mic, .editstage[data-phase="e-type"] .record svg.mic, .editstage[data-phase="e-done"] .record svg.mic { opacity:0; }
-  .record .check { position:absolute; width:30px; height:30px; color:var(--paper); opacity:0; transform:scale(.6); transition:opacity .3s ease, transform .45s cubic-bezier(.34,1.4,.64,1); }
-  .editstage[data-phase="e-edit"] .record .check, .editstage[data-phase="e-type"] .record .check, .editstage[data-phase="e-done"] .record .check { opacity:1; transform:scale(1); }
-  .editstage[data-phase="e-done"] .record { animation:press .55s cubic-bezier(.2,.7,.2,1); }
-  @keyframes press { 30% { transform:scale(.9); } 100% { transform:scale(1); } }
+  /* On the phone the keyboard takes the bottom of the screen while the text is edited —
+     there is no confirm button to press, which is the point: it copies as you type. */
+  .keys { position:absolute; left:0; right:0; bottom:0; height:224px; background:#D3D4DA; padding:10px 3px 28px;
+    display:flex; flex-direction:column; justify-content:space-between; transform:translateY(100%); transition:transform .5s cubic-bezier(.2,.7,.2,1); }
+  .keys .krow { display:flex; justify-content:center; gap:6px; }
+  .keys i { display:block; height:42px; width:30px; border-radius:5px; background:#FCFCFD; box-shadow:0 1px 0 rgba(0,0,0,.28); }
+  .keys i.wide { width:46px; background:#AFB3BC; box-shadow:none; }
+  .keys i.space { width:170px; }
+  .editstage[data-phase="e-tap"] .keys, .editstage[data-phase="e-edit"] .keys, .editstage[data-phase="e-type"] .keys, .editstage[data-phase="e-done"] .keys { transform:translateY(0); }
   .tapdot { position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid var(--ink); opacity:0; pointer-events:none; }
   .editstage[data-phase="e-tap"] .tapdot { animation:ripple .75s ease-out; }
   .editstage .card { position:relative; }
@@ -258,19 +262,18 @@
   .trio .frame.mini { aspect-ratio:340 / 300; max-width:340px; }
   .trio .mono { color:var(--mute); margin-top:24px; }
   .trio p { margin:8px 0 0; font-size:17px; line-height:1.45; max-width:340px; }
-  .panel { width:340px; height:300px; }
-  .sheet { position:absolute; left:0; right:0; background:var(--white); border-radius:16px; box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 30px rgba(0,0,0,.06); padding:16px; }
+  /* Each panel centres what it holds, so the three read as one row however tall they are. */
+  .panel { width:340px; height:300px; display:flex; flex-direction:column; justify-content:center; }
+  .sheet { background:var(--white); border-radius:16px; box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 30px rgba(0,0,0,.06); padding:16px; }
   .sheet .head { font-size:13px; font-weight:600; }
   .sheet .lab { font-size:11px; color:var(--mute); margin-top:14px; }
   .mini-pills { display:flex; gap:8px; flex-wrap:wrap; }
   .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .45s ease, color .45s ease; }
   .mini-pills span.on { background:var(--ink); color:var(--paper); }
   .mini-pills span.add { background:transparent; box-shadow:inset 0 0 0 1.5px var(--rule); color:var(--mute); }
-  .p-styles .mini-pills { flex-wrap:nowrap; }
-  .p-styles .sheet { top:48px; }
+  .p-styles .mini-pills { flex-wrap:nowrap; margin-bottom:14px; }
   .p-styles .inst { margin-top:6px; font-size:13px; line-height:1.55; min-height:82px; }
   .p-styles .caret { height:14px; vertical-align:-2px; opacity:1; animation:blink 1.1s steps(1) infinite; }
-  .p-model .sheet { top:16px; }
   .p-model .row + .row { margin-top:14px; padding-top:14px; border-top:1px solid var(--rule); }
   .p-model .mini-pills { margin-top:8px; }
   /* The selection is not a colour the pills take turns wearing — two pills mid-fade are both
@@ -289,7 +292,7 @@
   .p-model .key { margin-top:8px; display:flex; align-items:center; gap:10px; height:34px; padding:0 12px; border-radius:10px; background:var(--fill); font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.02em; }
   .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; }
   .p-model .kept { margin-top:8px; font-size:11px; color:var(--mute); }
-  .p-history .sheet { top:16px; padding-bottom:8px; }
+  .p-history .sheet { padding-bottom:8px; }
   /* Four rows tall and clipped, so the list cannot grow however long the page stays open;
      the rows themselves never animate — the track they sit on does. */
   .p-history .rows { margin-top:8px; height:152px; overflow:hidden;
@@ -478,14 +481,14 @@
       </div>
       <div class="steps mono"><span>01 Speak</span><span>02 Transcribe</span><span>03 Rewrite</span><span>04 Paste</span></div>
       <div class="ctarow">
-        <a class="cta" href="https://apps.apple.com/app/id6809807393"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· App Store</span></a>
+        <span class="cta soon"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· coming soon</span></span>
         <a class="cta quiet" href="https://github.com/ralfchille/utterclip-app#utterclip-for-mac"><svg><use href="#i-desktop"/></svg>Get it for Mac</a>
         <span class="mono">Free · Open source</span>
       </div>
     </div>
     <div class="frame">
       <div class="stage" id="stage" data-phase="idle">
-        <div class="stagebar" aria-hidden="true"><svg><use href="#i-wave"/></svg></div>
+        <div class="stagebar" aria-hidden="true"><img src="menubar.png" alt="" width="17" height="18"></div>
         <div class="composer" aria-hidden="true">
           <div class="to">Message to #standup</div>
           <div class="field"><span class="ph">Write a message…</span><span class="txt"></span><span class="send"><svg><use href="#i-send"/></svg></span></div>
@@ -509,7 +512,7 @@
     </div>
     <div class="frame">
       <div class="stage promptstage" id="promptstage" data-phase="idle">
-        <div class="stagebar" aria-hidden="true"><svg><use href="#i-wave"/></svg></div>
+        <div class="stagebar" aria-hidden="true"><img src="menubar.png" alt="" width="17" height="18"></div>
         <div class="composer" aria-hidden="true">
           <div class="to">New chat</div>
           <div class="field"><span class="ph">Ask anything</span><span class="txt"></span><span class="send"><svg><use href="#i-send"/></svg></span></div>
@@ -568,7 +571,7 @@
   <section class="close">
     <h2>Stop typing what<br>you could just say.</h2>
     <div class="ctarow">
-      <a class="cta" href="https://apps.apple.com/app/id6809807393"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· App Store</span></a>
+      <span class="cta soon"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· coming soon</span></span>
       <a class="cta quiet" href="https://github.com/ralfchille/utterclip-app#utterclip-for-mac"><svg><use href="#i-desktop"/></svg>Get it for Mac</a>
     </div>
     <div class="foot"><span>Utterclip</span><span>iOS 17 · macOS 14</span><span>MIT</span></div>
@@ -694,9 +697,16 @@
   editStage.appendChild(ePhone); waves(ePhone); spinners(ePhone);
   setText(ePhone, '.rawtext', RAW);
   var eRes = ePhone.querySelector('.result'), eCard = ePhone.querySelector('.card');
-  var eCheck = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); eCheck.setAttribute('class', 'check');
-  var eUse = document.createElementNS('http://www.w3.org/2000/svg', 'use'); eUse.setAttribute('href', '#i-check'); eCheck.appendChild(eUse);
-  ePhone.querySelector('.record').appendChild(eCheck);
+  var keys = document.createElement('div'); keys.className = 'keys';
+  [10, 9, 9].forEach(function (n, r) {
+    var row = document.createElement('div'); row.className = 'krow';
+    for (var i = 0; i < n; i++) { var k = document.createElement('i'); if (r === 2 && (i === 0 || i === n - 1)) k.className = 'wide'; row.appendChild(k); }
+    keys.appendChild(row);
+  });
+  var lastRow = document.createElement('div'); lastRow.className = 'krow';
+  ['wide', 'space', 'wide'].forEach(function (c) { var k = document.createElement('i'); k.className = c; lastRow.appendChild(k); });
+  keys.appendChild(lastRow);
+  ePhone.querySelector('.screen').appendChild(keys);
   var tapdot = document.createElement('span'); tapdot.className = 'tapdot'; eCard.appendChild(tapdot);
   function setWord(w) {
     eRes.innerHTML = 'Running about <span class="w">' + w + '</span><i class="caret"></i> minutes late to standup. Go ahead and start without me \u2014 I\'ll catch up on the notes after.';
@@ -714,7 +724,7 @@
     }],
     ['e-edit', 900, null],
     ['e-type', 1700, function () { later(250, function () { setWord('1'); }); later(480, function () { setWord(''); }); later(820, function () { setWord('1'); }); later(1080, function () { setWord('15'); }); }],
-    ['e-done', 1000, function () { later(320, function () { pop(ePhone); }); }],
+    ['e-done', 1200, function () { later(320, function () { pop(ePhone); }); }],
     ['e-hold', 3000, null]
   ];
   var eIdx = -1;
