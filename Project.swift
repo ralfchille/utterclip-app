@@ -167,7 +167,18 @@ let project = Project(
                 // that changes with every build, so macOS treats each build as a new app —
                 // microphone permission and keychain access get asked for again and again.
                 // The team's development certificate gives the app one stable identity.
+                // `scripts/release-mac.sh` re-signs the export with the Developer ID
+                // certificate instead; this stays the identity for everyday builds.
                 "CODE_SIGN_IDENTITY": "Apple Development",
+                // Notarisation refuses anything without it, and the app has nothing that the
+                // hardened runtime forbids: no JIT, no unsigned memory, no plug-ins from
+                // outside the bundle. Microphone access keeps working through the
+                // `device.audio-input` entitlement above; Accessibility is a TCC grant, not
+                // an entitlement, so it is unaffected. Note that turning this on changes the
+                // signature, and macOS then treats the app as new — Utterclip has to be
+                // removed from System Settings → Privacy & Security → Accessibility and
+                // added again, once.
+                "ENABLE_HARDENED_RUNTIME": "YES",
             ])
         ),
         // Home Screen / Lock Screen widget and the Control Center "Dictate" button.

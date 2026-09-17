@@ -11,3 +11,6 @@ DerivedData/
 
 # Tuist
 .tuist-cache/
+
+# Release artefacts (scripts/release-mac.sh)
+build/

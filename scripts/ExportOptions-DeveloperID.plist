@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Direct distribution, not the Mac App Store: the app is unsandboxed on purpose
+	     (see Project.swift on the UtterclipMac target), which the store does not allow. -->
+	<key>method</key>
+	<string>developer-id</string>
+	<key>teamID</key>
+	<string>2F7QR8NL2D</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<!-- The script notarises and staples itself, so that it can verify each step. -->
+	<key>destination</key>
+	<string>export</string>
+</dict>
+</plist>

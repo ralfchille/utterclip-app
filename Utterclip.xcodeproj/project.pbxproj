@@ -954,6 +954,7 @@
 				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/UtterclipMac.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Derived/InfoPlists/UtterclipMac-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1082,6 +1083,7 @@
 				CODE_SIGN_ENTITLEMENTS = Derived/Entitlements/UtterclipMac.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "Derived/InfoPlists/UtterclipMac-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (

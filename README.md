@@ -306,9 +306,11 @@ build does not show up in any of these, restart the phone; iOS caches the galler
 version.
 
 **Can I use it on iPad or Mac?**
-Mac, yes: the repository builds a native macOS app from the same code (see
-[Utterclip for Mac](#utterclip-for-mac)); it is not on the Mac App Store yet and is installed by
-building it. iPad is not supported; the iPhone app is portrait-only.
+Mac, yes: there is a native macOS app built from the same code (see
+[Utterclip for Mac](#utterclip-for-mac)). It is not on the Mac App Store — it cannot be, being
+unsandboxed on purpose — so it is a notarised download from
+[Releases](https://github.com/ralfchille/utterclip-app/releases/latest). iPad is not supported;
+the iPhone app is portrait-only.
 
 ---
 
@@ -345,6 +347,24 @@ What is different, and only because the platform is:
 
 Requirements: macOS 14 or later; Apple Intelligence needs macOS 26 on an Apple silicon Mac.
 The Whisper model is downloaded once (about 220 MB), into the app's own container.
+
+### Download it
+
+The Mac app is **not on the Mac App Store** — see the note below on why — so it is distributed
+the other way Apple provides for: signed with a Developer ID and notarised, which is what lets
+macOS open it without a warning.
+
+1. Download `Utterclip-1.1.zip` from the
+   [latest release](https://github.com/ralfchille/utterclip-app/releases/latest).
+2. Unzip it and drag **Utterclip** into `/Applications`.
+3. Open it. The Utterclip mark appears in the menu bar; there is no Dock icon.
+4. The first time you use the global shortcut, macOS asks for **Accessibility** — that is the
+   permission that lets Utterclip see which text field you were typing in and paste the result
+   back. Everything else works without it.
+
+There are no automatic updates: a direct-download app has none unless it ships an updater, and
+this one does not yet. Watch the repository, or check
+[Releases](https://github.com/ralfchille/utterclip-app/releases) now and then.
 
 ### Build it
 
