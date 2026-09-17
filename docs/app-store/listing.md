@@ -84,9 +84,21 @@ dictation,voice to text,speech to text,whisper,transcribe,clipboard,rewrite,emai
 
 ## What's New in This Version
 
+1.0 shipped with `Initial release.` — the text below is for **1.1**.
+
 ```
-Initial release.
+Dictate on the iPhone, pick it up on the Mac.
+
+• iCloud sync. Your history, your styles, your settings and your API key travel between your own devices, inside your own iCloud account — never through a server of ours. One switch in Settings turns it off.
+• Fix a word where it sits. Tap the result and type: the cursor lands where you tapped, and the corrected text is on the clipboard as you go.
+• Give the Action button to Utterclip and it opens recording: Settings → Action Button → Shortcut → Start dictating. (iPhone 15 Pro and later.)
+• The dictated text now has a typeface of its own, so a result reads as writing rather than as interface.
+• Steadier haptics: a tap when the rewrite lands and when you confirm an edit, and none while you are typing.
+• A Mac app, built from the same source, is available from the project's GitHub page.
 ```
+
+Character count is well inside Apple's 4000. The Mac line is a statement of fact about an
+open-source project, not a purchase link — drop it if App Review ever queries it.
 
 ## App Privacy (nutrition label)
 
@@ -121,10 +133,23 @@ HOW TO TEST
       The provider is detected from the key prefix. The key is stored in the Keychain and sent only to that provider.
 5. Tap another style pill (WhatsApp, Prompt, Email, Plain) to re-run the rewrite; each result is copied to the clipboard.
 
+NEW IN 1.1, IF YOU WANT TO SEE IT
+- iCloud sync (Settings → iCloud → Sync with iCloud, on by default): History, styles, settings
+  and the API key travel between the reviewer's own devices through their own iCloud account.
+  There is no developer server in that path. Turning the switch off stops it and re-stores the
+  key as device-only. Nothing about this needs a second device to review the app.
+- Editing a result in place: tap the rewritten text, the cursor lands where you tapped, and the
+  edited text is copied as you type. The checkmark above the keyboard finishes.
+- The Action button can start a dictation on iPhone 15 Pro and later:
+  Settings → Action Button → Shortcut → Start dictating.
+
 PRIVACY
 - Audio is transcribed on-device and deleted after transcription. It is never uploaded.
 - The only network requests are the one-time model download and, if the user chose the cloud engine, the rewrite request to the provider whose key they entered. No analytics, no tracking, no developer server. Privacy policy: https://github.com/ralfchille/utterclip-app/blob/main/PRIVACY.md
 - The app writes to the pasteboard; it never reads from it, so no paste prompt appears.
+- With iCloud sync on, the app writes History, styles, settings and the API key to the user's
+  own CloudKit private database and iCloud Keychain. Nothing is sent to the developer, who has
+  no server and cannot read any of it.
 
 WIDGETS / CONTROL
 - The Home Screen / Lock Screen widget and the Control Center control ("Dictate") deep-link into the app and start a recording. The control requires iOS 18.

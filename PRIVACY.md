@@ -1,7 +1,8 @@
 # Utterclip Privacy Policy
 
-**Effective date:** 8 September 2026
-**Applies to:** the Utterclip iOS app, version 1.0 and later, as distributed on the App Store
+**Effective date:** 17 September 2026
+**Applies to:** the Utterclip iOS app (version 1.0 and later) as distributed on the App Store,
+and the Utterclip Mac app as distributed from the project's GitHub releases
 and as built from this repository.
 
 Utterclip is a dictation app: it records your voice, transcribes it on your iPhone, and
@@ -93,11 +94,19 @@ Redaction has no effect on the on-device engine, since nothing is sent anywhere.
 
 ### Your API key
 
-The key is stored in the iOS Keychain with the strictest common protection class
-(accessible only after the device has been unlocked once, and marked "this device only",
-so it is **not** included in iCloud or computer backups and does not sync to other devices).
-It is sent only to the provider it belongs to, as described above. Deleting the key in
-Settings removes it from the Keychain; uninstalling the app does too.
+The key is stored in the Keychain, never in ordinary preferences, and is sent only to the
+provider it belongs to, as described above. It is readable after the device has been unlocked
+once, and never before.
+
+Where it lives depends on one switch. With **Settings → iCloud → Sync with iCloud** on — the
+default — the key is stored as a synchronising Keychain item, so your other devices signed in
+to the same Apple Account can use it too. Apple's iCloud Keychain carries it end-to-end
+encrypted; Apple cannot read it, and neither can the developer. With sync off, the key is
+marked "this device only": it does not travel to another device and is **not** included in
+iCloud or computer backups.
+
+Deleting the key in Settings removes it from the Keychain — and, with sync on, from your other
+devices; uninstalling the app removes the copy on that device.
 
 ### The speech-recognition model
 
@@ -117,15 +126,53 @@ styles you edit or create are stored in the app's local preferences on the devic
 prompts you write are only ever sent to a cloud provider as part of a rewrite request, in the
 same way as the built-in ones.
 
+### Sync between your devices
+
+With **Sync with iCloud** on (the default), Utterclip keeps the devices signed in to your Apple
+Account in step through **your own iCloud account** — Apple's CloudKit private database and the
+iCloud Keychain. What travels:
+
+- **History**: each dictation's raw transcript, the rewritten text, and which style produced it.
+- **Your styles and settings**: styles you edited or wrote, the default style, copy mode, and
+  the redaction and engine toggles.
+- **A live note of what your other device is doing** — recording, transcribing, done — so the
+  Mac can show that a dictation is happening on the iPhone and offer to bring the finished text
+  across. The finished text is part of that note.
+- **Your API key**, as described above.
+
+All of it sits in the private database of your own iCloud account, held by Apple under your
+Apple Account and encrypted in transit and at rest. The developer has no server in this path
+and cannot read any of it. Nothing is shared with anyone else.
+
+Turning **Settings → iCloud → Sync with iCloud** off stops all of it: the app writes nothing
+further to iCloud, the API key is re-stored as device-only, and what is already on each device
+stays there. Data already in iCloud is removed the way any app's is, in iOS Settings → your
+name → iCloud → Manage Account Storage.
+
+### On the Mac
+
+The Mac app does two things the iPhone app does not. Both happen entirely on your machine, and
+both need permission you grant yourself in System Settings → Privacy & Security → Accessibility:
+
+- opened with the global shortcut, it asks the app you are working in where its text cursor is,
+  so the window appears beside it rather than somewhere else on screen;
+- when you confirm **Paste into …**, it sends a ⌘V keystroke to that app.
+
+It reads no other content from other applications, and nothing about either action leaves your
+Mac. The Mac app is distributed outside the Mac App Store precisely because these two
+permissions cannot work inside Apple's app sandbox.
+
 ## Network connections, complete list
 
 Utterclip connects to exactly these hosts, and to nothing else:
 
 1. `huggingface.co` — once, to download the speech model.
 2. The API host of the one provider whose key you entered — for each cloud rewrite.
+3. Apple's iCloud (CloudKit and the iCloud Keychain) — while **Sync with iCloud** is on, to keep
+   your own devices in step. That is your iCloud account, not a service of the developer's.
 
 There is no connection to any server operated by the developer, and no connection at all in
-the on-device configuration once the model is downloaded.
+the on-device configuration once the model is downloaded and sync is off.
 
 ## What the developer receives
 
@@ -141,8 +188,10 @@ developer is through channels you control:
 ## Backups
 
 Your History and preferences are part of your normal iPhone backup (iCloud Backup or a
-computer backup), protected by Apple's backup encryption and your Apple Account. Your API key
-and the downloaded speech model are excluded from backups by design.
+computer backup), protected by Apple's backup encryption and your Apple Account. With **Sync
+with iCloud** on they are also in your iCloud private database, as described above. The
+downloaded speech model is excluded from backups by design, and so is your API key when sync
+is off.
 
 ## Children
 
