@@ -37,9 +37,9 @@
   .band::before { content:""; position:absolute; top:0; bottom:0; left:50%; width:100vw; transform:translateX(-50%); background:#F4F4F2; z-index:-1; }
 
   /* ---- nav ---- */
-  .nav { display:flex; align-items:center; gap:14px; padding:22px 0 0; }
-  .nav img { display:block; width:26px; height:26px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); }
-  .wordmark { font-size:20px; font-weight:600; }
+  .nav { display:flex; align-items:center; gap:21px; padding:22px 0 0; }
+  .nav img { display:block; width:39px; height:39px; border-radius:9px; box-shadow:0 6px 18px rgba(0,0,0,.15); }
+  .wordmark { font-size:30px; font-weight:600; }
   .nav .links { margin-left:auto; display:flex; gap:28px; font-size:15px; }
 
   /* ---- hero ---- */
@@ -284,8 +284,9 @@
   .md ul { margin:0; padding-left:16px; }
   .md li { line-height:24px; }
   .md ul + h4 { margin-top:24px; }
-  .promptstage .composer .to { }
-  .promptstage .composer .field { min-height:150px; white-space:pre-line; font-size:13px; line-height:1.5; }
+  /* The prompt is longer than a message, so its composer is taller — a fixed height again,
+     with room for the whole thing, so nothing reflows when it lands. */
+  .promptstage .composer .field { height:296px; white-space:pre-line; font-size:13px; line-height:1.5; }
 
   /* ---- make it yours: three small live panels ---- */
   .yours { padding-top:120px; }
@@ -423,7 +424,9 @@
     .steps { flex-wrap:wrap; gap:14px 22px; }
     .ctarow { flex-wrap:wrap; gap:16px; margin-top:44px; }
     .switch { margin-top:40px; }
-    .nav { padding-top:14px; }
+    .nav { padding-top:14px; gap:14px; }
+    .nav img { width:32px; height:32px; border-radius:7px; }
+    .wordmark { font-size:24px; }
     .nav .links { gap:18px; }
     .sync { padding-top:88px; } .privacy { padding-top:110px; } .close { padding-top:110px; }
     .band { padding-bottom:72px; }
@@ -782,9 +785,9 @@
   var PROMPT_RAW = "Uh, so rewrite the release notes for one point one, um, because the current draft is too technical for the App Store, keep it under a hundred words, no jargon, and it's done when a non-developer gets what changed.";
   var PROMPT_BLOCKS = [
     ['The job', ['Rewrite the release notes for 1.1.']],
-    ['The why', ['The current draft is too technical for the App Store.']],
+    ['The why', ['Too technical for the App Store.']],
     ['The guardrails', ['Under 100 words.', 'No jargon.']],
-    ['Done means', ['A non-developer understands what changed.']]
+    ['Done means', ['A non-developer gets what changed.']]
   ];
   var PROMPT_MD = PROMPT_BLOCKS.map(function (b) { return '## ' + b[0] + '\n' + b[1].map(function (l) { return '- ' + l; }).join('\n'); }).join('\n\n');
   var pStage = document.getElementById('promptstage'), pMac = make('tpl-mac');
