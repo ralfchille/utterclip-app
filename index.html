@@ -45,7 +45,8 @@
   /* ---- hero ---- */
   .hero { display:grid; grid-template-columns: 560px 1fr; gap:40px; align-items:center; min-height:900px; padding-top:40px; }
   h1 { margin:0; font-size:60px; line-height:1.02; font-weight:600; letter-spacing:-0.03em; }
-  .switch { display:inline-flex; margin-top:56px; padding:3px; border-radius:999px; background:var(--fill); position:relative; }
+  .lead { margin:22px 0 0; font-size:19px; line-height:1.5; color:var(--mute); max-width:530px; }
+  .switch { display:inline-flex; margin-top:44px; padding:3px; border-radius:999px; background:var(--fill); position:relative; }
   .switch button { position:relative; z-index:1; width:96px; height:38px; border-radius:999px; font-size:15px; font-weight:500; color:var(--mute); transition:color .35s ease; }
   .switch button[aria-pressed="true"] { color:var(--paper); }
   .switch .thumb { position:absolute; top:3px; left:3px; width:96px; height:38px; border-radius:999px; background:var(--ink); transition:transform .45s cubic-bezier(.3,.7,.15,1); }
@@ -378,6 +379,7 @@
   }
   @media (max-width: 700px) {
     h1 { font-size:clamp(32px, 9.4vw, 60px); }
+    .lead { font-size:17px; margin-top:18px; }
     .edit h2, .sync h2, .prompt h2, .privacy h2 { font-size:clamp(30px, 7.6vw, 44px); }
     .close h2 { font-size:clamp(32px, 8.4vw, 56px); }
     .facts { grid-template-columns:1fr 1fr; gap:24px; margin-top:40px; }
@@ -466,6 +468,7 @@
   <section class="hero" id="hero" data-device="ios" data-step="0">
     <div class="copy">
       <h1>Speak the message.<br>Paste the message.</h1>
+      <p class="lead">It comes back in the language you spoke — an English Slack message, a German WhatsApp reply, a French email.</p>
       <div class="switch" role="group" aria-label="Device">
         <span class="thumb"></span>
         <button type="button" data-device="ios" aria-pressed="true">iPhone</button>
