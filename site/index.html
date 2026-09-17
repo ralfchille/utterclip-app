@@ -278,7 +278,9 @@
      is on: outside the clip nothing paints, so only ever one pill is dark, and moving it is a
      single eased property. */
   .p-model .seg { position:relative; }
-  .p-model .seg-on { position:absolute; left:0; top:0; width:100%; background:var(--ink); pointer-events:none; will-change:clip-path; transition:clip-path .55s cubic-bezier(.32,.72,.24,1); }
+  /* margin:0 — the row it is cloned from carries a top margin, and an absolutely positioned
+     box still takes its margins, which sat the selection 8 px below the pill it marks. */
+  .p-model .seg-on { position:absolute; left:0; top:0; margin:0; width:100%; background:var(--ink); pointer-events:none; will-change:clip-path; transition:clip-path .55s cubic-bezier(.32,.72,.24,1); }
   .p-model .seg-on span { background:transparent; color:var(--paper); transition:opacity .22s ease .3s; }
   /* Crossing the gap between two pills, the clip shows the halves of both labels it covers.
      The label goes with the pill it belongs to: out as the selection leaves, back as it lands. */
