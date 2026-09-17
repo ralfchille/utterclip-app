@@ -8,8 +8,20 @@
 	<string>developer-id</string>
 	<key>teamID</key>
 	<string>2F7QR8NL2D</string>
+	<!-- Manual, with a profile made once by hand at developer.apple.com and installed
+	     locally. Automatic signing would ask App Store Connect to create the profile, and
+	     that ("cloud signing") needs an API key with Admin access — a far more powerful
+	     credential to keep on disk than this release needs. The App Manager key still does
+	     the notarisation. -->
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Developer ID Application</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.ralfchille.voicer.mac</key>
+		<string>Utterclip Mac Developer ID</string>
+	</dict>
 	<!-- The script notarises and staples itself, so that it can verify each step. -->
 	<key>destination</key>
 	<string>export</string>

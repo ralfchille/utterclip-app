@@ -10,17 +10,19 @@
 # What it needs once, outside this repo:
 #   · a Developer ID Application certificate in the login keychain
 #     (Xcode → Settings → Accounts → Manage Certificates → + → Developer ID Application)
-#   · an App Store Connect API key, used both to create the Developer ID provisioning
-#     profile and to talk to the notary service:
+#   · a Developer ID provisioning profile named "Utterclip Mac Developer ID", made at
+#     developer.apple.com and installed by double-clicking it. Made by hand on purpose:
+#     letting Xcode create it ("cloud signing") needs an App Store Connect key with Admin
+#     access, which is a much more powerful credential to leave on disk than this needs.
+#   · an App Store Connect API key with App Manager access, for the notary service:
 #       ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8
 #
 # Usage:
 #   ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-xxxx-… scripts/release-mac.sh
 #
-# Instead of the key, an app-specific password stored with
-# `xcrun notarytool store-credentials` can carry the notarisation half:
+# An app-specific password stored with `xcrun notarytool store-credentials` works just as
+# well as the key:
 #   NOTARY_PROFILE=utterclip-notary scripts/release-mac.sh
-# (the provisioning half then needs a Developer ID profile already installed).
 
 set -euo pipefail
 
@@ -40,15 +42,11 @@ die() { printf '\n\033[31m%s\033[0m\n' "$1" >&2; exit 1; }
 
 # Credentials: either the API key (both halves) or a stored notary profile (one half).
 notary_args=()
-signing_args=(-allowProvisioningUpdates)
 if [[ -n "${ASC_KEY_ID:-}" ]]; then
     key="$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
     [[ -f "$key" ]] || die "No API key at $key"
     [[ -n "${ASC_ISSUER_ID:-}" ]] || die "ASC_ISSUER_ID is not set"
     notary_args=(--key "$key" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER_ID")
-    signing_args+=(-authenticationKeyPath "$key"
-                   -authenticationKeyID "$ASC_KEY_ID"
-                   -authenticationKeyIssuerID "$ASC_ISSUER_ID")
 elif [[ -n "${NOTARY_PROFILE:-}" ]]; then
     notary_args=(--keychain-profile "$NOTARY_PROFILE")
 else
@@ -58,6 +56,21 @@ fi
 security find-identity -v -p codesigning | grep -q "Developer ID Application" \
     || die "No Developer ID Application certificate in the keychain.
 Xcode → Settings → Accounts → Manage Certificates → + → Developer ID Application."
+
+profiles="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+decoded=$(mktemp -t utterclip-profile)
+trap 'rm -f "$decoded"' EXIT
+found=no
+for p in "$profiles"/*.provisionprofile; do
+    [[ -e "$p" ]] || continue
+    security cms -D -i "$p" -o "$decoded" 2>/dev/null || continue
+    name=$(/usr/libexec/PlistBuddy -c "Print :Name" "$decoded" 2>/dev/null || true)
+    [[ "$name" == "Utterclip Mac Developer ID" ]] && found=yes
+done
+[[ "$found" == yes ]] \
+    || die "No provisioning profile named 'Utterclip Mac Developer ID' is installed.
+Make one at developer.apple.com → Certificates, Identifiers & Profiles → Profiles → + →
+Developer ID, for com.ralfchille.voicer.mac, and double-click the download to install it."
 
 step "Generating the project (Utterclip $version build $build)"
 mise exec tuist@4.200.5 -- tuist generate --no-open
@@ -71,7 +84,6 @@ xcodebuild archive \
     -configuration Release \
     -destination 'generic/platform=macOS' \
     -archivePath "$archive" \
-    "${signing_args[@]}" \
     | tail -20
 
 step "Exporting with the Developer ID certificate"
@@ -79,7 +91,6 @@ xcodebuild -exportArchive \
     -archivePath "$archive" \
     -exportPath "$export_dir" \
     -exportOptionsPlist scripts/ExportOptions-DeveloperID.plist \
-    "${signing_args[@]}" \
     | tail -20
 [[ -d "$app" ]] || die "Export produced no app at $app"
 
