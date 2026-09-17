@@ -277,13 +277,15 @@
   .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; }
   .p-model .kept { margin-top:8px; font-size:11px; color:var(--mute); }
   .p-history .sheet { top:16px; padding-bottom:8px; }
-  .p-history .rows { margin-top:8px; }
-  .p-history .row { display:flex; gap:12px; align-items:baseline; padding:10px 0; border-top:1px solid var(--rule); font-size:13px; line-height:1.35; transition:opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
-  .p-history .row:first-child { border-top:0; }
+  /* Four rows tall and clipped, so the list cannot grow however long the page stays open;
+     the rows themselves never animate — the track they sit on does. */
+  .p-history .rows { margin-top:8px; height:152px; overflow:hidden;
+    -webkit-mask-image:linear-gradient(#000 calc(100% - 20px), transparent);
+    mask-image:linear-gradient(#000 calc(100% - 20px), transparent); }
+  .p-history .track { will-change:transform; }
+  .p-history .row { display:flex; gap:12px; align-items:center; height:38px; border-top:1px solid var(--rule); font-size:13px; line-height:1.35; }
   .p-history .row .when { flex:none; width:64px; font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:11px; color:var(--mute); }
   .p-history .row .what { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .p-history .row.in { opacity:0; transform:translateY(-10px); }
-  .p-history .row.out { opacity:0; transform:translateY(6px); }
   @media (max-width: 900px) { .trio { grid-template-columns:1fr; gap:44px; } }
 
   /* ---- sync scene ---- */
@@ -783,17 +785,26 @@
       ['Sun', 'Reminder to move the planning call to Thursday afternoon…'],
       ['Sat', 'Draft: three options for the onboarding copy, keep the…']
     ];
-    var rows = document.querySelector('.p-history .rows'), head = 0, VISIBLE = 4;
+    var rows = document.querySelector('.p-history .rows'), VISIBLE = 4, ROW = 38, next = VISIBLE;
+    var track = document.createElement('div'); track.className = 'track'; rows.appendChild(track);
     function row(it) { var r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span class="when">' + it[0] + '</span><span class="what">' + it[1] + '</span>'; return r; }
-    for (var k = 0; k < VISIBLE; k++) rows.appendChild(row(items[k]));
-    if (!reduced) setInterval(function () {
-      head = (head + 1) % items.length;
-      var fresh = row(items[(head + items.length - 1) % items.length]); fresh.classList.add('in');
-      rows.insertBefore(fresh, rows.firstChild);
-      requestAnimationFrame(function () { requestAnimationFrame(function () { fresh.classList.remove('in'); }); });
-      var last = rows.lastElementChild; last.classList.add('out');
-      setTimeout(function () { last.remove(); }, 520);
-    }, 2600);
+    for (var k = 0; k < VISIBLE; k++) track.appendChild(row(items[k]));
+    // One move: the new dictation goes on top with the list held one row high, then the list
+    // settles down onto it. Every tick starts by putting the track back to four rows at rest,
+    // so a tick the browser skipped — a background tab runs no animation frames — leaves
+    // nothing behind to accumulate or jump.
+    function tick() {
+      track.style.transition = 'none';
+      track.style.transform = 'none';
+      while (track.children.length > VISIBLE) track.lastElementChild.remove();
+      track.insertBefore(row(items[next]), track.firstChild);
+      next = (next + 1) % items.length;
+      track.style.transform = 'translateY(-' + ROW + 'px)';
+      void track.offsetHeight;                     // commit the shift before arming the ease
+      track.style.transition = 'transform .65s cubic-bezier(.2,.7,.2,1)';
+      track.style.transform = 'translateY(0)';
+    }
+    if (!reduced) setInterval(tick, 3200);
   })();
 
   /* ---------- sync scene: dictate on the phone, it arrives on the Mac ---------- */
