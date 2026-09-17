@@ -14,6 +14,13 @@ let iCloudEntitlements: [String: Plist.Value] = [
 let iOSPushEntitlement: [String: Plist.Value] = ["aps-environment": "development"]
 let macPushEntitlement: [String: Plist.Value] = ["com.apple.developer.aps-environment": "development"]
 
+/// Which CloudKit environment the Mac app talks to. A development-signed build would other-
+/// wise use Development, and the iPhone app on TestFlight or the App Store uses Production —
+/// so the two would keep separate histories and never see each other's dictations. The Mac
+/// app ships notarised rather than through a store, and a Developer ID build uses Production
+/// anyway; saying so explicitly makes the local Release build behave like the shipped one.
+let macCloudKitEnvironment: [String: Plist.Value] = ["com.apple.developer.icloud-container-environment": "Production"]
+
 let project = Project(
     name: "Utterclip",
     packages: [
@@ -142,7 +149,8 @@ let project = Project(
                 "com.apple.security.device.audio-input": true,
                 "com.apple.security.network.client": true,
             ].merging(iCloudEntitlements) { current, _ in current }
-             .merging(macPushEntitlement) { current, _ in current }),
+             .merging(macPushEntitlement) { current, _ in current }
+             .merging(macCloudKitEnvironment) { current, _ in current }),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),

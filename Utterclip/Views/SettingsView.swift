@@ -202,6 +202,16 @@ struct SettingsView: View {
                 } footer: {
                     Text("Emails, phone numbers, links and addresses are swapped for placeholders before the transcript is sent to the AI provider, and put back in the result. Names stay as they are — detecting them is unreliable and they matter for tone. Audio never leaves the device.")
                 }
+
+                #if os(macOS)
+                // Which build this is, where a Mac app is looked for: the bottom of Settings,
+                // rather than an About window a menu bar app has no menu to open.
+                Text(Self.buildDescription)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .listRowBackground(Color.clear)
+                #endif
             }
             .groupedFormStyle()
             .subtleSeparators()
@@ -220,6 +230,15 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// "Utterclip 1.1 (4)" — the marketing version with the build behind it, the way Apple
+    /// writes it everywhere else.
+    private static var buildDescription: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "Utterclip \(version) (\(build))"
     }
 
     private func close() {
