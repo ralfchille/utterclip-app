@@ -85,13 +85,14 @@ finish processing before it appears under **TestFlight → iOS Builds**.
 
 ## After approval
 
-- [ ] README: replace the two App Store placeholders with the real link
-      (`https://apps.apple.com/app/id<APP_ID>`); delete or complete the TestFlight / IPA sections;
-      fill the Support contact and the roadmap line.
-- [ ] GitHub repo **Website** field → the App Store link.
-- [ ] `git tag -a v1.0 -m "App Store release 1.0 (3)"` and push the tag; create a GitHub Release
-      from it with the "What's New" text.
-- [ ] Revoke the App Review test key.
+**1.0 (3) went live on the App Store on 2026-09-17.**
+
+- [x] README: App Store links point at `id6809807393`. The TestFlight / IPA sections and the
+      Support contact are still open — see the 1.1 checklist.
+- [x] GitHub repo **Website** field → the App Store link.
+- [x] `v1.0` tags `f37ac51` on `main` — the submitted 1.0 (3) — and the GitHub Release is
+      published from it.
+- [x] Revoke the App Review test key. Revoked 2026-09-17.
 
 ## Known review-risk notes
 
