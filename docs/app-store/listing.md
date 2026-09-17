@@ -25,9 +25,15 @@ list**, where other companies' trademarks tend to get flagged under guideline 2.
 
 ## Promotional text (170)
 
+Editable any time without shipping a build, so it carries whatever the news is. For 1.1 that
+is the Mac.
+
 ```
-Speak, and a clean Slack message, WhatsApp reply, email or AI prompt lands on your clipboard. Transcribed on your iPhone. No account: bring your own key or go on-device.
+Speak, and a clean Slack message, WhatsApp reply, email or AI prompt lands on your clipboard. Transcribed on your iPhone, and now waiting on your Mac too.
 ```
+
+1.0 shipped with: `Speak, and a clean Slack message, WhatsApp reply, email or AI prompt lands
+on your clipboard. Transcribed on your iPhone. No account: bring your own key or go on-device.`
 
 ## Description (4000)
 
@@ -87,18 +93,21 @@ dictation,voice to text,speech to text,whisper,transcribe,clipboard,rewrite,emai
 1.0 shipped with `Initial release.` — the text below is for **1.1**.
 
 ```
-Dictate on the iPhone, pick it up on the Mac.
+Utterclip runs on the Mac now, and the two keep each other in step.
 
-• iCloud sync. Your history, your styles, your settings and your API key travel between your own devices, inside your own iCloud account — never through a server of ours. One switch in Settings turns it off.
-• Fix a word where it sits. Tap the result and type: the cursor lands where you tapped, and the corrected text is on the clipboard as you go.
-• Give the Action button to Utterclip and it opens recording: Settings → Action Button → Shortcut → Start dictating. (iPhone 15 Pro and later.)
-• The dictated text now has a typeface of its own, so a result reads as writing rather than as interface.
-• Steadier haptics: a tap when the rewrite lands and when you confirm an edit, and none while you are typing.
-• A Mac app, built from the same source, is available from the project's GitHub page.
+• Your history, your styles and your settings follow you between iPhone and Mac, inside your own iCloud account. Nothing passes through a server of ours, and one switch in Settings turns it off.
+• Dictate on the phone and the Mac says so as it happens — one click brings the finished text across.
+• Fix a word where it sits. Tap the result and type: the cursor lands where you tapped, and the corrected text is on your clipboard as you go.
+• Give the Action button to Utterclip and it opens recording. Settings → Action Button → Shortcut → Start dictating. (iPhone 15 Pro and later.)
+• The dictated text is set in a face of its own, so a result reads as writing rather than as interface.
+• A tap when the rewrite lands and when you confirm an edit, and none while you are typing.
+
+The Mac app is free and open source, from the project's GitHub page.
 ```
 
-Character count is well inside Apple's 4000. The Mac line is a statement of fact about an
-open-source project, not a purchase link — drop it if App Review ever queries it.
+918 characters, well inside Apple's 4000. The closing line about the Mac is a
+statement of fact about an open-source project rather than a purchase link — drop it if App
+Review ever queries it.
 
 ## App Privacy (nutrition label)
 
@@ -163,6 +172,11 @@ Required: **6.9-inch iPhone**, 1320 × 2868 px, portrait, up to 10. App Store Co
 these to the smaller iPhone sizes automatically. The set in
 [`screenshots/`](screenshots/) was captured on the iPhone 17 Pro Max simulator, light mode;
 the dictations shown are sample content, not real recordings.
+
+App Store Connect keeps a slot per display size. The 6.9-inch one takes the files in
+`screenshots/`; if you land in the **6.5-inch** slot it refuses them and asks for 1242 × 2688
+or 1284 × 2778, which is what `screenshots/6.5-inch/` holds — the same six, scaled to 1284
+wide with the twelve surplus pixels taken off the bottom, below the home indicator.
 
 Six of them, in the order they tell the story: idle, recording, the message, the prompt,
 history, settings. Retaking them is one command per screen rather than an afternoon —
