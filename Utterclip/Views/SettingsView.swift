@@ -7,6 +7,7 @@ import UtterclipCore
 struct SettingsView: View {
     @Bindable var viewModel: RecorderViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.panelDismiss) private var panelDismiss
 
     @State private var store = StyleStore.shared
     @State private var apiKeyInput = ""
@@ -14,15 +15,29 @@ struct SettingsView: View {
     @State private var keySaved = false
     @State private var storedProvider = KeyProvider.shared.provider?.displayName
     @State private var keyError: String?
+    @State private var syncEnabled = SyncPreference.isEnabled
+    #if os(macOS)
+    @State private var mac = MacPreferences.shared
+    @State private var accessibilityAllowed = FocusedField.isAllowed
+    #endif
+    @State private var syncStatus = SyncStatus.shared
+    /// The switch was flipped this session: history and settings pick it up after a relaunch.
+    @State private var syncChangePending = false
 
     var body: some View {
-        NavigationStack {
+        SheetNavigation {
             VStack(spacing: 0) {
             #if os(macOS)
             MacHeader(title: "Settings") {
-                Button("Done") { dismiss() }
-                    .font(.body.weight(.semibold))
-                    .keyboardShortcut(.cancelAction) // Escape closes; Return stays with the fields
+                // Settings saves as you go, so leaving is plain navigation: a close glyph, like
+                // History. Only the editor, which can save or discard, keeps Cancel / Done.
+                Button {
+                    close()
+                } label: {
+                    Image(systemName: "chevron.down")
+                }
+                .accessibilityLabel("Close")
+                .keyboardShortcut(.cancelAction) // Escape closes; Return stays with the fields
             }
             #endif
             Form {
@@ -104,9 +119,9 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("AI provider API key")
+                    Text("AI provider API key for rewrites")
                 } footer: {
-                    Text("Stored only in the device Keychain. The provider is detected from the key. Needed for style rewrites; transcription works without it.")
+                    Text("Kept in the Keychain — and, with iCloud sync on, in your iCloud Keychain so your other devices have it too. The provider is detected from the key. Needed for style rewrites; transcription works without it.")
                 }
 
                 // Only on devices that can run Apple's model at all (iOS 26, Apple
@@ -127,6 +142,59 @@ struct SettingsView: View {
                     }
                 }
 
+                #if os(macOS)
+                Section {
+                    Picker("Dictate from anywhere", selection: shortcutBinding) {
+                        Text("Off").tag(GlobalHotkey.Shortcut?.none)
+                        ForEach(GlobalHotkey.Shortcut.allCases) { shortcut in
+                            Text(shortcut.label).tag(GlobalHotkey.Shortcut?.some(shortcut))
+                        }
+                    }
+                    Toggle("Open beside the text field", isOn: nearFieldBinding)
+                        .disabled(mac.shortcut == nil)
+                    Toggle("Offer to paste back", isOn: pasteBackBinding)
+                        .disabled(mac.shortcut == nil)
+                    if mac.opensNearTextField, !accessibilityAllowed {
+                        Button("Allow Accessibility access…") {
+                            FocusedField.requestAccess()
+                        }
+                    }
+                } header: {
+                    Text("Shortcut")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Press the shortcut in any app to open Utterclip and start dictating; press it again to stop. The window opens next to wherever you are typing. When the text is ready, read it, edit or re-style it if you like, then press Return to send it into that app.")
+                        if (mac.opensNearTextField || mac.pastesBack), !accessibilityAllowed {
+                            Text("Finding the text field and pasting back both need Accessibility access. Without it the window opens beside the pointer and the text waits on the clipboard.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                #endif
+
+                Section {
+                    Toggle("Sync with iCloud", isOn: $syncEnabled)
+                        .onChange(of: syncEnabled) { _, on in
+                            SyncPreference.isEnabled = on
+                            KeyProvider.shared.applySyncPreference()
+                            syncChangePending = true
+                        }
+                } header: {
+                    Text("iCloud")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("History, rewrite styles, settings and the API key follow you to your other devices, inside your own iCloud account and encrypted by Apple. Nothing passes through anyone else. Off: everything stays on this device.")
+                        if syncStatus.accountAvailable == false {
+                            Text("Not signed in to iCloud on this device — everything stays here until you are.")
+                                .foregroundStyle(.secondary)
+                        }
+                        if syncChangePending {
+                            Text("History and styles switch over the next time you open Utterclip; the API key already has.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section {
                     Toggle("Redact personal details", isOn: $viewModel.redactPersonalData)
                 } header: {
@@ -138,13 +206,24 @@ struct SettingsView: View {
             .groupedFormStyle()
             .subtleSeparators()
             }
+            .ignoreHiddenTitleBar()
             .barChrome(title: "Settings") {
+                // Settings saves as you go, so there is nothing for a Done to commit: leaving
+                // is plain navigation, and gets the same close glyph History has.
                 ToolbarItem(placement: .sheetCancel) {
-                    Button("Done") { dismiss() }
+                    Button {
+                        close()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("Close")
                 }
             }
         }
-        .sheetFrame(minWidth: 480, minHeight: 600)
+    }
+
+    private func close() {
+        if let panelDismiss { panelDismiss() } else { dismiss() }
     }
 
     /// Validates and stores the key; every failure is shown, including a Keychain refusal.
@@ -175,6 +254,29 @@ struct SettingsView: View {
         }
     }
 
+    #if os(macOS)
+    private var shortcutBinding: Binding<GlobalHotkey.Shortcut?> {
+        Binding(get: { mac.shortcut }, set: { mac.shortcut = $0 })
+    }
+
+    private var pasteBackBinding: Binding<Bool> {
+        Binding(get: { mac.pastesBack }, set: { on in
+            mac.pastesBack = on
+            if on, !FocusedField.isAllowed { FocusedField.requestAccess() }
+            accessibilityAllowed = FocusedField.isAllowed
+        })
+    }
+
+    private var nearFieldBinding: Binding<Bool> {
+        Binding(get: { mac.opensNearTextField }, set: { on in
+            mac.opensNearTextField = on
+            // Ask the first time it is switched on; System Settings takes it from there.
+            if on, !FocusedField.isAllowed { FocusedField.requestAccess() }
+            accessibilityAllowed = FocusedField.isAllowed
+        })
+    }
+    #endif
+
     private var defaultStyleBinding: Binding<String> {
         Binding(
             get: { viewModel.defaultStyleID },
@@ -195,7 +297,10 @@ struct StylePromptEditor: View {
     let mode: Mode
     @State private var name: String
     @State private var prompt: String
+    @State private var usesMarkdown: Bool
     @State private var store = StyleStore.shared
+    /// Set by Delete so leaving the page afterwards doesn't re-create the style.
+    @State private var deleted = false
     @Environment(\.dismiss) private var dismiss
 
     init(mode: Mode) {
@@ -204,9 +309,11 @@ struct StylePromptEditor: View {
         case .new:
             _name = State(initialValue: "")
             _prompt = State(initialValue: "")
+            _usesMarkdown = State(initialValue: false)
         case .edit(let style):
             _name = State(initialValue: style.name)
             _prompt = State(initialValue: style.systemPrompt)
+            _usesMarkdown = State(initialValue: style.usesMarkdown)
         }
     }
 
@@ -258,25 +365,33 @@ struct StylePromptEditor: View {
             }
 
             Section {
-                saveButton
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+                Toggle("Markdown output", isOn: $usesMarkdown)
+            } header: {
+                Text("Format")
+            } footer: {
+                Text("On: results in this style offer a Markdown switch on the result card, for prompts and other text with headings or lists. Off: results are always copied as plain text.")
             }
 
             if let style = editedStyle, showsReset || showsDelete {
                 Section {
                     if showsReset {
-                        Button("Reset to default", role: .destructive) {
+                        Button(role: .destructive) {
                             store.resetToDefault(for: style.id)
                             let original = Styles.style(withID: style.id)
                             name = original.name
                             prompt = original.systemPrompt
+                            usesMarkdown = original.usesMarkdown
+                        } label: {
+                            Text("Reset to default").frame(maxWidth: .infinity)
                         }
                     }
                     if showsDelete {
-                        Button("Delete prompt", role: .destructive) {
+                        Button(role: .destructive) {
+                            deleted = true
                             store.removeStyle(id: style.id)
                             dismiss()
+                        } label: {
+                            Text("Delete prompt").frame(maxWidth: .infinity)
                         }
                     }
                 }
@@ -285,38 +400,27 @@ struct StylePromptEditor: View {
         .groupedFormStyle()
         .subtleSeparators()
         }
+        .ignoreHiddenTitleBar()
         .barTitle(editedStyle?.name ?? "New rewrite prompt")
-    }
-
-    /// Monochrome primary action, matching the app's black-filled controls: `.primary`
-    /// fill with an inverted label, so it stays legible in dark mode too.
-    private var saveButton: some View {
-        Button {
+        // No Save button: like the rest of Settings, edits apply when you leave the page —
+        // back arrow, Done, or the sheet closing. Empty fields are ignored rather than saved.
+        .onDisappear {
+            guard !deleted, canSave else { return }
             save()
-            dismiss()
-        } label: {
-            Text("Save")
-                .font(.headline)
-                .foregroundStyle(Color.appBackground)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Capsule().fill(.primary))
         }
-        .buttonStyle(.plain)
-        .disabled(!canSave)
-        .opacity(canSave ? 1 : 0.4)
     }
 
     private func save() {
         switch mode {
         case .new:
-            store.addStyle(name: name, prompt: prompt)
+            store.addStyle(name: name, prompt: prompt, usesMarkdown: usesMarkdown)
         case .edit(let style):
             if store.isCustom(style.id) {
-                store.updateStyle(id: style.id, name: name, prompt: prompt)
+                store.updateStyle(id: style.id, name: name, prompt: prompt, usesMarkdown: usesMarkdown)
             } else {
                 store.setName(name, for: style.id)
                 store.setPrompt(prompt, for: style.id)
+                store.setUsesMarkdown(usesMarkdown, for: style.id)
             }
         }
     }

@@ -1,5 +1,19 @@
 import ProjectDescription
 
+/// Shared by the iPhone and Mac apps so they meet in the same CloudKit container and the same
+/// keychain access group. The widget extension needs none of it. (No key-value store: it rides
+/// on iCloud Drive, which managed Macs can have switched off; settings use CloudKit instead.)
+let iCloudEntitlements: [String: Plist.Value] = [
+    "com.apple.developer.icloud-container-identifiers": ["iCloud.com.ralfchille.voicer"],
+    "com.apple.developer.icloud-services": ["CloudKit"],
+    "keychain-access-groups": ["$(AppIdentifierPrefix)com.ralfchille.voicer.shared"],
+]
+
+/// CloudKit delivers change notifications over push. The key differs per platform; Xcode
+/// flips the value to "production" for App Store / TestFlight exports.
+let iOSPushEntitlement: [String: Plist.Value] = ["aps-environment": "development"]
+let macPushEntitlement: [String: Plist.Value] = ["com.apple.developer.aps-environment": "development"]
+
 let project = Project(
     name: "Utterclip",
     packages: [
@@ -23,8 +37,8 @@ let project = Project(
             // Shared by app, core framework and widget extension — the store requires
             // them to match. Bump the build number whenever the widget changes: iOS caches
             // widget gallery previews per bundle version and won't re-render otherwise.
-            "MARKETING_VERSION": "1.0",
-            "CURRENT_PROJECT_VERSION": "3",
+            "MARKETING_VERSION": "1.1",
+            "CURRENT_PROJECT_VERSION": "4",
             // FoundationModels exists from iOS 26 / macOS 26; weak-link so older systems
             // still launch.
             "OTHER_LDFLAGS": ["$(inherited)", "-weak_framework", "FoundationModels"],
@@ -58,8 +72,14 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Utterclip",
+                // Read at runtime to name the shared keychain access group ("<TeamID>.…").
+                "UtterclipAppIdentifierPrefix": "$(AppIdentifierPrefix)",
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
                 "UILaunchScreen": [:],
+                // CloudKit wakes the app with a silent push when another device changed history.
+                "UIBackgroundModes": ["remote-notification", "fetch"],
+                // Wakes the app to pre-load the Whisper model; see WarmUpScheduler.
+                "BGTaskSchedulerPermittedIdentifiers": ["com.ralfchille.voicer.warm"],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "ITSAppUsesNonExemptEncryption": false,
                 // utterclip://record — the widget and control open the app into a recording.
@@ -69,6 +89,10 @@ let project = Project(
             ]),
             sources: ["Utterclip/**/*.swift"],
             resources: ["Utterclip/Resources/**"],
+            // iCloud sync (plan/1.1-icloud-sync.md): one CloudKit container and one key-value
+            // store shared with the Mac app, a keychain access group both apps can see so the
+            // API key syncs through iCloud Keychain, and push so CloudKit can signal changes.
+            entitlements: .dictionary(iCloudEntitlements.merging(iOSPushEntitlement) { current, _ in current }),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
@@ -91,6 +115,7 @@ let project = Project(
             deploymentTargets: .macOS("14.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Utterclip",
+                "UtterclipAppIdentifierPrefix": "$(AppIdentifierPrefix)",
                 // Menu bar app: no Dock tile, no app-switcher entry; the status item is the app.
                 "LSUIElement": true,
                 "NSMicrophoneUsageDescription": "Used to record your voice for transcription.",
@@ -101,15 +126,23 @@ let project = Project(
                     ["CFBundleURLName": "com.ralfchille.voicer.mac", "CFBundleURLSchemes": ["utterclip"]],
                 ],
             ]),
-            sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift"],
-            resources: ["UtterclipMac/Resources/**"],
-            // Sandboxed like a store app: microphone for recording, outbound network for the
-            // one-time model download and the optional cloud rewrite. Nothing else.
+            sources: ["UtterclipMac/**/*.swift", "Utterclip/Views/**/*.swift",
+                      // The notification names the menus post; the intents beside them are iOS-only.
+                      "Utterclip/Intents/**/*.swift"],
+            // The identity typeface lives with the iPhone app's resources and is shared,
+            // the same way the views are.
+            resources: ["UtterclipMac/Resources/**", "Utterclip/Resources/Fonts/**"],
+            // Not sandboxed, deliberately. The global shortcut's two useful halves — reading
+            // which text field another app has focused, and handing the text back with a ⌘V —
+            // are Accessibility APIs, and the sandbox blocks those against other processes
+            // even once the user has granted Accessibility access (macOS grants it, every call
+            // then fails). Every Mac dictation tool that types into other apps is unsandboxed
+            // for the same reason. The cost: this app cannot go to the Mac App Store as it is.
             entitlements: .dictionary([
-                "com.apple.security.app-sandbox": true,
                 "com.apple.security.device.audio-input": true,
                 "com.apple.security.network.client": true,
-            ]),
+            ].merging(iCloudEntitlements) { current, _ in current }
+             .merging(macPushEntitlement) { current, _ in current }),
             dependencies: [
                 .target(name: "UtterclipCore"),
                 .package(product: "HighlightedTextEditor"),
@@ -141,7 +174,10 @@ let project = Project(
                 "CFBundleDisplayName": "Utterclip",
                 "NSExtension": ["NSExtensionPointIdentifier": "com.apple.widgetkit-extension"],
             ]),
-            sources: ["UtterclipWidgets/**/*.swift"],
+            // The record intent is shared source with the app: the control runs it here, and
+            // the app's AppShortcutsProvider offers the same intent to Shortcuts, Siri and
+            // the Action button.
+            sources: ["UtterclipWidgets/**/*.swift", "Utterclip/Intents/**/*.swift"],
             resources: ["UtterclipWidgets/Resources/**"]
         ),
     ]

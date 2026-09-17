@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Observation
 #if canImport(UIKit)
 import UIKit
@@ -16,7 +17,9 @@ public final class RecorderViewModel {
         case error(String)
     }
 
-    public private(set) var phase: Phase = .idle
+    public private(set) var phase: Phase = .idle {
+        didSet { phaseDidChange() }
+    }
     public private(set) var rawTranscript: String?
     public private(set) var styledText: String?
     /// Non-fatal rewrite failure — raw transcript remains available and copied.
@@ -40,12 +43,61 @@ public final class RecorderViewModel {
     /// Pill highlighted before a rewrite started; restored if that rewrite is cancelled.
     private var styleBeforeRewrite: MessageStyle?
 
-    /// History entry the current dictation writes into; nil until a transcript exists.
-    private var currentEntryID: UUID?
+    /// The dictation on screen as it will be (or is) stored. Created when a transcript
+    /// arrives, written to the store once the dictation has settled — rewrite finished,
+    /// failed or abandoned — so other devices sync one finished entry instead of every
+    /// intermediate state. Later edits update the stored entry directly.
+    private var currentEntry: HistoryEntry?
+    private var currentEntryIsStored = false
 
     /// Set while a recording should be appended to the transcript on screen instead of
     /// replacing it (see `continueRecording`).
     private var isContinuing = false
+
+    // Watching the phone (Mac only; see `startWatchingOtherDevices`).
+
+    /// What the phone is up to, for the small indicator: recording, transcribing, a result on
+    /// its way, or a finished dictation ready to be pulled in with a tap. Nil when there is
+    /// nothing recent, or once the result was claimed.
+    public private(set) var phoneUpdate: PhoneUpdate?
+    private var phoneObserver: NSObjectProtocol?
+    /// Dictations already pulled in (or dismissed): the indicator does not come back for them.
+    private var claimedRemoteIDs: Set<UUID> = []
+    /// Phone activity up to this timestamp was dismissed; only newer activity shows again.
+    private var dismissedActivityAt = Date.distantPast
+
+    public struct PhoneUpdate: Equatable {
+        public let deviceName: String
+        public let phase: String
+        /// The finished dictation, once its record has arrived; nil while still in progress.
+        public let entry: HistoryEntry?
+        public let updatedAt: Date
+        /// In progress for longer than a dictation takes: the phone has not synced since.
+        public var isStale = false
+
+        public var isReady: Bool { entry != nil }
+
+        /// "iPhone · Recording…", "iPhone · Transcribing…", "iPhone · Fetching…", "New from iPhone".
+        public var title: String {
+            if isReady { return "New from \(deviceName)" }
+            if isStale { return "\(deviceName) · Waiting for sync…" }
+            switch phase {
+            case "recording": return "\(deviceName) · Recording…"
+            case "transcribing": return "\(deviceName) · Transcribing…"
+            case "rewriting": return "\(deviceName) · Rewriting…"
+            default: return "\(deviceName) · Fetching…"
+            }
+        }
+
+        /// First words of the result, for the indicator.
+        public var preview: String? {
+            guard let entry else { return nil }
+            let text = (entry.styledText.map(MarkdownStripper.plainText) ?? entry.rawTranscript)
+                .replacingOccurrences(of: "\n", with: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? nil : text
+        }
+    }
 
     /// Rewrites already produced for the current transcript, keyed by the exact style
     /// (id + prompt) that produced them. Cleared whenever the transcript changes.
@@ -59,23 +111,31 @@ public final class RecorderViewModel {
     /// When on, copies put the raw markdown source on the clipboard instead of the
     /// stripped plain text. Persists across recordings and launches.
     public var copyAsMarkdown: Bool {
-        didSet { UserDefaults.standard.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) }
+        didSet { if !isApplyingRemoteSettings { defaults.set(copyAsMarkdown, forKey: Self.copyAsMarkdownKey) } }
     }
 
     /// Swap emails, phone numbers, links and addresses for placeholders before a rewrite
     /// leaves the device, restoring them in the result (see `Redactor`). On by default.
     public var redactPersonalData: Bool {
-        didSet { UserDefaults.standard.set(redactPersonalData, forKey: Self.redactPersonalDataKey) }
+        didSet { if !isApplyingRemoteSettings { defaults.set(redactPersonalData, forKey: Self.redactPersonalDataKey) } }
     }
 
     /// Rewrite with Apple's on-device model (`LocalRewriter`) instead of the cloud provider.
     /// The engines produce different text, so switching clears the per-style cache.
     public var useOnDeviceModel: Bool {
         didSet {
+            // Deliberately per device (not synced): whether Apple's model is available differs
+            // between a Mac and an iPhone, and between iPhones.
             UserDefaults.standard.set(useOnDeviceModel, forKey: Self.useOnDeviceModelKey)
             rewriteCache.removeAll()
         }
     }
+
+    /// Settings and styles that follow the user through iCloud (see `SyncedDefaults`).
+    private let defaults = SyncedDefaults.shared
+    /// Set while another device's values are copied in, so the `didSet`s don't write them back.
+    private var isApplyingRemoteSettings = false
+    private var remoteSettingsObserver: NSObjectProtocol?
 
     /// The device could run Apple's model (right OS, eligible hardware) — gates whether the
     /// on-device option appears at all. See `onDeviceAvailable` for "ready right now".
@@ -85,7 +145,7 @@ public final class RecorderViewModel {
 
     public var defaultStyleID: String {
         get {
-            let stored = UserDefaults.standard.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
+            let stored = defaults.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
             // A saved default may name a style that no longer exists (a removed built-in id,
             // or a deleted user-added style) — fall back so the picker and the one-tap
             // rewrite stay consistent.
@@ -93,7 +153,7 @@ public final class RecorderViewModel {
             return StyleStore.shared.styles.first?.id ?? Styles.defaultStyle.id
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Self.defaultStyleKey)
+            defaults.set(newValue, forKey: Self.defaultStyleKey)
             // With nothing on screen the pills show the upcoming style; keep them in step with
             // the new default. A shown result keeps its own pill — the text belongs to it.
             if rawTranscript == nil {
@@ -104,8 +164,8 @@ public final class RecorderViewModel {
 
     public init(cloudRewriter: Rewriter = CloudRewriter(keyProvider: { KeyProvider.shared.apiKey() })) {
         self.cloudRewriter = cloudRewriter
-        self.copyAsMarkdown = UserDefaults.standard.bool(forKey: Self.copyAsMarkdownKey)
-        self.redactPersonalData = UserDefaults.standard.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
+        self.copyAsMarkdown = SyncedDefaults.shared.bool(forKey: Self.copyAsMarkdownKey)
+        self.redactPersonalData = SyncedDefaults.shared.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
         self.useOnDeviceModel = UserDefaults.standard.bool(forKey: Self.useOnDeviceModelKey)
         self.selectedStyle = Styles.defaultStyle // placeholder until `self` is fully initialized
         self.selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
@@ -114,6 +174,28 @@ public final class RecorderViewModel {
         recorder.onSilence = { [weak self] in
             guard let self, self.phase == .recording else { return }
             self.stopAndProcess()
+        }
+        remoteSettingsObserver = NotificationCenter.default.addObserver(
+            forName: SyncedDefaults.didChangeRemotely, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.applyRemoteSettings() }
+        }
+        // Tell the other devices this screen is empty right now: the indicator over there
+        // must not keep pointing at a result that is no longer on this screen.
+        LiveSync.publish(phase: "idle", entry: nil)
+    }
+
+    /// Another device changed a synced setting: take the new values without echoing them
+    /// back, and keep the pill in step with the default while nothing is on screen.
+    private func applyRemoteSettings() {
+        isApplyingRemoteSettings = true
+        defer { isApplyingRemoteSettings = false }
+        copyAsMarkdown = defaults.bool(forKey: Self.copyAsMarkdownKey)
+        redactPersonalData = defaults.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
+        if rawTranscript == nil {
+            selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
+        } else if StyleStore.shared.styleIfPresent(withID: selectedStyle.id) == nil {
+            selectedStyle = StyleStore.shared.style(withID: defaultStyleID) // the pill was deleted elsewhere
         }
     }
 
@@ -190,7 +272,7 @@ public final class RecorderViewModel {
             // `cancel()` already restored the visible state.
         } catch AppError.emptyTranscript {
             // Silence or non-speech only: keep what was on screen, copy and log nothing.
-            notice = "Nothing heard — tap the mic and try again."
+            notice = silenceNotice
             phase = rawTranscript == nil ? .idle : .done
         } catch {
             phase = .error(error.localizedDescription)
@@ -217,6 +299,9 @@ public final class RecorderViewModel {
 
     private func performRewrite(with style: MessageStyle) async {
         guard let raw = rawTranscript else { return }
+        // Whatever happens below — result, missing key, error, cancellation — the dictation
+        // has settled once this attempt is over; that is when it goes into History.
+        defer { commitCurrentEntry() }
         // Re-fetch by id so a prompt edited in Settings applies to the next rewrite.
         let style = StyleStore.shared.style(withID: style.id)
         styleBeforeRewrite = selectedStyle
@@ -230,11 +315,15 @@ public final class RecorderViewModel {
                 entry.styledText = cached
                 entry.styleID = style.id
             }
+            commitCurrentEntry() // stored before "done" is published, so both sync together
             phase = .done
             haptic(.light)
             return
         }
         phase = .rewriting
+        /// Whether a result actually arrived, as opposed to a missing key or a failed rewrite,
+        /// both of which also end at `.done`.
+        var landed = false
         do {
             // A stored on-device preference on a device that can't run the model (restored
             // backup, older phone) falls back to the cloud — the option is hidden there, so
@@ -255,6 +344,7 @@ public final class RecorderViewModel {
                 entry.styledText = styled
                 entry.styleID = style.id
             }
+            landed = true
         } catch is CancellationError {
             return // `cancel()` already restored the visible state.
         } catch AppError.noApiKey {
@@ -262,7 +352,31 @@ public final class RecorderViewModel {
         } catch {
             rewriteError = error.localizedDescription
         }
+        // Store first, announce second: the "done" activity record names this dictation, and
+        // the other device can only show it if both records travel in the same export.
+        commitCurrentEntry()
         phase = .done
+        // The result arriving is the moment the whole dictation was for, and it was the one
+        // thing that happened without a word. The same tap as confirming an edit, and only on
+        // a result: a missing key or a failed rewrite also ends here, and neither is good news.
+        if landed { successHaptic() }
+    }
+
+    /// Whether the microphone delivered nothing at all, or simply caught no speech. A muted
+    /// or half-connected input (AirPods that are paired but not streaming) is the common
+    /// cause and worth naming, since no amount of re-recording fixes it.
+    private var silenceNotice: String {
+        guard recorder.lastTakeWasSilent else {
+            #if os(macOS)
+            return "Nothing heard — click the mic and try again."
+            #else
+            return "Nothing heard — tap the mic and try again."
+            #endif
+        }
+        if let device = recorder.lastInputName {
+            return "No sound came from \(device). Pick another input in Sound settings and try again."
+        }
+        return "No sound came from the microphone. Check the input device and try again."
     }
 
     /// Chosen from the missing-key card: switch engines and rewrite the current transcript.
@@ -273,19 +387,33 @@ public final class RecorderViewModel {
 
     // MARK: - History
 
-    /// Starts a history entry for a finished dictation. Blank transcripts are not logged.
+    /// Starts the history entry for a finished dictation (in memory until it settles).
+    /// Blank transcripts are not logged.
     private func logDictation(_ raw: String) {
-        currentEntryID = nil
+        currentEntry = nil
+        currentEntryIsStored = false
         guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        let entry = HistoryEntry(
-            id: UUID(), date: .now, rawTranscript: raw, styledText: nil, styleID: nil)
-        HistoryStore.shared.add(entry)
-        currentEntryID = entry.id
+        currentEntry = HistoryEntry(
+            id: UUID(), date: .now, rawTranscript: raw, styledText: nil, styleID: nil,
+            originDevice: DeviceIdentity.id)
     }
 
     private func updateCurrentEntry(_ mutate: (inout HistoryEntry) -> Void) {
-        guard let id = currentEntryID else { return }
-        HistoryStore.shared.update(id, mutate)
+        guard var entry = currentEntry else { return }
+        mutate(&entry)
+        currentEntry = entry
+        if currentEntryIsStored {
+            HistoryStore.shared.update(entry.id) { $0 = entry }
+            if phase == .done { LiveSync.publish(phase: "done", entry: entry) } // an edit on screen
+        }
+    }
+
+    /// Writes the pending entry to the store, once. Called when a rewrite attempt ends,
+    /// whatever its outcome; a no-op for entries that are already stored.
+    private func commitCurrentEntry() {
+        guard let entry = currentEntry, !currentEntryIsStored else { return }
+        HistoryStore.shared.add(entry)
+        currentEntryIsStored = true
     }
 
     /// Brings a past dictation back as the current result and re-copies it in the
@@ -297,7 +425,8 @@ public final class RecorderViewModel {
         styledText = entry.styledText
         rewriteError = nil
         rewriteNeedsKey = false
-        currentEntryID = entry.id
+        currentEntry = entry
+        currentEntryIsStored = true
         rewriteCache.removeAll()
         if let styleID = entry.styleID {
             selectedStyle = StyleStore.shared.style(withID: styleID)
@@ -313,12 +442,15 @@ public final class RecorderViewModel {
         haptic(.light)
     }
 
-    /// Plain-text copy by default (markdown characters stripped); raw markdown when
-    /// the markdown mode is active. Always a plain string — rich clipboard items broke
-    /// pasting into single-line inputs on the Mac.
+    /// Plain-text copy by default (markdown characters stripped); raw markdown when the
+    /// style keeps Markdown and the markdown mode is active. Always a plain string — rich
+    /// clipboard items broke pasting into single-line inputs on the Mac.
     private func copyStyled(_ text: String) {
-        Clipboard.copy(copyAsMarkdown ? text : MarkdownStripper.plainText(text))
+        Clipboard.copy(copiesMarkdown ? text : MarkdownStripper.plainText(text))
     }
+
+    /// The Markdown switch is offered per style; for every other style results are plain.
+    public var copiesMarkdown: Bool { selectedStyle.usesMarkdown && copyAsMarkdown }
 
     /// Toggles markdown-copy mode and immediately re-copies the current result in the
     /// new mode. The mode sticks until toggled off.
@@ -333,15 +465,23 @@ public final class RecorderViewModel {
     /// Applies a user-edited version of the styled result and re-copies it in the
     /// current copy mode. Empty edits are ignored so a stray clear can't wipe the
     /// result out from under the copy that's already on the clipboard.
-    public func applyStyledEdit(_ edited: String) {
+    /// - Parameter confirmed: whether to mark it with a tap. The pause while typing puts the
+    ///   text back on the clipboard every few seconds, and a tap each time reads as random
+    ///   buzzing — the label already says what happened. Only finishing an edit is confirmed.
+    public func applyStyledEdit(_ edited: String, confirmed: Bool = true) {
         let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         styledText = trimmed
         copyStyled(trimmed)
         rewriteCache[selectedStyle] = trimmed // keep the edit when switching pills and back
         updateCurrentEntry { $0.styledText = trimmed }
-        successHaptic()
+        if confirmed { successHaptic() }
     }
+
+    /// The tap that says an edit was taken, for when there is nothing left to apply: the pause
+    /// while typing has already put this exact text on the clipboard, so `applyStyledEdit`
+    /// would find no change and say nothing. Confirming should still feel like confirming.
+    public func acknowledgeEdit() { successHaptic() }
 
     /// Applies a user-edited raw transcript the same way a fresh recording lands: the
     /// plain text is copied right away, then the current style re-runs on it so the styled
@@ -364,6 +504,14 @@ public final class RecorderViewModel {
     }
 
     /// Recovers the raw transcript onto the clipboard in case the rewrite isn't wanted.
+    /// Puts the result back on the clipboard — after an edit, or when the user is simply not
+    /// sure it is still there.
+    public func copyStyledAgain() {
+        guard let styled = styledText else { return }
+        copyStyled(styled)
+        haptic(.light)
+    }
+
     public func copyRaw() {
         guard let raw = rawTranscript else { return }
         Clipboard.copy(raw)
@@ -393,6 +541,78 @@ public final class RecorderViewModel {
     public func dismissError() {
         recorder.cancel()
         phase = rawTranscript == nil ? .idle : .done
+    }
+
+    // MARK: - Watching the phone
+
+    /// Every phase change goes out on the live channel, so the other devices can show what
+    /// this one is doing. `done` carries the finished dictation itself.
+    private func phaseDidChange() {
+        let name: String
+        switch phase {
+        case .idle, .error: name = "idle"
+        case .recording: name = "recording"
+        case .transcribing: name = "transcribing"
+        case .rewriting: name = "rewriting"
+        case .done: name = "done"
+        }
+        LiveSync.publish(phase: name, entry: phase == .done ? currentEntry : nil)
+    }
+
+    private static let phoneLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "phone-watch")
+
+    /// Mac: follow the phone's activity for the indicator. Nothing on this device changes by
+    /// itself; the user pulls a finished dictation in with `claimPhoneUpdate()`.
+    public func startWatchingOtherDevices() {
+        guard phoneObserver == nil else { return }
+        RemoteZoneWatcher.shared.start()
+        phoneObserver = NotificationCenter.default.addObserver(
+            forName: RemoteZoneWatcher.didChange, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.refreshPhoneUpdate() }
+        }
+        refreshPhoneUpdate()
+    }
+
+    private func refreshPhoneUpdate() {
+        guard let remote = RemoteZoneWatcher.shared.latestRemote(), remote.updatedAt > dismissedActivityAt else {
+            phoneUpdate = nil
+            return
+        }
+        let stale = Date().timeIntervalSince(remote.updatedAt) > RemoteZoneWatcher.staleAfter
+        var update: PhoneUpdate?
+        if remote.isInProgress {
+            update = PhoneUpdate(deviceName: remote.deviceName, phase: remote.phase, entry: nil, updatedAt: remote.updatedAt, isStale: stale)
+        } else if remote.phase == "done", let entry = remote.entry,
+                  !claimedRemoteIDs.contains(entry.id), currentEntry?.id != entry.id {
+            update = PhoneUpdate(deviceName: remote.deviceName, phase: "done", entry: entry, updatedAt: remote.updatedAt)
+        }
+        if update != phoneUpdate {
+            Self.phoneLogger.notice("Indicator: \(update?.title ?? "none", privacy: .public)")
+            phoneUpdate = update
+        }
+    }
+
+    /// The indicator was tapped with a result ready: bring the phone's dictation in, exactly
+    /// like restoring it from History (result, raw transcript, style, clipboard).
+    public func claimPhoneUpdate() {
+        guard let entry = phoneUpdate?.entry else { return }
+        claimedRemoteIDs.insert(entry.id)
+        dismissedActivityAt = max(dismissedActivityAt, entry.date) // older results never resurface
+        phoneUpdate = nil
+        // The live record arrives ahead of History's own sync: put it in History now; the
+        // synced copy is collapsed as a duplicate by id when it lands.
+        if HistoryStore.shared.entry(id: entry.id) == nil { HistoryStore.shared.add(entry) }
+        restore(entry)
+    }
+
+    /// The ✕ on the indicator (or a click on a stale one): it goes, and only newer phone
+    /// activity brings it back.
+    public func dismissPhoneUpdate() {
+        guard let update = phoneUpdate else { return }
+        if let id = update.entry?.id { claimedRemoteIDs.insert(id) }
+        dismissedActivityAt = max(dismissedActivityAt, update.updatedAt)
+        phoneUpdate = nil
     }
 
     // MARK: - Haptics

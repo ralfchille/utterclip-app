@@ -1,4 +1,5 @@
 import Combine
+import HighlightedTextEditor
 import SwiftUI
 import UtterclipCore
 
@@ -9,9 +10,26 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var editTarget: EditTarget?
+    /// What the result card's label is saying: at rest it names the style, while you type it
+    /// says so, and it confirms each time the text goes back on the clipboard.
+    private enum ResultLabel: Equatable { case idle, writing, copied }
+    @State private var resultLabel: ResultLabel = .idle
+    /// Copies a moment after you stop typing, so an edit needs no button at all.
+    @State private var copyAfterTyping: Task<Void, Never>?
+    /// The result card is edited where it sits rather than in a sheet or a panel; this holds
+    /// the text while it is being typed.
+    @State private var styledDraft: String?
+    /// The result as it stood when the edit opened, so Esc can put it back.
+    @State private var styledOriginal: String?
+    /// Where the tap that opened the editor landed, so the caret can start there.
+    @State private var caretHint: CGPoint?
+    #if os(macOS)
+    @State private var pasteBack = PasteBack.shared
+    @State private var mac = MacPreferences.shared
+    #endif
 
     /// Which text the editor is currently editing.
-    private enum EditTarget: String, Identifiable {
+    private enum EditTarget: String, Identifiable, Hashable {
         case styled, raw
         var id: String { rawValue }
     }
@@ -34,20 +52,80 @@ struct ContentView: View {
                         Image(systemName: "gearshape")
                     }
                     .accessibilityLabel("Settings")
+                    // Two sizes: a panel to dictate into, and room to read and edit in.
+                    Button {
+                        AppDelegate.shared?.toggleWindowSize()
+                    } label: {
+                        Image(systemName: mac.isWindowExpanded
+                              ? "arrow.down.right.and.arrow.up.left"
+                              : "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityLabel(mac.isWindowExpanded ? "Smaller window" : "Bigger window")
+                    // Back to the menu bar without having to aim for the status item.
+                    Button {
+                        AppDelegate.shared?.hideWindow()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("Close")
                 }
                 #endif
                 resultArea
-                // Always present: before a recording the highlighted pill is the style the
-                // recording will be rewritten in; afterwards tapping one re-runs the rewrite.
-                StylePickerRow(
-                    selected: viewModel.selectedStyle,
-                    isDisabled: viewModel.isBusy
-                ) { style in
-                    viewModel.select(style)
+                    .overlay(alignment: .top) {
+                        // Mac: the phone has something — a recording under way or a finished
+                        // dictation one tap away. Nothing loads until it is tapped.
+                        if let update = viewModel.phoneUpdate {
+                            PhoneUpdateBlob(update: update,
+                                            claim: { viewModel.claimPhoneUpdate() },
+                                            dismiss: { viewModel.dismissPhoneUpdate() })
+                                .padding(.top, 4)
+                                .padding(.horizontal) // the style pills' margin
+                                .transition(.scale(scale: 0.6).combined(with: .opacity))
+                        }
+                    }
+                    .animation(.spring(duration: 0.45, bounce: 0.35), value: viewModel.phoneUpdate)
+            #if os(macOS)
+            .animation(.spring(duration: 0.35, bounce: 0.2), value: pasteBack.offeredAppName)
+            #endif
+                // The pills go while the result is being typed into: re-running the rewrite
+                // would throw the edit away.
+                if !isEditingResult {
+                    // Before a recording the highlighted pill is the style the recording will
+                    // be rewritten in; afterwards tapping one re-runs the rewrite.
+                    StylePickerRow(
+                        selected: viewModel.selectedStyle,
+                        isDisabled: viewModel.isBusy
+                    ) { style in
+                        viewModel.select(style)
+                    }
+                    .padding(.bottom, 10) // sit a touch higher above the record button
                 }
-                .padding(.bottom, 10) // sit a touch higher above the record button
-                recordButton
-                    .padding(.bottom, 24)
+                #if os(macOS)
+                // Editing borrows the record button's place rather than adding a control:
+                // the eye is already there, and nothing else on screen moves.
+                Group {
+                    if isEditingResult { doneEditingButton } else { recordButton }
+                }
+                .padding(.bottom, pasteBack.offeredAppName == nil ? 24 : 16)
+                // A dictation started with the shortcut waits under the record button until it
+                // is sent on — through the edit too, so text fixed here still lands in the
+                // field it was dictated into.
+                if let appName = pasteBack.offeredAppName {
+                    PasteBackBar(appName: appName,
+                                 paste: { pasteBack.paste() },
+                                 dismiss: { pasteBack.disarm() })
+                        .padding(.horizontal) // the style pills' margin
+                        .padding(.bottom, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                #else
+                // On a phone the keyboard has already taken half the screen, and the check
+                // button rides above it; the record button would be behind it anyway.
+                if !isEditingResult {
+                    recordButton
+                        .padding(.bottom, 24)
+                }
+                #endif
             }
             .ignoreHiddenTitleBar()
             .barChrome(title: "Utterclip") {
@@ -68,15 +146,45 @@ struct ContentView: View {
                     .accessibilityLabel("Settings")
                 }
             }
-            .sheet(isPresented: $showSettings) {
+            .panel(isPresented: $showSettings) {
                 SettingsView(viewModel: viewModel)
             }
-            .sheet(isPresented: $showHistory) {
+            .panel(isPresented: $showHistory) {
                 HistoryView(viewModel: viewModel)
             }
+            #if os(iOS)
+            // The Action button's shortcut may have run before this view was listening.
+            .task {
+                guard #available(iOS 18.0, *), PendingDictation.take(),
+                      !viewModel.recorder.isRecording, !recordUnavailable else { return }
+                await viewModel.record()
+            }
+            #endif
             .onOpenURL { url in
                 // utterclip://record — from the Home Screen widget or the Control Center button.
                 // (The Mac app receives URLs in its AppDelegate and posts the notification above.)
+                #if DEBUG
+                // utterclip://demo — the Mac's debug seed, reachable on the phone too, so the
+                // App Store screenshots can be staged without dictating into a simulator that
+                // has no microphone. `history=1` fills the History screen as well.
+                if url.host == "demo" {
+                    let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+                    func value(_ name: String) -> String? { query.first(where: { $0.name == name })?.value }
+                    if value("history") == "1" { seedDebugHistory() }
+                    // ?show=history|settings opens that screen, so a screenshot run needs no taps
+                    switch value("show") {
+                    case "history": NotificationCenter.default.post(name: .utterclipShowHistory, object: nil); return
+                    case "settings": NotificationCenter.default.post(name: .utterclipShowSettings, object: nil); return
+                    default: break
+                    }
+                    var info: [String: Any] = ["edit": value("edit") == "1", "phone": false]
+                    if let raw = value("raw") { info["raw"] = raw }
+                    if let style = value("style") { info["style"] = style }
+                    NotificationCenter.default.post(name: .utterclipDebugResult,
+                                                    object: value("text") ?? "", userInfo: info)
+                    return
+                }
+                #endif
                 guard url.host == "record", !viewModel.recorder.isRecording, !recordUnavailable else { return }
                 Task { await viewModel.record() }
             }
@@ -98,6 +206,90 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowHistory)) { _ in
                 showHistory = true
             }
+            #if DEBUG
+            // `utterclip://demo`, for looking at the result card without dictating one.
+            .onReceive(NotificationCenter.default.publisher(for: .utterclipDebugResult)) { showDebugResult($0) }
+            #endif
+            .task {
+                #if os(macOS)
+                viewModel.startWatchingOtherDevices() // the indicator; the phone stays as it is
+                #endif
+                #if DEBUG
+                // SIMCTL_CHILD_UTTERCLIP_DEMO=slack|prompt|history|settings puts the app straight
+                // into that screen at launch. A URL would do it too, but iOS asks "Open in
+                // Utterclip?" first and that dialog lands in the screenshot.
+                if let state = ProcessInfo.processInfo.environment["UTTERCLIP_DEMO"] {
+                    applyDebugState(state)
+                }
+                #endif
+            }
+            #if !os(macOS)
+            // The phone never opens the editor by itself: a keyboard covering half the screen
+            // after every dictation is not what you want. It only follows a result that
+            // replaced the one being edited, and stops editing when new text is on its way.
+            .onChange(of: viewModel.styledText) { _, styled in
+                // Trimmed, because the pause while typing puts the text on the clipboard
+                // without its trailing whitespace — so a draft ending in a space comes back
+                // here looking like a change from elsewhere. It is not: it is this view's own
+                // echo, and acting on it ate the space and moved the caret. Anything that
+                // genuinely differs — a re-style, a restore, a dictation from the phone —
+                // still replaces the draft.
+                guard let styled, let draft = styledDraft,
+                      draft.trimmingCharacters(in: .whitespacesAndNewlines) != styled else { return }
+                copyAfterTyping?.cancel()
+                beginEditing(styled)
+                resultLabel = .idle
+            }
+            .onChange(of: viewModel.phase) { _, phase in
+                switch phase {
+                case .recording, .transcribing, .rewriting, .idle, .error: endEditing()
+                case .done: break
+                }
+            }
+            #endif
+            #if os(macOS)
+            // A dictation started with the global shortcut goes back to the app it came from
+            // once its text is on the clipboard; anything else leaves the target alone.
+            .onChange(of: viewModel.phase) { _, phase in
+                switch phase {
+                case .done:
+                    PasteBack.shared.offer()
+                    // Straight into the text with a caret at the end: a rewrite is usually
+                    // read and tweaked, not admired. Skipped while a paste-back is waiting,
+                    // where Return belongs to the confirm bar rather than to the text.
+                    if pasteBack.offeredAppName == nil, styledDraft == nil,
+                       let styled = viewModel.styledText {
+                        beginEditing(styled)
+                        resultLabel = .idle
+                    }
+                case .idle, .error:
+                    PasteBack.shared.disarm()
+                    endEditing()
+                case .recording, .transcribing, .rewriting:
+                    // New text is on its way: stop editing the old, and make sure the
+                    // pending copy cannot write the old draft over it.
+                    endEditing()
+                }
+            }
+            .onChange(of: styledDraft == nil) { _, notEditing in
+                AppDelegate.shared?.setWindowDraggableByBackground(notEditing)
+            }
+            // A re-style, a restore from History or a dictation claimed from the phone all
+            // replace the result while the card may still be holding the previous one.
+            .onChange(of: viewModel.styledText) { _, styled in
+                // Trimmed, because the pause while typing puts the text on the clipboard
+                // without its trailing whitespace — so a draft ending in a space comes back
+                // here looking like a change from elsewhere. It is not: it is this view's own
+                // echo, and acting on it ate the space and moved the caret. Anything that
+                // genuinely differs — a re-style, a restore, a dictation from the phone —
+                // still replaces the draft.
+                guard let styled, let draft = styledDraft,
+                      draft.trimmingCharacters(in: .whitespacesAndNewlines) != styled else { return }
+                copyAfterTyping?.cancel()
+                beginEditing(styled)
+                resultLabel = .idle
+            }
+            #endif
             .onReceive(NotificationCenter.default.publisher(for: .utterclipShowSettings)) { _ in
                 showSettings = true
             }
@@ -244,18 +436,71 @@ struct ContentView: View {
         if let styled = viewModel.styledText, viewModel.phase == .done {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("Copied — \(viewModel.selectedStyle.name)", systemImage: "doc.on.clipboard")
+                    // Also the way to put it back on the clipboard, which is what you want
+                    // right after editing it.
+                    Button {
+                        viewModel.copyStyledAgain()
+                        flashCopied()
+                    } label: {
+                        // Not a Label: its three symbols are different widths, so the text
+                        // shifted every time the state changed. A fixed box holds the line.
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            // The box fixes the layout in both directions: the three symbols
+                            // differ in height as well as width, so a width-only frame still
+                            // let the row grow and the text ride up and down with it.
+                            Image(systemName: resultLabelIcon)
+                                .frame(width: 15, height: 12, alignment: .center)
+                            Text(resultLabelText)
+                        }
+                        .frame(height: 14, alignment: .center)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
+                        .contentShape(Rectangle())
+                        .animation(.easeInOut(duration: 0.15), value: resultLabelText)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Copy again")
+                    .accessibilityLabel("Copy the result again")
                     Spacer()
-                    editButton("Edit formatted text") { editTarget = .styled }
-                    markdownToggle
+                    if viewModel.selectedStyle.usesMarkdown {
+                        markdownToggle
+                    }
                 }
-                MarkdownView(markdown: styled)
-                    .textSelection(.enabled)
+                // Edited where it sits: a tap turns the rendered result into its markdown
+                // source in the same frame, so it reads as putting a cursor in the text rather
+                // than opening a screen.
+                if styledDraft != nil {
+                    // No height of its own here: the view reports what its text needs, so it
+                    // grows in the same pass as the keystroke.
+                    MarkdownTextView(
+                        text: Binding(get: { styledDraft ?? "" }, set: { styledDraft = $0 }),
+                        onChange: { typedInResult() },
+                        onCommit: { commitStyledEdit() },
+                        onCancel: { discardStyledEdit() },
+                        caretHint: caretHint
+                    )
+                    .frame(minHeight: ResultTypography.lineHeight)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+
+                } else {
+                    MarkdownView(markdown: styled)
+                }
             }
             .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            // The card itself is the edit affordance. Applied inside the glass so the hover
+            // tint sits between glass and text.
+            .tapToEdit("Edit formatted text", shape: RoundedRectangle(cornerRadius: 16)) { point in
+                caretHint = point
+                beginEditing(styled)
+            }
+            // While editing the card is a solid sheet rather than glass, so the text view can
+            // be opaque and repaint cleanly as it grows.
+            .background {
+                if isEditingResult {
+                    RoundedRectangle(cornerRadius: 16).fill(Color.editorSurface)
+                }
+            }
             .glassBackground(shape: RoundedRectangle(cornerRadius: 16))
         }
 
@@ -282,21 +527,28 @@ struct ContentView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    editButton("Edit raw transcript") { editTarget = .raw }
                     Button {
                         viewModel.copyRaw()
                     } label: {
                         Label("Copy raw", systemImage: "doc.on.doc")
                             .font(.caption)
                     }
+                    .compactActionStyle()
                     .accessibilityLabel("Copy raw transcript")
                 }
                 Text(raw)
-                    .font(.callout)
+                    .font(PlatformFont.rawTranscript)
+                    // The rewrite is the result; the raw text is there to check it against,
+                    // so it stays a glance rather than a wall. The editor shows all of it.
+                    .lineLimit(viewModel.styledText == nil ? nil : 4)
                     .foregroundStyle(viewModel.styledText == nil ? .primary : .secondary)
-                    .textSelection(.enabled)
             }
             .padding(.horizontal) // align with the styled card's inner content
+            .padding(.vertical, 10) // air inside the hover tint …
+            .tapToEdit("Edit raw transcript", shape: RoundedRectangle(cornerRadius: 12), tint: 0.03) { _ in
+                editTarget = .raw   // a sheet, with its own caret
+            }
+            .padding(.vertical, -10) // … without moving the block in the layout
         }
     }
 
@@ -353,6 +605,162 @@ struct ContentView: View {
         .padding(.top, 60)
     }
 
+    #if DEBUG
+    /// Puts the app into one of the states the App Store screenshots show.
+    private func applyDebugState(_ state: String) {
+        let slack = ("Quick heads-up: I pushed the fix for the login crash this morning, and it's already on the release branch.\n\nCould someone from QA give it a quick run before we cut tomorrow's build?",
+                     "um so quick heads up I pushed the fix for the login crash this morning uh it's on the release branch already can someone from QA give it a quick run before we cut the build tomorrow")
+        let prompt = ("## The job\n- Rewrite the release notes for 1.1.\n\n## The why\n- The current draft is too technical for the App Store.\n\n## The guardrails\n- Under 100 words.\n- No jargon.\n\n## Done means\n- A non-developer understands what changed.",
+                      "uh so rewrite the release notes for one point one because the current draft is way too technical for the app store, keep it under a hundred words, no jargon, and it's done when a non-developer gets what changed")
+        seedDebugHistory()
+        switch state {
+        case "slack":
+            viewModel.restore(HistoryEntry(rawTranscript: slack.1, styledText: slack.0, styleID: "slack"))
+        case "prompt":
+            viewModel.restore(HistoryEntry(rawTranscript: prompt.1, styledText: prompt.0, styleID: "prompt"))
+        case "history":
+            showHistory = true
+        case "settings":
+            showSettings = true
+        default:
+            break
+        }
+        resultLabel = .idle
+    }
+
+    /// A few past dictations, so the History screen has something to show in a screenshot.
+    private func seedDebugHistory() {
+        guard HistoryStore.shared.entries.isEmpty else { return }
+        let samples: [(TimeInterval, String, String)] = [
+            (-90,     "So I'm going to be about 10 minutes late to the stand-up. Could you start without me and I'll catch up on the notes afterwards.",
+                      "Running about 10 minutes late to standup. Go ahead and start without me — I'll catch up on the notes after."),
+            (-4_800,  "Can you rewrite the release notes for one point one, the current draft is way too technical for the App Store, keep it under a hundred words.",
+                      "## The job\n- Rewrite the release notes for 1.1.\n\n## The guardrails\n- Under 100 words.\n- No jargon."),
+            (-26_000, "Danke für das Review, ich habe die zwei Punkte zur Navigation übernommen und den Rest kommentiert.",
+                      "Danke für das Review! Die zwei Punkte zur Navigation habe ich übernommen, den Rest habe ich kommentiert."),
+            (-98_000, "Just a reminder that we should move the planning call to Thursday afternoon because half the team is out on Wednesday.",
+                      "Quick reminder: let's move the planning call to Thursday afternoon — half the team is out on Wednesday."),
+        ]
+        for (offset, raw, styled) in samples {
+            HistoryStore.shared.add(HistoryEntry(date: Date().addingTimeInterval(offset),
+                                                 rawTranscript: raw, styledText: styled, styleID: "slack"))
+        }
+    }
+
+    /// `utterclip://demo`: a fixed result, shown rendered — and then, with `edit=1`, opened
+    /// for editing the way a click on the card opens it, so the two states can be compared.
+    private func showDebugResult(_ note: Notification) {
+        guard let text = note.object as? String else { return }
+        viewModel.restore(HistoryEntry(rawTranscript: note.userInfo?["raw"] as? String ?? text,
+                                       styledText: text, styleID: note.userInfo?["style"] as? String))
+        if note.userInfo?["phone"] as? Bool == false { viewModel.dismissPhoneUpdate() }
+        // The Mac opens a fresh result for editing by itself; the rendered card comes first here.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            endEditing()
+            guard note.userInfo?["edit"] as? Bool == true else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                caretHint = note.userInfo?["point"] as? CGPoint
+                beginEditing(text)
+            }
+        }
+    }
+    #endif
+
+    /// Opens the editor on `text`, keeping a copy of what it replaces for Esc.
+    private func beginEditing(_ text: String) {
+        styledOriginal = text
+        styledDraft = text
+    }
+
+    /// Cleared whenever the editor closes, so a later open that carries no point — the phone
+    /// opening it by itself after a rewrite — starts at the end rather than at a stale tap.
+    private func forgetCaretHint() { caretHint = nil }
+
+    /// Drops the edit in progress, with nothing left to fire afterwards.
+    private func endEditing() {
+        forgetCaretHint()
+        copyAfterTyping?.cancel()
+        copyAfterTyping = nil
+        styledDraft = nil
+        styledOriginal = nil
+        resultLabel = .idle
+    }
+
+    /// Esc throws the edit away. What was typed has usually been applied already — the pause
+    /// after typing copies it — so this puts the old text back the way an edit goes in rather
+    /// than only closing the card: clipboard, history entry and style cache all follow.
+    private func discardStyledEdit() {
+        forgetCaretHint()
+        copyAfterTyping?.cancel()
+        copyAfterTyping = nil
+        let original = styledOriginal
+        styledDraft = nil
+        styledOriginal = nil
+        if let original, viewModel.styledText != original {
+            viewModel.applyStyledEdit(original, confirmed: false)
+        }
+        resultLabel = .idle
+    }
+
+    /// Clicking away finishes the edit.
+    private func commitStyledEdit() {
+        forgetCaretHint()
+        copyAfterTyping?.cancel()
+        styledOriginal = nil
+        guard let draft = styledDraft else { return }
+        styledDraft = nil
+        // Either way the edit has been taken, and either way it should feel taken. Whether
+        // the pause got there first is this view's business, not something to feel.
+        if draft != viewModel.styledText {
+            viewModel.applyStyledEdit(draft)
+        } else {
+            viewModel.acknowledgeEdit()
+        }
+        flashCopied()
+    }
+
+    /// Each keystroke says "Writing…" and restarts the wait; when it elapses the text goes
+    /// back on the clipboard and the label says so. No save button anywhere.
+    private func typedInResult() {
+        if resultLabel != .writing { resultLabel = .writing }
+        copyAfterTyping?.cancel()
+        copyAfterTyping = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.75))
+            guard !Task.isCancelled, let draft = styledDraft else { return }
+            if draft != viewModel.styledText { viewModel.applyStyledEdit(draft, confirmed: false) }
+            flashCopied()
+        }
+    }
+
+    /// True while the result is being typed into, on either platform.
+    private var isEditingResult: Bool { styledDraft != nil }
+
+    /// Confirms a copy for a moment, then goes back to naming the style.
+    private func flashCopied() {
+        resultLabel = .copied
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.8))
+            if resultLabel == .copied { resultLabel = .idle }
+        }
+    }
+
+    private var resultLabelText: String {
+        switch resultLabel {
+        case .writing: "Writing…"
+        case .copied: "Copied"
+        // Not the style name: the highlighted pill below already says which one it is.
+        case .idle: "Copied"
+        }
+    }
+
+    private var resultLabelIcon: String {
+        switch resultLabel {
+        case .writing: "pencil"
+        case .copied: "checkmark"
+        case .idle: "doc.on.clipboard"
+        }
+    }
+
     /// Sticky copy-mode switch: off = plain text (markdown stripped), on = raw markdown.
     /// Toggling re-copies the current result and the mode persists across recordings.
     private var markdownToggle: some View {
@@ -380,15 +788,6 @@ struct ContentView: View {
         .accessibilityLabel(viewModel.copyAsMarkdown
             ? "Markdown copy on — tap to copy plain text instead"
             : "Copy as markdown")
-    }
-
-    /// Compact monochrome "Edit" affordance opening the full-screen editor.
-    private func editButton(_ accessibilityLabel: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label("Edit", systemImage: "square.and.pencil")
-                .font(.caption.weight(.semibold))
-        }
-        .accessibilityLabel(accessibilityLabel)
     }
 
     private func progressRow(_ text: String) -> some View {
@@ -447,14 +846,14 @@ struct ContentView: View {
         .overlay(alignment: .leading) {
             if viewModel.recorder.isRecording || viewModel.isBusy {
                 cancelButton
-                    .offset(x: -80)
+                    .offset(x: -ControlMetrics.satelliteOffset)
                     .transition(.opacity.combined(with: .scale))
             }
         }
         .overlay(alignment: .trailing) {
             if viewModel.phase == .done, viewModel.rawTranscript != nil {
                 continueButton
-                    .offset(x: 80)
+                    .offset(x: ControlMetrics.satelliteOffset)
                     .transition(.opacity.combined(with: .scale))
             }
         }
@@ -467,9 +866,9 @@ struct ContentView: View {
     @ViewBuilder
     private var recordButtonLabel: some View {
         let icon = Image(systemName: viewModel.recorder.isRecording ? "stop.fill" : "mic.fill")
-            .font(.system(size: 30, weight: .semibold))
+            .font(.system(size: ControlMetrics.recordGlyph, weight: .semibold))
             .foregroundStyle(viewModel.recorder.isRecording ? Color.appBackground : .primary)
-            .frame(width: 84, height: 84)
+            .frame(width: ControlMetrics.record, height: ControlMetrics.record)
         // Explicit hit shape: on macOS the glass/background layers don't count as content,
         // so without it only the glyph's own pixels would take the click.
         if viewModel.recorder.isRecording {
@@ -479,15 +878,37 @@ struct ContentView: View {
         }
     }
 
+#if os(macOS)
+    /// The way out of an in-place edit. It takes the record button's place while the edit is
+    /// open — recording is not what that button is for mid-edit — and is filled like the stop
+    /// state rather than glass, so the check reads white against it. Clicking away and Esc
+    /// still commit; this is the one that can be seen.
+    private var doneEditingButton: some View {
+        Button {
+            commitStyledEdit()
+        } label: {
+            Image(systemName: "checkmark")
+                .font(.system(size: ControlMetrics.recordGlyph, weight: .semibold))
+                .foregroundStyle(Color.appBackground)
+                .frame(width: ControlMetrics.record, height: ControlMetrics.record)
+                .background(Circle().fill(.primary))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help("Finish editing (⌘↩)")
+        .accessibilityLabel("Finish editing")
+    }
+    #endif
+
     /// Abandons the recording, transcription or rewrite in progress; visible while any is.
     private var cancelButton: some View {
         Button {
             viewModel.cancel()
         } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: ControlMetrics.satelliteGlyph, weight: .semibold))
                 .foregroundStyle(.primary)
-                .frame(width: 56, height: 56)
+                .frame(width: ControlMetrics.satellite, height: ControlMetrics.satellite)
                 .glassBackground(shape: Circle())
                 .contentShape(Circle())
         }
@@ -501,9 +922,9 @@ struct ContentView: View {
             Task { await viewModel.continueRecording() }
         } label: {
             Image(systemName: "mic.badge.plus")
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: ControlMetrics.satelliteGlyph, weight: .semibold))
                 .foregroundStyle(.primary)
-                .frame(width: 56, height: 56)
+                .frame(width: ControlMetrics.satellite, height: ControlMetrics.satellite)
                 .glassBackground(shape: Circle())
                 .contentShape(Circle())
         }

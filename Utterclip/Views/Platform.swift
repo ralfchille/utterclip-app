@@ -1,5 +1,10 @@
 import SwiftUI
 import UtterclipCore
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 // The views are shared by the iPhone app and the Mac app. Everything that differs
 // between the two platforms is funneled through this file, so the views themselves
@@ -16,6 +21,17 @@ extension Color {
     }
 
     /// Flat fill for an unselected pill (the iOS `systemGray6`).
+    /// The surface the result sits on while it is being edited. Opaque on purpose: a
+    /// transparent text view has nothing to paint over the pixels it vacates, and left
+    /// fragments of old lines behind as the frame grew.
+    static var editorSurface: Color {
+        #if os(macOS)
+        Color(nsColor: .textBackgroundColor)
+        #else
+        Color(.secondarySystemGroupedBackground)
+        #endif
+    }
+
     static var pillFill: Color {
         #if os(macOS)
         Color.primary.opacity(0.07)
@@ -112,17 +128,6 @@ extension View {
         #endif
     }
 
-    /// macOS sheets size to their content and would otherwise come up tiny; iOS sheets
-    /// fill the screen and ignore this.
-    @ViewBuilder
-    func sheetFrame(minWidth: CGFloat, minHeight: CGFloat) -> some View {
-        #if os(macOS)
-        frame(minWidth: minWidth, idealWidth: minWidth, minHeight: minHeight, idealHeight: minHeight)
-        #else
-        self
-        #endif
-    }
-
     /// The Mac window hides its title bar but SwiftUI still reserves its height as a safe
     /// area; the header row takes that space instead. No-op on iOS.
     @ViewBuilder
@@ -134,25 +139,56 @@ extension View {
         #endif
     }
 
-    /// Breathing room between a sheet's title bar and the editor text on macOS, where no
-    /// navigation bar separates them; iOS already has that gap.
+    /// Breathing room between the Mac header and the editor text; iOS already has that gap.
     @ViewBuilder
     func editorTopInset() -> some View {
         #if os(macOS)
-        padding(.top, 14)
+        padding(.top, 8)
         #else
         self
         #endif
     }
 
-    /// The text editor takes the whole screen on iOS; on macOS it is a sheet.
+    /// History and Settings: a sheet on iOS; on the Mac they open in place, pushed inside the
+    /// window's navigation stack, so the compact window never spawns a second one.
     @ViewBuilder
-    func editorPresentation<Item: Identifiable, Content: View>(
+    func panel<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+        #if os(macOS)
+        overlay {
+            ZStack {
+                if isPresented.wrappedValue {
+                    content()
+                        .environment(\.panelDismiss) { isPresented.wrappedValue = false }
+                        .background(Color.appBackground)
+                        .transition(.move(edge: .bottom))
+                }
+            }
+            .animation(.spring(duration: 0.38, bounce: 0.08), value: isPresented.wrappedValue)
+        }
+        #else
+        sheet(isPresented: isPresented, content: content)
+        #endif
+    }
+
+    /// The text editor takes the whole screen on iOS; on macOS it opens in place inside the
+    /// window, like History and Settings.
+    @ViewBuilder
+    func editorPresentation<Item: Identifiable & Hashable, Content: View>(
         item: Binding<Item?>,
         @ViewBuilder content: @escaping (Item) -> Content
     ) -> some View {
         #if os(macOS)
-        sheet(item: item, content: content)
+        overlay {
+            ZStack {
+                if let value = item.wrappedValue {
+                    content(value)
+                        .environment(\.panelDismiss) { item.wrappedValue = nil }
+                        .background(Color.appBackground)
+                        .transition(.move(edge: .bottom))
+                }
+            }
+            .animation(.spring(duration: 0.38, bounce: 0.08), value: item.wrappedValue)
+        }
         #else
         fullScreenCover(item: item, content: content)
         #endif
@@ -168,7 +204,7 @@ struct MacHeader<Actions: View>: View {
     @ViewBuilder var actions: Actions
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 0) { // the button style adds the breathing room
             if let back {
                 Button(action: back) {
                     Image(systemName: "chevron.left")
@@ -177,21 +213,105 @@ struct MacHeader<Actions: View>: View {
                 .keyboardShortcut(.cancelAction)
             }
             Text(title)
-                .font(.headline)
+                // The wordmark, so it carries the identity face; the buttons beside it stay
+                // on the system font with the symbols they sit against.
+                .font(IdentityFont.text(size: 13, weight: .semibold, relativeTo: .headline))
             Spacer()
             actions
         }
-        .font(.system(size: 17, weight: .medium))
-        .buttonStyle(.plain)
+        .font(.system(size: 15, weight: .medium))
+        .buttonStyle(HeaderActionButtonStyle())
         .foregroundStyle(.primary)
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 4)
+        .padding(.leading, 20)
+        .padding(.trailing, 10) // plus the button's own ~8 pt: glyph edges sit ~18 pt in
+        .padding(.top, 6) // the 36 pt buttons give the row its height; keep the title where it was
+        .padding(.bottom, 0)
+    }
+}
+
+/// Header buttons are small glyphs; give each a comfortable 36-point target and a light
+/// pressed state, so a click a few points off the mark still lands.
+struct HeaderActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            // 8 pt puts a text action's edge where a centred 15 pt glyph's edge lands in a
+            // 32 pt button, so Done / Cancel / Clear line up with the symbols. 32 keeps the
+            // two header glyphs close together; the row stays 36 pt tall.
+            .padding(.horizontal, 8)
+            .frame(minWidth: 32, minHeight: 36)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.5 : 1)
+    }
+}
+
+/// Small monochrome action chips (Edit, Copy raw). Drawn explicitly instead of the automatic
+/// bordered bezel: on macOS 26 that bezel is glass and takes its colour from what is behind it,
+/// so over the (also glass) result card it disappeared whenever the window was key and
+/// reappeared when it wasn't. Fixed fill = label primary at 6 %, radius 8, padding 10 × 6.
+struct CompactActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 8).fill(.primary.opacity(0.06)))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .opacity(configuration.isPressed ? 0.5 : 1)
     }
 }
 #endif
 
+/// Tap-to-edit for the result card and the raw transcript: the whole block is the target
+/// (no Edit chip), exposed to assistive tech as a button. The Mac shows a hand cursor and a
+/// faint tint while hovering, since nothing else says "editable"; buttons inside the block
+/// (Markdown toggle, Copy raw) keep priority over the block's tap.
+struct TapToEdit<S: Shape>: ViewModifier {
+    let label: String
+    let shape: S
+    /// Hover tint strength: 6 % on the glass card, 3 % on the bare raw transcript.
+    var tint: Double = 0.06
+    /// Carries where the tap landed, in global coordinates, so the editor that opens can put
+    /// the caret there instead of at the end.
+    let action: (CGPoint) -> Void
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            // Behind the content, not over it: a tint on top of the text dulls it.
+            .background(shape.fill(.primary.opacity(hovering ? tint : 0)))
+            .contentShape(shape)
+            .onTapGesture(coordinateSpace: .global) { action($0) }
+            #if os(macOS)
+            .onHover { inside in
+                hovering = inside
+                if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+            }
+            #endif
+            .accessibilityElement(children: .contain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(label)
+            // No point to offer from a VoiceOver action; the caret falls back to the end.
+            .accessibilityAction(named: label) { action(.zero) }
+    }
+}
+
 extension View {
+    /// Opens the editor when the block is tapped; see `TapToEdit`.
+    func tapToEdit<S: Shape>(_ label: String, shape: S, tint: Double = 0.06,
+                             action: @escaping (CGPoint) -> Void) -> some View {
+        modifier(TapToEdit(label: label, shape: shape, tint: tint, action: action))
+    }
+
+    /// Mac: the fixed-fill chip above. iOS keeps the system button look.
+    @ViewBuilder
+    func compactActionStyle() -> some View {
+        #if os(macOS)
+        buttonStyle(CompactActionButtonStyle())
+        #else
+        self
+        #endif
+    }
+
     /// iOS: inline navigation title plus the bar items. macOS: no system bar at all — the
     /// view draws a `MacHeader` instead — so the window toolbar is hidden.
     @ViewBuilder
@@ -199,8 +319,15 @@ extension View {
         #if os(macOS)
         self.toolbar(.hidden, for: .windowToolbar)
         #else
-        navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
+        // A principal item rather than navigationTitle, so the wordmark can carry the
+        // identity face without reaching for a global UINavigationBar appearance override.
+        navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(title)
+                        .font(IdentityFont.text(size: 17, weight: .semibold, relativeTo: .headline))
+                }
+            }
             .toolbar(content: toolbar)
         #endif
     }
@@ -238,6 +365,101 @@ extension View {
     }
 }
 
+/// The root of History and Settings. iOS presents them as sheets, each with its own
+/// navigation stack; on the Mac they are pushed inside the window's stack and must not nest
+/// another one (their NavigationLinks push onto the window's stack instead).
+struct SheetNavigation<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        // Both platforms need a stack of their own now: a Mac panel slides up over the whole
+        // window rather than pushing onto the main one, so its own sub-pages (the style
+        // editor) have nowhere else to push.
+        NavigationStack { content }
+    }
+}
+
+/// How a page closes itself when it is a Mac panel rather than a pushed or sheeted view.
+/// `dismiss` only knows about presentations SwiftUI made itself.
+private struct PanelDismissKey: EnvironmentKey {
+    static let defaultValue: (() -> Void)? = nil
+}
+
+extension EnvironmentValues {
+    var panelDismiss: (() -> Void)? {
+        get { self[PanelDismissKey.self] }
+        set { self[PanelDismissKey.self] = newValue }
+    }
+}
+
+/// The rewritten result — the thing the app is for, and the text you actually read back
+/// before sending it somewhere. It gets a size of its own rather than the system body, and
+/// enough leading to read as prose. The editor uses the same numbers so editing looks like
+/// the result (see `MarkdownEditorRules`).
+enum ResultTypography {
+    #if os(macOS)
+    static let size: CGFloat = 16
+    static let lineHeight: CGFloat = 24
+    #else
+    // A third larger than the Mac's, which is what reads comfortably at arm's length.
+    static let size: CGFloat = 24
+    static let lineHeight: CGFloat = 34
+    #endif
+
+    /// The identity face, not the system one: this is the text the app exists to produce.
+    static var font: Font { IdentityFont.text(size: size, relativeTo: .body) }
+
+    /// The height one line takes before any leading is added. Asked of the font rather than
+    /// guessed at: the old rule multiplied the point size by 1.2, which was true enough of
+    /// SF Pro and wrong by 0.8 pt for the face that replaced it — the rendered text and the
+    /// editable text then disagreed by that much on every line.
+    ///
+    /// Both sides read this one number, so they cannot drift apart again. Measured: at 16 pt
+    /// Schibsted Grotesk lays out at 20 in SwiftUI and 20 in TextKit; at 24 pt, 29 and 29.
+    static let naturalLineHeight: CGFloat = {
+        #if os(macOS)
+        let font = IdentityFont.nsFont(size: size)
+        #else
+        let font = IdentityFont.uiFont(size: size)
+        #endif
+        // Laid out rather than derived: AppKit has defaultLineHeight(for:) and UIKit does not,
+        // and the arithmetic they would replace it with is wrong for both — ascender minus
+        // descender comes to 19.75 at 16 pt where the engine actually uses 20. So ask the
+        // engine, the same one the editor lays its text out in.
+        let layout = NSLayoutManager()
+        let container = NSTextContainer(size: CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                     height: CGFloat.greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        layout.addTextContainer(container)
+        let storage = NSTextStorage(string: "Hxg", attributes: [.font: font])
+        storage.addLayoutManager(layout)
+        layout.ensureLayout(for: container)
+        return layout.usedRect(for: container).height
+    }()
+
+    /// Leading is extra space on top of that, which is how both SwiftUI and TextKit express it.
+    static var lineSpacing: CGFloat { max(0, lineHeight - naturalLineHeight) }
+}
+
+/// The record button and the two satellites beside it. A thumb needs 84 pt; a pointer does
+/// not, and at that size they swallowed a small Mac window — so the Mac runs them at
+/// two-thirds, keeping every proportion between them.
+enum ControlMetrics {
+    #if os(macOS)
+    static let record: CGFloat = 56
+    static let recordGlyph: CGFloat = 20
+    static let satellite: CGFloat = 38
+    static let satelliteGlyph: CGFloat = 14
+    static let satelliteOffset: CGFloat = 54
+    #else
+    static let record: CGFloat = 84
+    static let recordGlyph: CGFloat = 30
+    static let satellite: CGFloat = 56
+    static let satelliteGlyph: CGFloat = 20
+    static let satelliteOffset: CGFloat = 80
+    #endif
+}
+
 /// Wording that names the input device.
 enum PlatformText {
     /// The idle-screen hint.
@@ -252,9 +474,9 @@ enum PlatformText {
     /// Settings footer under the style list; there is no swipe on a Mac.
     static var stylesFooter: String {
         #if os(macOS)
-        "Click a style to edit its name and instructions, or delete it from its editor. Deleted defaults can be restored. Up to \(maxStyles) styles."
+        "Click a style to edit its name, instructions and Markdown output, or delete it from its editor. Deleted defaults can be restored. Up to \(maxStyles) styles."
         #else
-        "Tap a style to edit its name and instructions; swipe to delete. Deleted defaults can be restored. Up to \(maxStyles) styles."
+        "Tap a style to edit its name, instructions and Markdown output; swipe to delete. Deleted defaults can be restored. Up to \(maxStyles) styles."
         #endif
     }
     private static let maxStyles = StyleStore.maxStyles
@@ -275,13 +497,15 @@ enum RecordingState {
     @MainActor static var isRecording = false
 }
 
-/// App-level commands (menu items and keyboard shortcuts on macOS) reach the main view
-/// through notifications, so the view owns the view model and the scene owns the menus.
-extension Notification.Name {
-    static let utterclipToggleRecording = Notification.Name("utterclip.toggleRecording")
-    /// Start only (never stop): the URL scheme's meaning on both platforms.
-    static let utterclipStartRecording = Notification.Name("utterclip.startRecording")
-    static let utterclipContinueRecording = Notification.Name("utterclip.continueRecording")
-    static let utterclipShowHistory = Notification.Name("utterclip.showHistory")
-    static let utterclipShowSettings = Notification.Name("utterclip.showSettings")
+/// Text roles whose size differs between the platforms: the Mac window is denser, so its
+/// history rows read at body size while the raw transcript steps down to caption
+/// (matched to the Figma spec, page "Mac app"); iOS keeps callout for both.
+enum PlatformFont {
+    #if os(macOS)
+    static let historyTranscript: Font = .body
+    static let rawTranscript: Font = .caption
+    #else
+    static let historyTranscript: Font = .callout
+    static let rawTranscript: Font = .callout
+    #endif
 }

@@ -60,6 +60,7 @@ public final class TranscriptionService {
         case .cold, .failed: break
         }
         state = .warming
+        print("[utterclip] warm-up started")
         Task {
             var lastError: Error?
             for attempt in 1...3 {
@@ -72,10 +73,15 @@ public final class TranscriptionService {
                     // specialization here at launch instead of on the user's first recording.
                     let config = WhisperKitConfig(model: Self.modelVariant, prewarm: true)
                     let kit = try await WhisperKit(config)
+
                     self.whisperKit = kit
                     self.state = .ready
                     Self.tidyModelStorage()
-                    logger.info("Whisper model ready in \(ContinuousClock.now - start, privacy: .public) (attempt \(attempt))")
+                    let elapsed = ContinuousClock.now - start
+                    logger.info("Whisper model ready in \(elapsed, privacy: .public) (attempt \(attempt))")
+                    // Also on stdout: device logs need root, but `devicectl process launch
+                    // --console` shows this.
+                    print("[utterclip] warm-up \(elapsed) attempt \(attempt)")
                     return
                 } catch {
                     lastError = error
@@ -103,7 +109,9 @@ public final class TranscriptionService {
         options.detectLanguage = true
         let start = ContinuousClock.now
         let results = try await kit.transcribe(audioPath: audioURL.path, decodeOptions: options)
-        logger.info("Transcription took \(ContinuousClock.now - start, privacy: .public)")
+        let took = ContinuousClock.now - start
+        logger.info("Transcription took \(took, privacy: .public)")
+        print("[utterclip] transcription \(took)")
         // Whisper marks non-speech audio with tokens like "[BLANK_AUDIO]" or "[MUSIC]";
         // they aren't dictation and must not reach the clipboard or history.
         let text = results.map(\.text).joined()

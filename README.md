@@ -29,11 +29,11 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/result.png" width="300" alt="iPhone: a dictation rewritten as a Slack message, already copied, with the raw transcript below and style pills to re-run it">
+  <img src="docs/screenshots/result.png" width="300" align="middle" alt="iPhone: a spoken note about being late to standup, rewritten as a Slack message and already copied, with the raw transcript below and style pills to re-run it">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/mac-result.png" width="340" alt="Mac: the same dictation in the menu bar app's window, floating above other apps">
+  <img src="docs/screenshots/mac-result.png" width="360" align="middle" alt="Mac: the same dictation rewritten as a Slack message in the menu bar app's window, floating above other apps">
 </p>
-<p align="center"><sub>Left: iPhone. Right: the Mac app, one window that floats above whatever you write in.</sub></p>
+<p align="center"><sub>The same dictation on both. Left: iPhone. Right: the Mac app, one window that floats above whatever you write in.</sub></p>
 
 ---
 
@@ -91,15 +91,20 @@ transcript, only rewrites it. There is no account, no subscription, and no serve
   though the style is called "Slack".
 
 **Everything around it**
+- **Sync with iCloud** (iPhone ↔ Mac): History, your rewrite styles, settings and the API key
+  follow you between devices, inside your own iCloud account and encrypted by Apple. One
+  switch in Settings turns it off; then everything stays on the device.
 - **Privacy redaction** (cloud engine, on by default): emails, phone numbers, links and addresses
   are swapped for placeholders before the text is sent, and restored in the result.
 - **History** of past dictations with one-tap restore and re-copy.
-- **Editor** for quick fixes. Fix the result and it is re-copied; fix the transcript and the
-  rewrite re-runs on the corrected text.
+- **Edit in place.** Tap (or click) the result and the card turns into a text field where it
+  sits — no screen change, same type size. A pause puts the corrected text back on the clipboard
+  by itself; there is no save button. Editing the raw transcript instead re-runs the rewrite on
+  the corrected text.
 - **Markdown or plain text** copy mode, sticky until you switch it back.
-- **Widget and Control**: a Home Screen widget, a circular Lock Screen widget, and an iOS 18
-  Control Center control (also assignable to the Action button) that open the app straight into
-  a recording.
+- **Widget, Control and Action button**: a Home Screen widget, a circular Lock Screen widget, an
+  iOS 18 Control Center control, and a **"Start dictating" shortcut** for the Action button, the
+  Shortcuts app and Siri. All of them open the app straight into a recording.
 - **Minimal, monochrome, native.** Black and white, system fonts and symbols, Liquid Glass on
   iOS 26 with a material fallback on iOS 17 to 25. Dark Mode follows the system.
 
@@ -120,9 +125,10 @@ cents a month. The on-device engine costs nothing at all.
 |---|---|
 | **iPhone** | iOS 17 or later |
 | **On-device rewriting** | iOS 26 with Apple Intelligence enabled (iPhone 15 Pro or later) |
-| **Control Center control** | iOS 18 or later |
+| **Control Center control / Action button control** | iOS 18 or later |
 | **Cloud rewriting** | An API key from Anthropic, OpenAI, Google Gemini, or Groq |
 | **First launch** | Internet access to download the Whisper model once (about 220 MB, Wi-Fi recommended) |
+| **Sync between devices** | Optional. An iCloud account signed in on each device; iCloud Keychain on for the API key to travel. Works even where iCloud Drive is switched off |
 
 ### First run
 
@@ -132,10 +138,12 @@ cents a month. The on-device engine costs nothing at all.
 2. **Choose a rewrite engine** in Settings (the gear icon). Either paste an API key under
    **AI provider API key**, or turn on **Rewrite engine → Rewrite on device (Apple Intelligence)**.
    Without either you still get the raw transcript on the clipboard after every recording.
+   With iCloud sync on, a key entered on one device shows up on your others.
 3. **Pick your starting style** under **One-tap rewrite**. Plain is the default; the pills above
    the mic change it for any recording.
-4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, or the **Dictate**
-   control to Control Center or the Action button (iOS 18).
+4. Optional: add the **Dictate** widget to your Home Screen or Lock Screen, the **Dictate**
+   control to Control Center (iOS 18), or give the Action button a dictation — **Settings →
+   Action button → Controls → Dictate**, or **→ Shortcut → Start dictating**.
 
 ### Getting an API key
 
@@ -222,8 +230,12 @@ phone, and so that nothing else leaves it without your say-so.
   of its own to any request.
 - **Your API key** lives in the iOS Keychain. **History** is a local JSON file in the app's
   container; clear it any time from the History screen. Deleting the app deletes both.
+- **iCloud sync** (on by default, off with one switch in Settings): History, styles, settings and
+  the API key are stored in *your* iCloud account, in the app's private CloudKit database and in
+  iCloud Keychain, encrypted by Apple. The developer cannot read them; there is still no server
+  of ours. Turn it off and everything stays on the device, exactly as in 1.0.
 - **Network access** is used for exactly three things: the one-time Whisper model download from
-  `huggingface.co`, the rewrite request to your chosen provider, and nothing else.
+  `huggingface.co`, the rewrite request to your chosen provider, and iCloud sync when it is on.
 
 The full privacy policy, written for the App Store listing, is in [PRIVACY.md](PRIVACY.md).
 
@@ -235,6 +247,19 @@ The full privacy policy, written for the App Store listing, is in [PRIVACY.md](P
 Because Utterclip has no server and no subscription. Your key means your text goes straight from
 your phone to the provider, and you pay only for what you use (cents, for short messages). If you
 would rather not deal with keys, turn on the on-device engine instead.
+
+**Does History sync between my iPhone and my Mac?**
+Yes, since 1.1, through your own iCloud account: dictations, the styles you edited or added,
+settings, and the API key. A dictation made on one device shows up in the other's History within
+seconds. Turn it off under **Settings → iCloud** if you would rather keep everything local.
+
+**My work Mac has iCloud Drive disabled. Does sync still work?**
+Yes. Utterclip uses CloudKit and iCloud Keychain, which do not depend on iCloud Drive. The
+Apple key-value store, which does, is deliberately not used.
+
+**I turned sync off but History still shows the other device's entries.**
+The switch takes effect for History and styles the next time you open the app; the API key
+follows immediately. Entries already on this device stay; nothing new comes in.
 
 **Which engine should I use?**
 Cloud models are noticeably better at restructuring (Email, Prompt) and at holding tone. The
@@ -260,15 +285,25 @@ try again, a little closer to the phone.
 Check the connection and retry from the card on the main screen. The download is about 220 MB and
 happens once; Wi-Fi is recommended.
 
+**The mic takes ages to become ready.**
+Almost always a full phone. The first load after a restart normally takes about three seconds:
+iOS compiles the model for the Neural Engine once and caches the result. That cache lives in the
+app's Caches folder, and when the device has no free space left the write fails silently and the
+compile is repeated on every single launch — measured at 24 seconds on an iPhone 15 Pro, and up
+to four minutes on a phone that was completely full. Free a few gigabytes and it goes back to
+three seconds. Utterclip itself keeps about 220 MB of model plus that cache.
+
 **The on-device engine says it is unavailable.**
 It needs iOS 26, an iPhone that supports Apple Intelligence (iPhone 15 Pro or later), and Apple
 Intelligence turned on in Settings. The app shows the specific reason under the toggle.
 
-**Where is the widget / control?**
+**Where is the widget / control / Action button?**
 Widgets: long-press the Home Screen or Lock Screen, tap **+**, search *Utterclip*. Control:
 open Control Center, long-press, **Add a Control**, search *Dictate*. The control needs iOS 18.
-If a freshly installed build does not show up in the gallery, restart the phone; iOS caches the
-gallery per app version.
+Action button: **Settings → Action button**, then either **Controls → Dictate** or
+**Shortcut → Start dictating** — both start a recording as the app opens. If a freshly installed
+build does not show up in any of these, restart the phone; iOS caches the gallery per app
+version.
 
 **Can I use it on iPad or Mac?**
 Mac, yes: the repository builds a native macOS app from the same code (see
@@ -280,8 +315,9 @@ building it. iPad is not supported; the iPhone app is portrait-only.
 ## Utterclip for Mac
 
 The same app, living in the **menu bar**: a small Utterclip mark at the top right of the screen.
-Click it and one compact window opens (420 × 720 by default, resizable) that **floats above other
-applications**, so it can sit next to Slack, Mail or a browser while you dictate into them.
+Click it and one compact window opens (340 × 560, with a header button that swaps to a roomier
+510 × 840 for reading and editing) that **floats above other applications**, so it can sit next to
+Slack, Mail or a browser while you dictate into them.
 Close the window and the app is back to just the icon; there is no Dock tile and no entry in the
 app switcher. Same features, same engines, same API calls, same monochrome look; the views are
 literally the same SwiftUI files as the iPhone app.
@@ -291,16 +327,20 @@ What is different, and only because the platform is:
 | iPhone | Mac |
 |---|---|
 | Tap the app icon, tap the mic | **Click the menu bar icon**: the window drops down right under it and a recording starts; click again to stop it and get the rewrite; click once more, with nothing running, and the window hides. **Right-click** opens a menu: Start / Stop Dictation, Continue Dictating, Show/Hide, History, Settings, Float on Top, Quit |
-| Home Screen / Lock Screen widget, Control Center control | Keyboard shortcuts while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
-| Full-screen editor | Editor in a sheet |
+| Home Screen / Lock Screen widget, Control Center control, Action button | **A global shortcut** (**⌃⌥⌘Space** by default, three alternatives in Settings) that works from any app: the window opens beside the text field you were typing in and starts recording straight away. Plus, while the window is in front: Start / Stop **⌘R**, Continue **⇧⌘R**, History **⌘Y**, Settings **⌘,** — and `utterclip://record` from any launcher |
+| Paste from the clipboard yourself | **Paste back where you came from.** A dictation started with the global shortcut waits under the record button — "Paste into Mail" — and **Return** sends it into the field you were in. It waits rather than pasting by itself, so a transcript that came out wrong can be fixed or re-styled first; ✕ leaves it on the clipboard |
+| Settings and History as sheets | They **slide up from the bottom of the same window** — no second window, no sheet; the caret at the top sends them back down |
+| Full-screen editor | **Click the result and it becomes editable where it sits**, at the size you were reading it. The record button's place becomes a black ✓ while you type, **⌘Return** does the same, and **Escape** throws the edit away and puts back what was there. Nothing to save: a pause puts the text back on the clipboard by itself |
 | Always fills the screen | **Float on Top** (right-click menu, or **⌥⌘T**) keeps the window above other apps, on every Space and over full-screen apps; on by default |
-| Swipe to go home | The red close button hides the window; quitting is in the right-click menu (**⌘Q** while the window is in front) |
+| Swipe to go home | **✕ in the header** hides the window, as does the red close button; quitting is in the right-click menu (**⌘Q** while the window is in front) |
 | On-device rewrite: iOS 26 with Apple Intelligence | macOS 26 with Apple Intelligence |
+| iCloud sync | The same: dictate on the Mac, it is in the iPhone's History a moment later, and the other way round. Universal Clipboard covers the copy itself: copy on one device, paste on the other |
+| — | **From the phone:** while you dictate on the iPhone, a small capsule at the top of the Mac window says so ("iPhone · Recording…"); when the result has synced it reads "New from iPhone" with the first words. Click it and the dictation lands in the Mac window, copied to the Mac clipboard — the fallback for the days Universal Clipboard doesn't feel like it |
 
 <p align="center">
-  <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window: title, History and Settings in its own header, style pills and the mic at the bottom">
+  <img src="docs/screenshots/mac-idle.png" width="360" alt="The Mac window waiting: History, Settings, the size toggle and close in its own header, style pills and the mic at the bottom — and a capsule saying a dictation just arrived from the iPhone">
   &nbsp;
-  <img src="docs/screenshots/mac-result.png" width="360" alt="A dictation rewritten as a Slack message in the Mac window, raw transcript below, continue-dictating button beside the mic">
+  <img src="docs/screenshots/mac-result.png" width="360" alt="A dictation rewritten as a Slack message in the Mac window, raw transcript below, continue-dictating button beside the mic; click the card to edit it where it sits">
 </p>
 
 Requirements: macOS 14 or later; Apple Intelligence needs macOS 26 on an Apple silicon Mac.
@@ -315,9 +355,18 @@ Same repository, same steps as [Option A](#option-a-build-it-yourself-with-xcode
 xcodebuild -workspace Utterclip.xcworkspace -scheme UtterclipMac -destination 'platform=macOS' -configuration Release build
 ```
 
-The app lands in Xcode's DerivedData folder; drag it into `/Applications`. The Mac app is
-sandboxed with exactly two permissions, microphone and outgoing network, and asks for the
-microphone the first time you record.
+The app lands in Xcode's DerivedData folder; drag it into `/Applications`. It asks for the
+microphone the first time you record, and the network only for the one-time model download and
+cloud rewrites.
+
+The Mac app is not sandboxed. The global dictation shortcut's two useful halves — reading which
+text field you are typing in, and pasting the finished text back — are Accessibility APIs, and
+the sandbox blocks those against other apps even after you grant Accessibility access. Every
+Mac dictation tool that types into other apps makes the same trade. The consequence is that
+this build cannot go to the Mac App Store as it stands; turn the sandbox back on in
+`Project.swift` if you would rather have it and do without the shortcut's placement and
+paste-back. Nothing else changes: transcription is still on-device and the only outbound
+connections are the model download and, if you use it, your own AI provider.
 
 Note on locally built copies: the build is signed with your development certificate, so
 microphone permission and keychain access survive rebuilds. Without a provisioning profile the
@@ -342,7 +391,8 @@ control.
 
 ```
 UtterclipCore/                     # framework, iOS + macOS: everything below the UI
-├─ Models/                         # MessageStyle, built-in Styles, HistoryEntry, AppError
+├─ Models/                         # MessageStyle, built-in Styles, HistoryEntry, AppError,
+│                                  # Dictation + SyncedSetting (SwiftData records CloudKit mirrors)
 ├─ Services/
 │  ├─ AudioRecorder.swift          # 16 kHz mono WAV, live level metering, silence detection
 │  ├─ TranscriptionService.swift   # always-warm WhisperKit singleton
@@ -353,32 +403,44 @@ UtterclipCore/                     # framework, iOS + macOS: everything below th
 │  ├─ LocalRewriter.swift          # Apple Foundation Models engine (iOS 26)
 │  ├─ Redactor.swift               # reversible placeholder redaction (NSDataDetector)
 │  ├─ StyleStore.swift             # built-in overrides, custom styles, deletions
-│  ├─ HistoryStore.swift           # dictation log (JSON in Application Support)
-│  ├─ KeyProvider.swift            # Keychain-backed key storage
+│  ├─ HistoryStore.swift           # dictation log on the CloudKit-backed store (imports 1.0's JSON once)
+│  ├─ CloudStore.swift             # the one SwiftData store CloudKit syncs; shared by history + settings
+│  ├─ SyncedDefaults.swift         # UserDefaults mirrored as SyncedSetting records, newest wins
+│  ├─ SyncPreference.swift         # the Sync with iCloud switch; SyncStatus.swift asks CloudKit for the account
+│  ├─ KeyProvider.swift            # Keychain-backed key storage; shared access group + iCloud Keychain
 │  └─ Clipboard.swift              # UIPasteboard / NSPasteboard, markdown stripping
 └─ ViewModels/RecorderViewModel.swift  # record → transcribe → copy → rewrite → copy
 
 Utterclip/                         # the iPhone app
 ├─ UtterclipApp.swift              # @main; warms the Whisper model at launch
+├─ UtterclipShortcuts.swift        # the "Start dictating" App Shortcut (Action button, Siri)
+├─ Intents/                        # built into the app *and* the widget extension:
+│                                  # StartRecordingIntent + the app's notification names
 └─ Views/                          # ContentView, StylePickerRow, HistoryView, SettingsView,
                                    # EditorView, WaveformView, MarkdownView, GlassBackground;
+                                   # MarkdownTextView(+iOS) is the in-place editor, its
+                                   # highlighting shared through MarkdownEditorRules;
                                    # Platform.swift holds every iOS/macOS difference
 
 UtterclipMac/                      # the Mac app: menu bar status item, the one hide-on-close
-                                   # window, menu commands; compiles the same Utterclip/Views/
+                                   # window, menu commands, the global hotkey, caret lookup
+                                   # and paste-back; compiles the same Utterclip/Views/
 UtterclipWidgets/                  # widget extension: Home/Lock Screen widget + Control
 ```
 
 The flow, in one sentence: `RecorderViewModel` stops the recorder, hands the WAV to WhisperKit,
 copies the raw transcript, then asks whichever `Rewriter` is active to restyle it and copies the
-result; a failed rewrite never takes the raw text off the clipboard.
+result; a failed rewrite never takes the raw text off the clipboard. The dictation goes into
+History once that attempt has settled, so other devices receive one finished entry.
 
 Design notes from the original build live in [`plan/`](plan/).
 
 ### Dependencies
 
 - [WhisperKit](https://github.com/argmaxinc/WhisperKit) by Argmax: on-device Whisper on Core ML.
-- [HighlightedTextEditor](https://github.com/kyle-n/HighlightedTextEditor): the in-app editor.
+- [HighlightedTextEditor](https://github.com/kyle-n/HighlightedTextEditor): the full-screen
+  transcript editor, and the markdown highlighting rules the in-place editor reuses. The
+  in-place editor itself is hand-written — see the note at the top of `MarkdownTextView.swift`.
 
 ### Contributing
 

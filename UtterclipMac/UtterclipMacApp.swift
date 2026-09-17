@@ -9,6 +9,8 @@ struct UtterclipMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     init() {
+        // Before any view asks for it.
+        IdentityFont.register()
         // Always-warm, exactly like the iPhone app: load Whisper once at launch.
         TranscriptionService.shared.warmUp()
     }

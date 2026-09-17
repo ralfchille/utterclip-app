@@ -1,5 +1,7 @@
 import AppKit
+import UtterclipCore
 import SwiftUI
+import os
 
 /// Menu bar presence and the one window. Left-click on the status item is the whole
 /// workflow: window hidden → it drops down under the icon and a dictation starts;
@@ -21,13 +23,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         set { UserDefaults.standard.set(newValue, forKey: Self.floatOnTopKey); windowController?.floatOnTop = newValue }
     }
 
+    private static let pushLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "push")
+    private static let anchorLogger = Logger(subsystem: "com.ralfchille.utterclip", category: "anchor")
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
         UserDefaults.standard.register(defaults: [Self.floatOnTopKey: true])
+        // CloudKit tells us about the phone's changes through silent pushes; without this
+        // registration the Mac only imported when it exported something itself.
+        NSApp.registerForRemoteNotifications()
 
         let controller = MainWindowController(rootView: ContentView())
         controller.floatOnTop = floatOnTop
         windowController = controller
+
+        // Dictate from any app: the shortcut brings the window up where you are typing.
+        Self.pushLogger.notice("Accessibility access: \(FocusedField.isAllowed ? "granted" : "not granted", privacy: .public)")
+        GlobalHotkey.shared.onPress = { [weak self] in self?.hotkeyPressed() }
+        GlobalHotkey.shared.register(MacPreferences.shared.shortcut)
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
@@ -44,19 +57,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showWindowOnceAnchored()
     }
 
-    /// The status item only gets its place in the menu bar a few run-loop turns after it is
-    /// created — until then its window reports a placeholder frame at the screen origin, and
-    /// anchoring to that would pin the app window to the bottom-left corner. Wait (up to
-    /// three seconds) for a frame that sits in a menu bar, then show the window under it.
+    /// The status item takes a few run-loop turns to reach its place in the menu bar, and it
+    /// is not one jump but several. Polled every 50 ms on this Mac it reads: an empty
+    /// placeholder, then a frame below the screen, then 200 ms parked near the right-hand
+    /// edge, and only then a slide left into its real slot. Anchoring to any of those put the
+    /// window in the top-right corner instead of under the icon.
+    ///
+    /// So wait for a frame that sits in a menu bar and has stopped moving — the same frame
+    /// `stillPolls` times running. Two was not enough: the right-edge position held for
+    /// exactly two polls here, which is the shape of the bug rather than a safe margin.
+    /// Up to three seconds, then show it wherever it has got to.
     private func showWindowOnceAnchored(attempt: Int = 0) {
-        if statusItemFrame != nil || attempt >= 60 {
-            showWindow()
-        } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                self.showWindowOnceAnchored(attempt: attempt + 1)
+        let frame = statusItemFrame
+        Self.anchorLogger.debug("attempt \(attempt, privacy: .public) frame=\(String(describing: frame), privacy: .public) still=\(self.statusItemFrameRepeats, privacy: .public)")
+        if frame != nil, frame == lastSeenStatusItemFrame {
+            statusItemFrameRepeats += 1
+            if statusItemFrameRepeats >= Self.stillPolls {
+                Self.anchorLogger.notice("settled after \(attempt, privacy: .public) polls at \(String(describing: frame), privacy: .public)")
+                showWindow()
+                return
             }
+        } else {
+            statusItemFrameRepeats = 1
+        }
+        lastSeenStatusItemFrame = frame
+        guard attempt < 60 else { showWindow(); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.showWindowOnceAnchored(attempt: attempt + 1)
         }
     }
+
+    /// Identical readings that count as settled — 150 ms of stillness on top of the first one.
+    private static let stillPolls = 4
+    /// The previous poll's frame and how often it has now repeated, for the test above.
+    private var lastSeenStatusItemFrame: NSRect?
+    private var statusItemFrameRepeats = 0
 
     /// Menu-bar apps keep running with no windows; that is the point.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -67,7 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
-    /// `utterclip://record` from a launcher or automation; `utterclip://snapshot` in Debug.
+    /// `utterclip://record` from a launcher or automation; `utterclip://snapshot` and
+    /// `utterclip://demo` in Debug.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             switch url.host {
@@ -76,6 +112,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "snapshot":
                 #if DEBUG
                 DebugSnapshot.handle(url)
+                #endif
+            case "demo":
+                #if DEBUG
+                DebugSeed.handle(url)
                 #endif
             case "show":
                 #if DEBUG
@@ -90,6 +130,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window
 
     /// Brings the window forward; when the status item is on screen, right under its icon.
+    /// The header's resize button: swap between the two window sizes.
+    func toggleWindowSize() {
+        MacPreferences.shared.isWindowExpanded.toggle()
+        windowController?.applyPreferredSize()
+    }
+
+    /// The window is dragged by its background, which is right for a small panel and wrong
+    /// over a text view: a drag there should select, not move the window. Switched off for as
+    /// long as the result is being edited.
+    func setWindowDraggableByBackground(_ draggable: Bool) {
+        windowController?.window?.isMovableByWindowBackground = draggable
+    }
+
+    /// Back to the menu bar. The ✕ in the header, the red close button and ⌘W all land here.
+    func hideWindow() {
+        windowController?.hide()
+    }
+
+    /// Gets the window out of the way just before the text is pasted back: the dictation is
+    /// finished and the text is about to appear in the field you were typing in.
+    func hideWindowForPasteBack() {
+        Self.pushLogger.notice("Hiding the window for the paste-back.")
+        windowController?.hide()
+    }
+
     func showWindow() {
         if let anchor = statusItemFrame {
             windowController?.show(under: anchor)
@@ -119,18 +184,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Recording → stop it (the rewrite follows). Window open, nothing running → hide it.
-    /// Window hidden → show it under the icon and start recording.
+    // MARK: - Remote notifications (CloudKit change pushes)
+
+    func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Self.pushLogger.notice("Registered for CloudKit pushes.")
+    }
+
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        Self.pushLogger.error("Push registration failed: \(error.localizedDescription, privacy: .public)")
+    }
+
+    /// Core Data's mirroring imports on its own when a CloudKit push lands; a nudge makes sure
+    /// the import happens even if it would otherwise wait for the next export.
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+        Self.pushLogger.notice("CloudKit push received.")
+        Task { await RemoteZoneWatcher.shared.poll() }
+    }
+
+    /// Recording → stop it (the rewrite follows). Window in front, nothing running → hide it.
+    /// Otherwise the click means "dictate": a hidden window is shown under the icon, a window
+    /// buried behind other apps (only possible with Float on Top off) is brought forward, and
+    /// in both cases recording starts right away.
     private func statusItemPrimaryAction() {
         guard let controller = windowController else { return }
         if RecordingState.isRecording {
             NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
-        } else if controller.isShowing {
+        } else if controller.isInFront {
             controller.hide()
         } else {
-            showWindow()
+            if controller.isShowing {
+                controller.show()
+            } else {
+                showWindow()
+            }
             NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
         }
+    }
+
+    /// The global shortcut. Recording → stop it, as the second press of a dictation.
+    /// Otherwise open the window next to whatever you are typing in and start recording,
+    /// whichever app you were in.
+    private func hotkeyPressed() {
+        if RecordingState.isRecording {
+            NotificationCenter.default.post(name: .utterclipToggleRecording, object: nil)
+            return
+        }
+        PasteBack.shared.arm() // remember where to hand the text back, before we take focus
+        // Beside the caret when there is one to find. Otherwise under the menu bar icon —
+        // its home — rather than at the pointer, which is wherever it was last left and so
+        // puts the window somewhere different every time.
+        if MacPreferences.shared.opensNearTextField, let caret = FocusedField.caretRect() {
+            windowController?.show(beside: caret)
+        } else {
+            showWindow()
+        }
+        NotificationCenter.default.post(name: .utterclipStartRecording, object: nil)
     }
 
     /// The menu is attached only for the duration of the click, so a plain left-click keeps
@@ -186,11 +294,23 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     var isShowing: Bool { window?.isVisible == true }
 
+    /// Visible *and* actually in front of the user: a floating window always is; a normal
+    /// one only while it is the key window of the active app.
+    var isInFront: Bool {
+        guard let window, window.isVisible else { return false }
+        return floatOnTop || (NSApp.isActive && window.isKeyWindow)
+    }
+
     init(rootView: some View) {
         let hosting = NSHostingController(rootView: rootView)
         // The view draws its own header (title left, History/Settings right); no AppKit
         // toolbar or title bar chrome.
         hosting.sceneBridgingOptions = []
+        // Without this the hosting controller pins the window's minimum size to whatever
+        // SwiftUI says the content needs, which quietly clamped the window back to 420x720
+        // every launch — a saved smaller frame was restored and then grown again. The window
+        // keeps its own contentMinSize below instead.
+        hosting.sizingOptions = []
         let window = NSWindow(contentViewController: hosting)
         window.title = "Utterclip" // for the window list / accessibility; not drawn
         // Titled (so ⌘W and edge-resizing keep working) but with the bar invisible: no
@@ -202,13 +322,20 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
             window.standardWindowButton(button)?.isHidden = true
         }
-        window.setContentSize(NSSize(width: 420, height: 720))
-        window.contentMinSize = NSSize(width: 380, height: 600)
+        // Sized for what it is: a panel you dictate into, not a document window. The header's
+        // resize button swaps in `expanded` for reading and editing; still draggable to
+        // anything in between.
+        window.setContentSize(Self.compact)
+        // Low enough for the compact size people settle on for quick dictation; the style
+        // pills scroll rather than wrap below it.
+        window.contentMinSize = NSSize(width: 300, height: 420)
         window.isReleasedWhenClosed = false // hide on close; keep the view tree alive
         window.isMovableByWindowBackground = true
-        window.setFrameAutosaveName("Utterclip.main")
-        if !window.setFrameUsingName("Utterclip.main") { window.center() }
+        window.center()
         super.init(window: window)
+        // AppKit's frame autosave kept handing back a size the app never saved, and the app
+        // repositions the window on every show anyway — so only the size is remembered, and
+        // by us.
         window.delegate = self
         applyLevel()
     }
@@ -216,14 +343,55 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("not used") }
 
+    /// The two sizes the header button switches between; `expanded` is half as much again in
+    /// each direction, which is a different window rather than a slightly bigger one.
+    static let compact = NSSize(width: 340, height: 560)
+    static let expanded = NSSize(width: 510, height: 840)
+
+    /// Applies the chosen size, keeping the window's top-left corner and staying on screen.
+    func applyPreferredSize() {
+        guard let window else { return }
+        let wanted = MacPreferences.shared.isWindowExpanded ? Self.expanded : Self.compact
+        let visible = (window.screen ?? NSScreen.main)?.visibleFrame ?? .zero
+        let size = NSSize(width: min(wanted.width, visible.width), height: min(wanted.height, visible.height))
+        guard window.frame.size != size else { return }
+        // Anchored top-centre: the window is placed by its centre in the first place — under
+        // the status item, or beside the caret — so growing it should keep that centre and
+        // the top edge, and spread the extra width to both sides.
+        var frame = window.frame
+        let centreX = frame.midX
+        let top = frame.maxY
+        frame.size = size
+        frame.origin.x = centreX - size.width / 2
+        frame.origin.y = top - size.height
+        if !visible.isEmpty {
+            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
+        }
+        window.setFrame(frame, display: true, animate: window.isVisible)
+    }
+
     func show() {
+        applyPreferredSize()
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+        RemoteZoneWatcher.shared.interval = 2
+        Task { await RemoteZoneWatcher.shared.poll() } // current the moment the window is up
+        // App Nap otherwise suspends the refresh timer once the app has been in the
+        // background for a few minutes — the phone indicator then only updated on a click.
+        if napHold == nil {
+            napHold = ProcessInfo.processInfo.beginActivity(
+                options: [.userInitiatedAllowingIdleSystemSleep],
+                reason: "Keeping the phone indicator current while the window is on screen")
+        }
     }
+
+    private var napHold: NSObjectProtocol?
 
     /// Shows the window centred under a menu bar item, kept within that screen. The size is
     /// whatever the user last resized it to; only the position moves.
     func show(under anchor: NSRect) {
+        applyPreferredSize()
         if let window,
            let screen = NSScreen.screens.first(where: { $0.frame.intersects(anchor) }) ?? NSScreen.main {
             let visible = screen.visibleFrame
@@ -237,8 +405,34 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         show()
     }
 
+
+    /// Shows the window beside a caret (or the pointer): just below it when there is room,
+    /// above it otherwise, and always fully on the screen it belongs to.
+    func show(beside anchor: CGRect) {
+        applyPreferredSize()
+        if let window {
+            let screen = NSScreen.screens.first { $0.frame.contains(CGPoint(x: anchor.midX, y: anchor.midY)) }
+                ?? NSScreen.main
+            let visible = screen?.visibleFrame ?? .zero
+            var frame = window.frame
+            let gap: CGFloat = 12
+            frame.origin.x = anchor.midX - frame.width / 2
+            frame.origin.y = anchor.minY - gap - frame.height // below the caret
+            if frame.origin.y < visible.minY {
+                frame.origin.y = anchor.maxY + gap // no room below: sit above it instead
+            }
+            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
+            window.setFrame(frame, display: false)
+        }
+        show()
+    }
+
     func hide() {
         window?.orderOut(nil)
+        RemoteZoneWatcher.shared.interval = 30
+        if let napHold { ProcessInfo.processInfo.endActivity(napHold) }
+        napHold = nil
     }
 
     /// Status-item click: hide if the window is up and in front, otherwise bring it forward.
@@ -256,6 +450,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         hide()
         return false
     }
+
 
     private func applyLevel() {
         guard let window else { return }

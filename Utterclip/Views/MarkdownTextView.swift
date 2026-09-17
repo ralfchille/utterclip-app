@@ -1,0 +1,168 @@
+#if os(macOS)
+import AppKit
+import SwiftUI
+
+/// The text view the result is edited in.
+///
+/// Written rather than borrowed: the editor library rebuilds the whole attributed string and
+/// reassigns it on every SwiftUI update — which is every keystroke, since the text is state —
+/// and each rebuild redraws the view and restores the selection. On a frame that also grows
+/// as you type, that reads as a flicker. Here the text storage is never replaced; highlighting
+/// is applied to it in place, and an update from outside only lands when the text genuinely
+/// differs from what is on screen.
+struct MarkdownTextView: NSViewRepresentable {
+    @Binding var text: String
+    /// Called on every keystroke, for the label and the delayed copy.
+    var onChange: () -> Void = {}
+    /// Called when the view loses focus: an edit is finished by clicking away.
+    var onCommit: () -> Void = {}
+    /// Called on Esc: the edit is dropped rather than kept.
+    var onCancel: () -> Void = {}
+    /// Where the click that opened the editor landed, in SwiftUI's global space, so the caret
+    /// starts under the pointer rather than at the end of the text.
+    var caretHint: CGPoint?
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeNSView(context: Context) -> AutoGrowingTextView {
+        let textView = AutoGrowingTextView()
+        textView.delegate = context.coordinator
+        textView.isRichText = false
+        textView.allowsUndo = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.textContainerInset = .zero
+        // NSTextView pads each line fragment by 5 pt unless told otherwise, which shifted the
+        // text right the moment the card turned editable. The phone's half already zeroes it.
+        textView.textContainer?.lineFragmentPadding = 0
+        textView.drawsBackground = true
+        textView.backgroundColor = .textBackgroundColor
+        textView.isHorizontallyResizable = false
+        textView.textContainer?.widthTracksTextView = true
+        textView.string = text
+        textView.onCancel = onCancel
+        textView.onSubmit = onCommit
+        Self.highlight(textView)
+        // The caret belongs in the text the moment the card opens.
+        DispatchQueue.main.async {
+            guard textView.window?.firstResponder !== textView else { return }
+            textView.window?.makeFirstResponder(textView)
+            textView.setSelectedRange(caretRange(in: textView))
+        }
+        return textView
+    }
+
+    /// Where to put the caret when the editor opens: under the click that opened it, or at the
+    /// end when there was no click (the keyboard shortcut, VoiceOver).
+    ///
+    /// SwiftUI hands the point over in its global space: the window's content rectangle,
+    /// measured down from its top left. The content view here is SwiftUI's own hosting view,
+    /// which counts the same way, so the point goes straight in; a plain AppKit content view
+    /// would count up from the bottom left instead, and gets the flip. Measured before
+    /// trusting it — flipping the hosting view's point landed 200 pt below the text, and the
+    /// clamp then put every caret at the end.
+    private func caretRange(in textView: NSTextView) -> NSRange {
+        let end = NSRange(location: (textView.string as NSString).length, length: 0)
+        guard let hint = caretHint, let content = textView.window?.contentView else { return end }
+        let inContent = content.isFlipped ? NSPoint(x: hint.x, y: hint.y)
+                                          : NSPoint(x: hint.x, y: content.bounds.height - hint.y)
+        let local = textView.convert(inContent, from: content)
+        // The whole card opens the editor, so a click can land in the padding around the text
+        // or on the label above it: the nearest place inside is what was meant.
+        let clamped = NSPoint(x: min(max(local.x, textView.bounds.minX), textView.bounds.maxX),
+                              y: min(max(local.y, textView.bounds.minY), textView.bounds.maxY))
+        return NSRange(location: textView.characterIndexForInsertion(at: clamped), length: 0)
+    }
+
+    /// Only for changes that came from somewhere else — a re-style, a restore from History.
+    /// Typing never reaches here, which is the point.
+    func updateNSView(_ textView: AutoGrowingTextView, context: Context) {
+        guard textView.string != text else { return }
+        let selection = textView.selectedRange()
+        textView.string = text
+        Self.highlight(textView)
+        let length = (textView.string as NSString).length
+        textView.setSelectedRange(NSRange(location: min(selection.location, length), length: 0))
+        textView.invalidateIntrinsicContentSize()
+    }
+
+    /// Highlighting lives in MarkdownEditorRules, shared with the phone.
+    static func highlight(_ textView: NSTextView) {
+        guard let storage = textView.textStorage else { return }
+        MarkdownHighlighter.apply(to: storage)
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        private let parent: MarkdownTextView
+
+        init(_ parent: MarkdownTextView) { self.parent = parent }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            let selection = textView.selectedRange()
+            MarkdownTextView.highlight(textView)
+            textView.setSelectedRange(selection)
+            parent.text = textView.string
+            parent.onChange()
+        }
+
+        func textDidEndEditing(_ notification: Notification) {
+            parent.onCommit()
+        }
+    }
+}
+
+/// Reports the height its text needs, so the view grows in the same layout pass as the
+/// keystroke. Sizing it from SwiftUI state instead meant the frame arrived a pass late: the
+/// new line was drawn into a frame still one line short, the view scrolled to keep the caret
+/// visible, and then everything settled — which is what the flicker was.
+final class AutoGrowingTextView: NSTextView {
+    /// Esc. NSTextView's own `cancelOperation` opens autocompletion, which is not what the
+    /// key means in a card being edited in place — here it throws the edit away.
+    var onCancel: (() -> Void)?
+    /// ⌘Return, the other way to finish without reaching for the mouse.
+    var onSubmit: (() -> Void)?
+
+    override func cancelOperation(_ sender: Any?) {
+        onCancel?()
+    }
+
+    override func keyDown(with event: NSEvent) {
+        // ⌘ rather than ⇧: Return breaks the line here, and AppKit already gives ⇧Return its
+        // own meaning in a text view — a line break inside the paragraph. ⌘Return is free,
+        // and is what the rest of the Mac uses to send a piece of text on its way.
+        let enterKeys: Set<String> = ["\r", "\u{3}"] // Return, and the keypad's Enter
+        if event.modifierFlags.contains(.command), let onSubmit,
+           let key = event.charactersIgnoringModifiers, enterKeys.contains(key) {
+            onSubmit()
+            return
+        }
+        super.keyDown(with: event)
+    }
+
+    override var intrinsicContentSize: NSSize {
+        guard let container = textContainer, let manager = layoutManager else {
+            return super.intrinsicContentSize
+        }
+        manager.ensureLayout(for: container)
+        return NSSize(width: NSView.noIntrinsicMetric,
+                      height: ceil(manager.usedRect(for: container).height) + textContainerInset.height * 2)
+    }
+
+    /// The window is draggable by its background, which otherwise swallows a drag across the
+    /// text and moves the window instead of selecting.
+    override var mouseDownCanMoveWindow: Bool { false }
+
+    override func didChangeText() {
+        super.didChangeText()
+        invalidateIntrinsicContentSize()
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        let widthChanged = newSize.width != frame.width
+        super.setFrameSize(newSize)
+        if widthChanged { invalidateIntrinsicContentSize() } // rewrapping changes the height
+    }
+}
+
+#endif
