@@ -163,6 +163,28 @@ struct ContentView: View {
             .onOpenURL { url in
                 // utterclip://record — from the Home Screen widget or the Control Center button.
                 // (The Mac app receives URLs in its AppDelegate and posts the notification above.)
+                #if DEBUG
+                // utterclip://demo — the Mac's debug seed, reachable on the phone too, so the
+                // App Store screenshots can be staged without dictating into a simulator that
+                // has no microphone. `history=1` fills the History screen as well.
+                if url.host == "demo" {
+                    let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+                    func value(_ name: String) -> String? { query.first(where: { $0.name == name })?.value }
+                    if value("history") == "1" { seedDebugHistory() }
+                    // ?show=history|settings opens that screen, so a screenshot run needs no taps
+                    switch value("show") {
+                    case "history": NotificationCenter.default.post(name: .utterclipShowHistory, object: nil); return
+                    case "settings": NotificationCenter.default.post(name: .utterclipShowSettings, object: nil); return
+                    default: break
+                    }
+                    var info: [String: Any] = ["edit": value("edit") == "1", "phone": false]
+                    if let raw = value("raw") { info["raw"] = raw }
+                    if let style = value("style") { info["style"] = style }
+                    NotificationCenter.default.post(name: .utterclipDebugResult,
+                                                    object: value("text") ?? "", userInfo: info)
+                    return
+                }
+                #endif
                 guard url.host == "record", !viewModel.recorder.isRecording, !recordUnavailable else { return }
                 Task { await viewModel.record() }
             }
@@ -191,6 +213,14 @@ struct ContentView: View {
             .task {
                 #if os(macOS)
                 viewModel.startWatchingOtherDevices() // the indicator; the phone stays as it is
+                #endif
+                #if DEBUG
+                // SIMCTL_CHILD_UTTERCLIP_DEMO=slack|prompt|history|settings puts the app straight
+                // into that screen at launch. A URL would do it too, but iOS asks "Open in
+                // Utterclip?" first and that dialog lands in the screenshot.
+                if let state = ProcessInfo.processInfo.environment["UTTERCLIP_DEMO"] {
+                    applyDebugState(state)
+                }
                 #endif
             }
             #if !os(macOS)
@@ -576,6 +606,47 @@ struct ContentView: View {
     }
 
     #if DEBUG
+    /// Puts the app into one of the states the App Store screenshots show.
+    private func applyDebugState(_ state: String) {
+        let slack = ("Quick heads-up: I pushed the fix for the login crash this morning, and it's already on the release branch.\n\nCould someone from QA give it a quick run before we cut tomorrow's build?",
+                     "um so quick heads up I pushed the fix for the login crash this morning uh it's on the release branch already can someone from QA give it a quick run before we cut the build tomorrow")
+        let prompt = ("## The job\n- Rewrite the release notes for 1.1.\n\n## The why\n- The current draft is too technical for the App Store.\n\n## The guardrails\n- Under 100 words.\n- No jargon.\n\n## Done means\n- A non-developer understands what changed.",
+                      "uh so rewrite the release notes for one point one because the current draft is way too technical for the app store, keep it under a hundred words, no jargon, and it's done when a non-developer gets what changed")
+        seedDebugHistory()
+        switch state {
+        case "slack":
+            viewModel.restore(HistoryEntry(rawTranscript: slack.1, styledText: slack.0, styleID: "slack"))
+        case "prompt":
+            viewModel.restore(HistoryEntry(rawTranscript: prompt.1, styledText: prompt.0, styleID: "prompt"))
+        case "history":
+            showHistory = true
+        case "settings":
+            showSettings = true
+        default:
+            break
+        }
+        resultLabel = .idle
+    }
+
+    /// A few past dictations, so the History screen has something to show in a screenshot.
+    private func seedDebugHistory() {
+        guard HistoryStore.shared.entries.isEmpty else { return }
+        let samples: [(TimeInterval, String, String)] = [
+            (-90,     "So I'm going to be about 10 minutes late to the stand-up. Could you start without me and I'll catch up on the notes afterwards.",
+                      "Running about 10 minutes late to standup. Go ahead and start without me — I'll catch up on the notes after."),
+            (-4_800,  "Can you rewrite the release notes for one point one, the current draft is way too technical for the App Store, keep it under a hundred words.",
+                      "## The job\n- Rewrite the release notes for 1.1.\n\n## The guardrails\n- Under 100 words.\n- No jargon."),
+            (-26_000, "Danke für das Review, ich habe die zwei Punkte zur Navigation übernommen und den Rest kommentiert.",
+                      "Danke für das Review! Die zwei Punkte zur Navigation habe ich übernommen, den Rest habe ich kommentiert."),
+            (-98_000, "Just a reminder that we should move the planning call to Thursday afternoon because half the team is out on Wednesday.",
+                      "Quick reminder: let's move the planning call to Thursday afternoon — half the team is out on Wednesday."),
+        ]
+        for (offset, raw, styled) in samples {
+            HistoryStore.shared.add(HistoryEntry(date: Date().addingTimeInterval(offset),
+                                                 rawTranscript: raw, styledText: styled, styleID: "slack"))
+        }
+    }
+
     /// `utterclip://demo`: a fixed result, shown rendered — and then, with `edit=1`, opened
     /// for editing the way a click on the card opens it, so the two states can be compared.
     private func showDebugResult(_ note: Notification) {
