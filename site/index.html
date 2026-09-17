@@ -104,14 +104,22 @@
   .mac .body { top:56px; bottom:112px; }
   .hint { position:absolute; left:16px; right:16px; bottom:24px; text-align:center; color:var(--mute); font-size:17px; line-height:1.45; }
   .mac .hint { font-size:13px; bottom:14px; }
-  .rec { position:absolute; left:0; right:0; top:44%; transform:translateY(-50%); text-align:center; }
-  .timer { font-size:44px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-0.04em; }
-  .mac .timer { font-size:30px; }
-  .wave { display:flex; justify-content:center; align-items:center; gap:4.5px; height:56px; margin-top:22px; }
-  .wave i { display:block; width:3.5px; height:56px; border-radius:2px; background:var(--ink); transform:scaleY(.12); transform-origin:center; will-change:transform; }
-  .wave.resting i { transition:transform .5s cubic-bezier(.2,.7,.2,1); }
-  .mac .wave { height:40px; gap:4px; margin-top:16px; }
-  .mac .wave i { height:40px; width:3px; }
+  /* ContentView.recordingIndicator: VStack(spacing: 24), padding(.top, 60). */
+  .rec { position:absolute; left:0; right:0; top:60px; display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .reclabel { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:600; color:var(--mute); }
+  .mac .reclabel { font-size:11px; }
+  .reclabel svg { width:17px; height:13px; }
+  .reclabel path { stroke:currentColor; stroke-width:2; stroke-linecap:round; fill:none; animation:wv 1.3s linear infinite; }
+  .reclabel path:nth-child(2) { animation-delay:.12s; } .reclabel path:nth-child(3) { animation-delay:.24s; }
+  .reclabel path:nth-child(4) { animation-delay:.36s; } .reclabel path:nth-child(5) { animation-delay:.48s; }
+  @keyframes wv { 0%, 70%, 100% { opacity:.35; } 20% { opacity:1; } }
+  /* .system(size: 64, weight: .light, design: .rounded).monospacedDigit() — ui-rounded is
+     SF Rounded itself on Apple hardware, which is most of the people this page is for. */
+  .timer { font-family:ui-rounded, "SF Pro Rounded", "Schibsted Grotesk", sans-serif; font-size:64px; font-weight:300; font-variant-numeric:tabular-nums; letter-spacing:normal; line-height:1.1; }
+  /* WaveformView: one capsule per mic sample, 3 pt wide, 3 pt apart, up to 44 tall, the
+     newest at the right edge — quiet samples stay dots. */
+  .wave { display:flex; justify-content:flex-end; align-items:center; gap:3px; width:240px; height:44px; overflow:hidden; }
+  .wave i { display:block; flex:none; width:3px; height:3px; border-radius:1.5px; background:var(--ink); }
   .busy { position:absolute; left:0; right:0; top:44%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:16px; color:var(--mute); font-size:17px; }
   .mac .busy { font-size:13px; gap:10px; }
   .spin { position:relative; width:30px; height:30px; }
@@ -171,21 +179,33 @@
   .mac .record .stop { width:18px; height:18px; border-radius:5px; }
   .mac .sat { width:38px; height:38px; margin-left:54px; }
   .mac .sat svg { width:14px; height:14px; }
-  .pasteback { position:absolute; left:50%; bottom:78px; transform:translate(-50%, 10px); display:inline-flex; align-items:center; gap:8px; height:30px; padding:0 6px 0 12px; border-radius:15px; background:var(--ink); color:var(--paper); font-size:12px; font-weight:500; white-space:nowrap; opacity:0; transition:opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
-  .pasteback kbd { font:inherit; font-size:11px; padding:0 6px; height:20px; border-radius:6px; background:rgba(255,255,255,.18); display:inline-grid; place-items:center; }
-  .stage[data-phase="paste"] .mac .pasteback, .stage[data-phase="copied"] .mac .pasteback { opacity:1; transform:translate(-50%,0); }
+  /* PasteBackBar: one full-width capsule under the record button — the return glyph 14 pt in,
+     the label medium, and the ✕ its own target at the trailing edge. */
+  .pasteback { position:absolute; left:16px; right:16px; bottom:20px; display:flex; align-items:center; gap:8px;
+    height:34px; padding:0 8px 0 14px; border-radius:17px; background:var(--ink); color:var(--paper);
+    font-size:13px; font-weight:500; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.12);
+    opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
+  .pasteback .ret { display:grid; place-items:center; width:13px; height:13px; flex:none; }
+  .pasteback .ret svg { width:13px; height:13px; }
+  .pasteback .who { overflow:hidden; text-overflow:ellipsis; }
+  .pasteback .x { margin-left:auto; display:grid; place-items:center; width:24px; height:24px; flex:none; opacity:.6; }
+  .pasteback .x svg { width:10px; height:10px; }
+  /* the button moves up to make room, the way the stack does in the app */
+  .mac .controls { transition:bottom .5s cubic-bezier(.2,.7,.2,1); }
+  .stage[data-phase="paste"] .mac .controls, .stage[data-phase="copied"] .mac .controls { bottom:70px; }
+  .stage[data-phase="paste"] .mac .pasteback, .stage[data-phase="copied"] .mac .pasteback { opacity:1; transform:none; }
   .stage[data-phase="paste"] .mac .pills, .stage[data-phase="copied"] .mac .pills { opacity:0; }
   .mac .pills { transition:opacity .45s ease; }
 
   /* ---- state machine (shared by both devices) ---- */
   .hint, .rec, .busy, .card, .raw { opacity:0; transition:opacity .55s cubic-bezier(.2,.7,.2,1); }
-  .rec, .busy { transform:translateY(-50%) translateY(8px); transition:opacity .55s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
-  .rec { transition-duration:.3s, .5s; }
+  .busy { transform:translateY(-50%) translateY(8px); transition:opacity .55s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .rec { transform:translateY(8px); transition:opacity .3s cubic-bezier(.2,.7,.2,1), transform .5s cubic-bezier(.2,.7,.2,1); }
   [data-phase="transcribing"] .busy, [data-phase="p-busy"] .busy { transition-delay:.22s; }
   .card, .raw { transform:translateY(10px); transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
   .raw { transition-delay:.12s; }
   [data-phase="idle"] .hint { opacity:1; }
-  [data-phase="recording"] .rec, [data-phase="p-record"] .rec { opacity:1; transform:translateY(-50%); }
+  [data-phase="recording"] .rec, [data-phase="p-record"] .rec { opacity:1; transform:none; }
   [data-phase="recording"] .record, [data-phase="p-record"] .record { background:var(--ink); }
   [data-phase="recording"] .record svg, [data-phase="p-record"] .record svg { opacity:0; }
   [data-phase="recording"] .record .stop, [data-phase="p-record"] .record .stop { opacity:1; transform:scale(1); }
@@ -235,6 +255,14 @@
   .keys i.wide { width:46px; background:#AFB3BC; box-shadow:none; }
   .keys i.space { width:170px; }
   .editstage[data-phase="e-tap"] .keys, .editstage[data-phase="e-edit"] .keys, .editstage[data-phase="e-type"] .keys, .editstage[data-phase="e-done"] .keys { transform:translateY(0); }
+  .editstage[data-phase="e-edit"] .kdone, .editstage[data-phase="e-type"] .kdone, .editstage[data-phase="e-done"] .kdone { opacity:1; }
+  /* The phone's way to finish: one round button floating over the keyboard, right-aligned —
+     48 pt across, 14 pt clear of the keys, 16 pt in from the edge, as the app builds it. */
+  /* It belongs to the keyboard: with the keys down it would otherwise float over an empty screen. */
+  .kdone { position:absolute; right:16px; top:-62px; width:48px; height:48px; border-radius:50%; background:var(--ink); color:var(--paper); display:grid; place-items:center; box-shadow:0 3px 10px rgba(0,0,0,.18); opacity:0; transition:opacity .25s ease; }
+  .kdone svg { width:18px; height:18px; }
+  .editstage[data-phase="e-done"] .kdone { animation:press .5s cubic-bezier(.2,.7,.2,1); }
+  @keyframes press { 30% { transform:scale(.88); } 100% { transform:scale(1); } }
   .tapdot { position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid var(--ink); opacity:0; pointer-events:none; }
   .editstage[data-phase="e-tap"] .tapdot { animation:ripple .75s ease-out; }
   .editstage .card { position:relative; }
@@ -414,6 +442,7 @@
     <symbol id="i-send" viewBox="0 0 56 56"><path d="M 27.9883 50.1367 C 29.2071 50.1367 30.0976 49.2930 30.0976 48.0742 L 30.0976 17.2071 L 29.9102 12.2149 L 36.9180 19.9024 L 42.2617 25.1524 C 42.6367 25.5273 43.1992 25.7149 43.7383 25.7149 C 44.9102 25.7149 45.7773 24.8242 45.7773 23.6758 C 45.7773 23.1133 45.5664 22.6211 45.1211 22.1524 L 29.5586 6.5664 C 29.1133 6.0976 28.5742 5.8633 27.9883 5.8633 C 27.4258 5.8633 26.8867 6.0976 26.4414 6.5664 L 10.8789 22.1524 C 10.4336 22.6211 10.2227 23.1133 10.2227 23.6758 C 10.2227 24.8242 11.0898 25.7149 12.2383 25.7149 C 12.8008 25.7149 13.3633 25.5273 13.7383 25.1524 L 19.0586 19.9024 L 26.0898 12.1914 L 25.9024 17.2071 L 25.9024 48.0742 C 25.9024 49.2930 26.7695 50.1367 27.9883 50.1367 Z" fill="currentColor"/></symbol>
     <symbol id="i-apple" viewBox="0 0 56 56"><path d="M33.9370467,26.5128481 C34.0071746,34.0650232 40.5622987,36.5781967 40.6349206,36.6102741 C40.579494,36.787517 39.5875211,40.1917925 37.1813698,43.708166 C35.1013579,46.748249 32.9425798,49.7771957 29.5418665,49.8399278 C26.2003256,49.9014987 25.1258336,47.8583854 21.3055063,47.8583854 C17.486333,47.8583854 16.2925236,49.7771906 13.129383,49.9014987 C9.84683186,50.0257159 7.34720367,46.6140516 5.24990601,43.5851051 C0.964332248,37.3892927 -2.31073284,26.0771949 2.08685175,18.4413444 C4.27147795,14.64935 8.17557011,12.2481009 12.4131131,12.1865253 C15.6364944,12.125039 18.6789832,14.3551087 20.649477,14.3551087 C22.6187214,14.3551087 26.3159929,11.6732544 30.2027979,12.0671186 C31.8299473,12.1348421 36.3973824,12.7243949 39.3302579,17.0173633 C39.0939405,17.1638624 33.880373,20.1989532 33.9370467,26.5128552 M27.6570067,7.96804814 C29.3997351,5.85854475 30.5726917,2.92192094 30.2526965,0 C27.7406844,0.100960353 24.7030975,1.67393506 22.9012871,3.78227787 C21.286519,5.64931362 19.8723452,8.63762341 20.2539138,11.5017132 C23.0538462,11.7183402 25.9141925,10.078893 27.6570067,7.96805157" fill="currentColor"/></symbol>
     <symbol id="i-pen" viewBox="0 0 56 56"><path d="M 43.2930 16.9258 L 45.6601 14.6055 C 46.8555 13.4101 46.9023 12.1211 45.8477 11.0430 L 45.0508 10.2461 C 43.9961 9.1914 42.7070 9.3086 41.5117 10.4570 L 39.1445 12.8008 Z M 15.6601 44.4883 L 41.2305 18.9414 L 37.1289 14.8164 L 11.5352 40.3867 L 9.3086 45.5898 C 9.0977 46.1523 9.6836 46.8086 10.2461 46.5742 Z" fill="currentColor"/></symbol>
+    <symbol id="i-return" viewBox="0 0 24 24"><path d="M19 6v4.5a2.5 2.5 0 0 1-2.5 2.5H6M9.5 9.5 6 13l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 56 56"><path d="M 23.0781 48.0273 C 24.0859 48.0273 24.8828 47.5820 25.4453 46.7148 L 47.5937 11.8398 C 48.0156 11.1602 48.2031 10.6445 48.2031 10.1054 C 48.2031 8.8164 47.3359 7.9727 46.0469 7.9727 C 45.1328 7.9727 44.5937 8.2773 44.0313 9.1680 L 22.9844 42.7070 L 12.0625 28.4102 C 11.4766 27.5898 10.9140 27.2617 10.0469 27.2617 C 8.7344 27.2617 7.7969 28.1758 7.7969 29.4649 C 7.7969 30.0039 8.0313 30.6133 8.4766 31.1758 L 20.6406 46.6680 C 21.3672 47.5820 22.0703 48.0273 23.0781 48.0273 Z" fill="currentColor"/></symbol>
     <symbol id="i-phone" viewBox="0 0 56 56"><path d="M24,0 C26.209139,0 28,1.790861 28,4 L28,48 C28,50.209139 26.209139,52 24,52 L4,52 C1.790861,52 0,50.209139 0,48 L0,4 C0,1.790861 1.790861,0 4,0 L24,0 Z M23,7 L5,7 C4.44771525,7 4,7.44771525 4,8 L4,47 C4,47.5522847 4.44771525,48 5,48 L23,48 C23.5522847,48 24,47.5522847 24,47 L24,8 C24,7.44771525 23.5522847,7 23,7 Z M19,44 C19.5522847,44 20,44.4477153 20,45 C20,45.5522847 19.5522847,46 19,46 L9,46 C8.44771525,46 8,45.5522847 8,45 C8,44.4477153 8.44771525,44 9,44 L19,44 Z M17.5,3 L12.5,3 C12.2238576,3 12,3.22385763 12,3.5 C12,3.77614237 12.2238576,4 12.5,4 L17.5,4 C17.7761424,4 18,3.77614237 18,3.5 C18,3.22385763 17.7761424,3 17.5,3 Z M10.5,3 C10.2238576,3 10,3.22385763 10,3.5 C10,3.77614237 10.2238576,4 10.5,4 C10.7761424,4 11,3.77614237 11,3.5 C11,3.22385763 10.7761424,3 10.5,3 Z" fill="currentColor"/></symbol>
     <symbol id="i-desktop" viewBox="0 0 56 56"><path d="M 6.0860 43.2930 L 20.7579 43.2930 L 20.1251 47.6055 L 16.9142 47.6055 C 15.8360 47.6055 14.9220 48.4961 14.9220 49.5977 C 14.9220 50.6992 15.8360 51.6133 16.9142 51.6133 L 39.0860 51.6133 C 40.1642 51.6133 41.0782 50.6992 41.0782 49.5977 C 41.0782 48.4961 40.1642 47.6055 39.0860 47.6055 L 35.8751 47.6055 L 35.2423 43.2930 L 49.9144 43.2930 C 53.9219 43.2930 55.9374 41.3711 55.9374 37.2695 L 55.9374 10.4102 C 55.9374 6.3086 53.9219 4.3867 49.9144 4.3867 L 6.0860 4.3867 C 2.0782 4.3867 .6 6.3086 .6 10.4102 L .6 37.2695 C .6 41.3711 2.0782 43.2930 6.0860 43.2930 Z M 4.8438 32.9805 C 4.1407 32.9805 3.8360 32.6992 3.8360 31.9726 L 3.8360 10.4805 C 3.8360 8.8164 4.5626 8.1602 6.1564 8.1602 L 49.8438 8.1602 C 51.4609 8.1602 52.1641 8.8164 52.1641 10.4805 L 52.1641 31.9726 C 52.1641 32.6992 51.8593 32.9805 51.1561 32.9805 Z M 28.0001 40.9727 C 26.8282 40.9727 25.8204 39.9883 25.8204 38.7930 C 25.8204 37.6446 26.8282 36.6367 28.0001 36.6367 C 29.1720 36.6367 30.1798 37.6446 30.1798 38.7930 C 30.1798 39.9883 29.1720 40.9727 28.0001 40.9727 Z" fill="currentColor"/></symbol>
@@ -431,7 +460,7 @@
       <div class="ios-nav"><span class="circ"><svg><use href="#i-history"/></svg></span><div class="title">Utterclip</div><span class="circ"><svg><use href="#i-gear"/></svg></span></div>
       <div class="body">
         <div class="hint">Tap the mic, speak, tap again.<br>Your words land on the clipboard.</div>
-        <div class="rec"><div class="timer">0:00</div><div class="wave"></div></div>
+        <div class="rec"><div class="reclabel"><svg viewBox="0 0 22 16"><path d="M2 6v4"/><path d="M6 3v10"/><path d="M10 1v14"/><path d="M14 4v8"/><path d="M18 6v4"/></svg>Recording</div><div class="timer">0:00</div><div class="wave"></div></div>
         <div class="busy"><div class="spin"></div><span>Transcribing…</span></div>
         <div class="card"><div class="lbl"><span class="ico"><svg class="ic-clip"><use href="#i-clip"/></svg><svg class="ic-pen"><use href="#i-pen"/></svg><svg class="ic-check"><use href="#i-check"/></svg></span><span class="writing">Writing…</span><span class="copied">Copied</span></div><div class="result"></div></div>
         <div class="raw"><div class="rawhead"><span>Raw transcript</span><span class="copyraw"><svg><use href="#i-clip"/></svg>Copy raw</span></div><div class="rawtext"></div></div>
@@ -450,12 +479,12 @@
       <div class="mac-head"><span class="mac-title">Utterclip</span><span class="mac-icons"><span><svg><use href="#i-history"/></svg></span><span><svg><use href="#i-gear"/></svg></span><span><svg><use href="#i-expand"/></svg></span><span><svg><use href="#i-x"/></svg></span></span></div>
       <div class="body">
         <div class="hint">Click the mic, speak, click again.<br>Your words land on the clipboard.</div>
-        <div class="rec"><div class="timer">0:00</div><div class="wave"></div></div>
+        <div class="rec"><div class="reclabel"><svg viewBox="0 0 22 16"><path d="M2 6v4"/><path d="M6 3v10"/><path d="M10 1v14"/><path d="M14 4v8"/><path d="M18 6v4"/></svg>Recording</div><div class="timer">0:00</div><div class="wave"></div></div>
         <div class="busy"><div class="spin"></div><span>Transcribing…</span></div>
         <div class="card"><div class="lbl"><span class="ico"><svg class="ic-clip"><use href="#i-clip"/></svg><svg class="ic-pen"><use href="#i-pen"/></svg><svg class="ic-check"><use href="#i-check"/></svg></span><span class="writing">Writing…</span><span class="copied">Copied</span></div><div class="result"></div></div>
         <div class="raw"><div class="rawhead"><span>Raw transcript</span><span class="copyraw"><svg><use href="#i-clip"/></svg>Copy raw</span></div><div class="rawtext"></div></div>
       </div>
-      <div class="pasteback">Paste into Slack <kbd>↩</kbd></div>
+      <div class="pasteback"><span class="ret"><svg><use href="#i-return"/></svg></span><span class="who">Paste into Slack</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
       <div class="pills"><span>Plain</span><span class="on">Slack</span><span>WhatsApp</span><span>Prompt</span><span>Email</span></div>
       <div class="controls"><span class="record"><svg class="mic"><use href="#i-mic"/></svg><span class="stop"></span></span><span class="sat"><svg><use href="#i-micplus"/></svg></span></div>
     </div>
@@ -601,7 +630,7 @@
   function make(id) { return document.getElementById(id).content.firstElementChild.cloneNode(true); }
   function waves(root) {
     root.querySelectorAll('.wave').forEach(function (w) {
-      for (var i = 0; i < 28; i++) w.appendChild(document.createElement('i'));
+      for (var i = 0; i < 40; i++) w.appendChild(document.createElement('i'));
     });
   }
   function spinners(root) {
@@ -609,29 +638,34 @@
       for (var i = 0; i < 8; i++) { var k = document.createElement('i'); k.style.transform = 'rotate(' + (i * 45) + 'deg)'; k.style.animationDelay = (-(7 - i) * 0.10625).toFixed(3) + 's'; s.appendChild(k); }
     });
   }
-  // Levels that swell and settle like speech, eased frame by frame: a fixed loop reads as a graphic.
+  // The recorder samples the mic every 50 ms and keeps the last 40: each new level enters at
+  // the right and the strip scrolls left, so a phrase drifts away from where it was spoken.
+  // Room noise stays a dot, speech fills the bar — the same curve the app shapes levels with.
   function animateWaves(root) {
-    var bars = Array.prototype.slice.call(root.querySelectorAll('.wave i')), n = 28;
-    var levels = bars.map(function () { return 0.12; }), t0 = performance.now(), raf;
-    root.querySelectorAll('.wave').forEach(function (w) { w.classList.remove('resting'); });
-    function frame(now) {
-      var t = (now - t0) / 1000;
-      var env = 0.5 + 0.5 * Math.abs(Math.sin(t * 1.9) * Math.sin(t * 0.63 + 1.1));           // phrases
-      bars.forEach(function (b, idx) {
-        var i = idx % n, x = i / (n - 1);
-        var centre = 1 - Math.pow((x - 0.5) * 2, 2) * 0.6;
-        var flutter = 0.55 + 0.45 * Math.abs(Math.sin(t * 8.5 + i * 1.7) * Math.cos(t * 3.1 + i * 0.55));
-        var target = Math.max(0.1, Math.min(1, env * centre * flutter + (Math.random() - 0.5) * 0.14));
-        levels[idx] += (target - levels[idx]) * 0.28;
-        b.style.transform = 'scaleY(' + levels[idx].toFixed(3) + ')';
+    var strips = Array.prototype.slice.call(root.querySelectorAll('.wave'));
+    var levels = []; for (var i = 0; i < 40; i++) levels.push(0.03);
+    var t0 = performance.now(), timer;
+    function draw() {
+      var t = (performance.now() - t0) / 1000;
+      var speaking = (t % 2.1) < 1.5;                                   // a phrase, then a breath
+      var level = speaking
+        ? 0.34 + 0.6 * Math.abs(Math.sin(t * 9.3) * Math.cos(t * 3.1 + 0.7)) * (0.65 + 0.35 * Math.sin(t * 1.6))
+        : 0.02 + Math.random() * 0.05;
+      levels.push(Math.max(0.02, Math.min(1, level + (Math.random() - 0.5) * 0.1)));
+      levels.shift();
+      strips.forEach(function (w) {
+        for (var i = 0; i < w.children.length; i++) {
+          w.children[i].style.height = Math.max(3, levels[i] * 44).toFixed(1) + 'px';
+        }
       });
-      raf = requestAnimationFrame(frame);
+      timer = setTimeout(draw, 50);
     }
-    raf = requestAnimationFrame(frame);
+    draw();
     return function () {
-      cancelAnimationFrame(raf);
-      root.querySelectorAll('.wave').forEach(function (w) { w.classList.add('resting'); });
-      bars.forEach(function (b) { b.style.transform = 'scaleY(.12)'; });
+      clearTimeout(timer);
+      strips.forEach(function (w) {
+        for (var i = 0; i < w.children.length; i++) w.children[i].style.height = '3px';
+      });
     };
   }
   function setText(root, sel, text) { root.querySelectorAll(sel).forEach(function (el) { el.textContent = text; }); }
@@ -706,6 +740,9 @@
   var lastRow = document.createElement('div'); lastRow.className = 'krow';
   ['wide', 'space', 'wide'].forEach(function (c) { var k = document.createElement('i'); k.className = c; lastRow.appendChild(k); });
   keys.appendChild(lastRow);
+  var kdone = document.createElement('span'); kdone.className = 'kdone';
+  kdone.innerHTML = '<svg><use href="#i-check"/></svg>';
+  keys.appendChild(kdone);
   ePhone.querySelector('.screen').appendChild(keys);
   var tapdot = document.createElement('span'); tapdot.className = 'tapdot'; eCard.appendChild(tapdot);
   function setWord(w) {
@@ -752,7 +789,7 @@
   waves(pStage); spinners(pStage);
   pMac.querySelectorAll('.pills span').forEach(function (s) { s.classList.toggle('on', s.textContent === 'Prompt'); });
   pMac.querySelector('.rawtext').textContent = PROMPT_RAW;
-  pMac.querySelector('.pasteback').firstChild.textContent = 'Paste into Claude ';
+  pMac.querySelector('.pasteback .who').textContent = 'Paste into Claude';
   var pResult = pMac.querySelector('.result');
   function buildBlocks() {
     var md = document.createElement('div'); md.className = 'md';
