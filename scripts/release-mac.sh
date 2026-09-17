@@ -53,7 +53,11 @@ else
     die "Set ASC_KEY_ID and ASC_ISSUER_ID (or NOTARY_PROFILE). See the header of this script."
 fi
 
-security find-identity -v -p codesigning | grep -q "Developer ID Application" \
+# Note on the here-strings below rather than pipes: `set -o pipefail` plus a `grep -q` that
+# exits on its first match sends SIGPIPE to whatever is still writing, and the pipeline then
+# reports 141 for a check that actually passed.
+identities=$(security find-identity -v -p codesigning)
+grep -q "Developer ID Application" <<<"$identities" \
     || die "No Developer ID Application certificate in the keychain.
 Xcode → Settings → Accounts → Manage Certificates → + → Developer ID Application."
 
@@ -95,11 +99,14 @@ xcodebuild -exportArchive \
 [[ -d "$app" ]] || die "Export produced no app at $app"
 
 step "Checking the signature before it goes to the notary"
-codesign -dv --verbose=4 "$app" 2>&1 | grep -E 'Authority|flags|Identifier' || true
-codesign -dv "$app" 2>&1 | grep -q 'flags=.*runtime' \
+signature=$(codesign -dv --verbose=4 "$app" 2>&1)
+grep -E 'Authority|flags|Identifier' <<<"$signature" | sed 's/^/    /' || true
+grep -q 'flags=.*runtime' <<<"$signature" \
     || die "The export is not signed with the hardened runtime; the notary will refuse it."
-codesign -dv "$app" 2>&1 | grep -q 'Developer ID Application' \
+grep -q 'Developer ID Application' <<<"$signature" \
     || die "The export is not signed with a Developer ID certificate."
+# Universal or not, say so — the notes that go with the download depend on it.
+echo "architectures: $(lipo -archs "$app/Contents/MacOS/Utterclip")"
 ents="$out/entitlements.plist"
 codesign -d --entitlements - --xml "$app" 2>/dev/null > "$ents"
 # The push entitlement has to be the production one — a Developer ID app talks to the
