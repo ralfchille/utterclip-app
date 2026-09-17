@@ -618,6 +618,9 @@ struct ContentView: View {
             viewModel.restore(HistoryEntry(rawTranscript: slack.1, styledText: slack.0, styleID: "slack"))
         case "prompt":
             viewModel.restore(HistoryEntry(rawTranscript: prompt.1, styledText: prompt.0, styleID: "prompt"))
+        case "recording":
+            viewModel.stageRecordingForScreenshot()
+            return
         case "history":
             showHistory = true
         case "settings":

@@ -21,6 +21,17 @@ public final class AudioRecorder {
 
     /// Rolling window of normalized mic levels (0…1, newest last) for the live waveform.
     public private(set) var levels: [LevelSample] = []
+
+    #if DEBUG
+    /// Shows the recording screen as it looks mid-sentence, without a microphone: the App Store
+    /// screenshots are taken in a simulator, which has no usable input. Nothing is recorded —
+    /// this only fills the three pieces of state the view reads.
+    public func stageForScreenshot(levels values: [Float], startedSecondsAgo: TimeInterval) {
+        startedAt = Date().addingTimeInterval(-startedSecondsAgo)
+        isRecording = true
+        levels = values.enumerated().map { LevelSample(id: $0.offset, value: $0.element) }
+    }
+    #endif
     private static let levelWindow = 40
     private var sampleCount = 0
     private var meterTask: Task<Void, Never>?

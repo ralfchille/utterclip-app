@@ -478,6 +478,22 @@ public final class RecorderViewModel {
         if confirmed { successHaptic() }
     }
 
+    #if DEBUG
+    /// The recording screen, staged for a screenshot: a waveform shaped like a spoken phrase
+    /// that has just tailed off, and three seconds on the clock.
+    public func stageRecordingForScreenshot() {
+        let shape: [Float] = (0..<40).map { i in
+            let x = Float(i) / 39
+            if x > 0.86 { return 0.03 }                                   // the pause just now
+            let envelope = 0.55 + 0.45 * sinf(x * 7.5)                    // syllables
+            let swell = 1 - powf((x - 0.45) * 1.7, 2) * 0.55              // louder mid-phrase
+            return max(0.06, min(1, envelope * swell))
+        }
+        recorder.stageForScreenshot(levels: shape, startedSecondsAgo: 1)  // the shot is taken ~2 s later
+        phase = .recording
+    }
+    #endif
+
     /// The tap that says an edit was taken, for when there is nothing left to apply: the pause
     /// while typing has already put this exact text on the clipboard, so `applyStyledEdit`
     /// would find no change and say nothing. Confirming should still feel like confirming.

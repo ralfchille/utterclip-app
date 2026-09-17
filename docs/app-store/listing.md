@@ -164,6 +164,15 @@ these to the smaller iPhone sizes automatically. The set in
 [`screenshots/`](screenshots/) was captured on the iPhone 17 Pro Max simulator, light mode;
 the dictations shown are sample content, not real recordings.
 
+Six of them, in the order they tell the story: idle, recording, the message, the prompt,
+history, settings. Retaking them is one command per screen rather than an afternoon —
+`SIMCTL_CHILD_UTTERCLIP_DEMO=idle|recording|slack|prompt|history|settings` puts a Debug build
+into that screen at launch, seeding a few past dictations for History and a waveform for the
+recording screen, which a simulator has no microphone to produce. Two traps: `simctl` reports
+a screenshot as written even when the simulator daemon cannot write to the destination (aim
+somewhere under `/tmp` and copy the files in), and a stale system alert survives app
+relaunches, so `simctl erase` the device before a run.
+
 Suggested order and caption (if you add caption frames later):
 
 1. `01-idle.png` — "Tap the mic, speak, tap again."
