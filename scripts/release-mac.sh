@@ -23,6 +23,11 @@
 # An app-specific password stored with `xcrun notarytool store-credentials` works just as
 # well as the key:
 #   NOTARY_PROFILE=utterclip-notary scripts/release-mac.sh
+#
+# STAPLE_ONLY=1 picks up an export that is already on disk and does nothing but notarise,
+# staple and pack it. That is the mode for a submission that came back late: the
+# notarisation ticket belongs to the signature, so the app it was submitted for is the app
+# that has to be stapled, and a rebuild would sign a new one and throw the wait away.
 
 set -euo pipefail
 
@@ -76,6 +81,11 @@ done
 Make one at developer.apple.com → Certificates, Identifiers & Profiles → Profiles → + →
 Developer ID, for com.ralfchille.voicer.mac, and double-click the download to install it."
 
+if [[ -n "${STAPLE_ONLY:-}" ]]; then
+    [[ -d "$app" ]] || die "STAPLE_ONLY, but there is no export at $app."
+    step "Using the export already on disk (no rebuild: the ticket belongs to this signature)"
+else
+
 step "Generating the project (Utterclip $version build $build)"
 mise exec tuist@4.200.5 -- tuist generate --no-open
 
@@ -97,6 +107,8 @@ xcodebuild -exportArchive \
     -exportOptionsPlist scripts/ExportOptions-DeveloperID.plist \
     | tail -20
 [[ -d "$app" ]] || die "Export produced no app at $app"
+
+fi
 
 step "Checking the signature before it goes to the notary"
 signature=$(codesign -dv --verbose=4 "$app" 2>&1)
@@ -125,12 +137,30 @@ for CloudKit's change notifications and never hear about a new dictation from th
 [[ -f "$app/Contents/embedded.provisionprofile" ]] \
     || die "No embedded.provisionprofile in the export: CloudKit would fail on any other Mac."
 
-step "Notarising (a few minutes)"
-ditto -c -k --keepParent "$app" "$zip"
-xcrun notarytool submit "$zip" "${notary_args[@]}" --wait
+# A ticket that already exists is the whole point of STAPLE_ONLY: a submission that came
+# back after the run that made it was abandoned. Stapling asks Apple for the ticket by the
+# signature's hash, so if one is waiting there is nothing left to submit.
+stapled=no
+if [[ -n "${STAPLE_ONLY:-}" ]]; then
+    step "Asking whether a ticket for this signature already exists"
+    if xcrun stapler staple "$app"; then
+        stapled=yes
+    else
+        echo "No ticket yet; submitting."
+    fi
+fi
 
-step "Stapling"
-xcrun stapler staple "$app"
+if [[ "$stapled" == no ]]; then
+    step "Notarising (a few minutes)"
+    rm -f "$zip"
+    ditto -c -k --keepParent "$app" "$zip"
+    xcrun notarytool submit "$zip" "${notary_args[@]}" --wait
+
+    step "Stapling"
+    xcrun stapler staple "$app"
+fi
+
+step "Validating the staple"
 xcrun stapler validate "$app"
 
 step "What Gatekeeper sees"
