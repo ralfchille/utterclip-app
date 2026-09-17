@@ -272,6 +272,16 @@
   .p-model .sheet { top:16px; }
   .p-model .row + .row { margin-top:14px; padding-top:14px; border-top:1px solid var(--rule); }
   .p-model .mini-pills { margin-top:8px; }
+  /* The selection is not a colour the pills take turns wearing — two pills mid-fade are both
+     dark, which is the flicker. It is one dark copy of the whole row, clipped to the pill it
+     is on: outside the clip nothing paints, so only ever one pill is dark, and moving it is a
+     single eased property. */
+  .p-model .seg { position:relative; }
+  .p-model .seg-on { position:absolute; left:0; top:0; width:100%; background:var(--ink); pointer-events:none; will-change:clip-path; transition:clip-path .55s cubic-bezier(.32,.72,.24,1); }
+  .p-model .seg-on span { background:transparent; color:var(--paper); transition:opacity .22s ease .3s; }
+  /* Crossing the gap between two pills, the clip shows the halves of both labels it covers.
+     The label goes with the pill it belongs to: out as the selection leaves, back as it lands. */
+  .p-model .seg-on.moving span { opacity:0; transition-duration:.12s; transition-delay:0s; }
   .p-model .mini-pills span { height:26px; padding:0 11px; font-size:11.5px; }
   .p-model .key { margin-top:8px; display:flex; align-items:center; gap:10px; height:34px; padding:0 12px; border-radius:10px; background:var(--fill); font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.02em; }
   .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; }
@@ -774,8 +784,34 @@
       setTimeout(step, wait);
     })(); else extra.textContent = add;
     // model: the choice moves along the providers
-    var provs = document.querySelectorAll('.p-model .mini-pills span'), pi = 1;
-    if (!reduced) setInterval(function () { provs[pi].classList.remove('on'); pi = (pi + 1) % provs.length; provs[pi].classList.add('on'); }, 1700);
+    var seg = document.querySelector('.p-model .mini-pills');
+    var provs = [].slice.call(seg.children), pi = 1;
+    var canClip = window.CSS && CSS.supports && CSS.supports('clip-path', 'inset(1px 1px 1px 1px round 1px)');
+    if (canClip) {
+      seg.classList.add('seg');
+      var on = seg.cloneNode(true);
+      on.className = 'mini-pills seg-on';
+      on.setAttribute('aria-hidden', 'true');
+      [].forEach.call(on.children, function (s) { s.classList.remove('on'); });
+      provs.forEach(function (s) { s.classList.remove('on'); });   // the layer marks the choice now
+      seg.appendChild(on);
+      var settleText;
+      var clipTo = function (el, moving) {
+        on.style.clipPath = 'inset(' + el.offsetTop + 'px ' + (seg.offsetWidth - el.offsetLeft - el.offsetWidth) + 'px '
+          + (seg.offsetHeight - el.offsetTop - el.offsetHeight) + 'px ' + el.offsetLeft + 'px round ' + (el.offsetHeight / 2) + 'px)';
+        if (!moving) return;
+        on.classList.add('moving');
+        clearTimeout(settleText);
+        settleText = setTimeout(function () { on.classList.remove('moving'); }, 400);
+      };
+      var settle = function () { on.style.transition = 'none'; clipTo(provs[pi]); void on.offsetHeight; on.style.transition = ''; };
+      settle();
+      document.fonts && document.fonts.ready.then(settle);       // the pills move when the real face arrives
+      window.addEventListener('resize', settle);
+      if (!reduced) setInterval(function () { pi = (pi + 1) % provs.length; clipTo(provs[pi], true); }, 2400);
+    } else if (!reduced) {
+      setInterval(function () { provs[pi].classList.remove('on'); pi = (pi + 1) % provs.length; provs[pi].classList.add('on'); }, 2400);
+    }
     // history: a new dictation arrives on top, the oldest leaves
     var items = [
       ['09:41', 'Running about 10 minutes late to standup. Go ahead and…'],
