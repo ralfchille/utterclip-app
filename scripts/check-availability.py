@@ -6,9 +6,13 @@ it isn't.
 Worth having because the storefronts and the setting disagree in a way that is easy to
 misread: a territory can be selected for sale and still not be buyable. On 2026-09-18 every
 one of the 27 EU territories came back available=true with the status
-TRADER_STATUS_NOT_PROVIDED, which is Apple withholding the EU until the trader details are on
-the account — nothing to do with the app, and not fixed by shipping a new version. Checking a
-storefront by hand shows only that Germany is missing; this says what is holding it.
+TRADER_STATUS_NOT_PROVIDED, while App Store Connect's own Compliance row read "Digital
+Services Act · 27 Countries or Regions · In Review". Both were true: the trader details had
+been submitted the day before and Apple had not finished verifying them, and until it does the
+EU stays withheld. So read this status as "no accepted trader status yet", not as "you forgot
+to fill the form" — nothing to do with the app, and not fixed by shipping a new version.
+Checking a storefront by hand shows only that Germany is missing; this says what is holding
+it.
 
 The same key the release scripts use, with App Manager access, is enough. It is read-only
 here, and the key is read from ~/.appstoreconnect/private_keys — never from the repository.
