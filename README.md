@@ -354,10 +354,11 @@ The Mac app is **not on the Mac App Store** — see the note below on why — so
 the other way Apple provides for: signed with a Developer ID and notarised, which is what lets
 macOS open it without a warning.
 
-1. Download `Utterclip-1.1.zip` from the
-   [latest release](https://github.com/ralfchille/utterclip-app/releases/latest).
-2. Unzip it and drag **Utterclip** into `/Applications`.
-3. Open it. The Utterclip mark appears in the menu bar; there is no Dock icon.
+1. **[Download Utterclip.dmg](https://github.com/ralfchille/utterclip-app/releases/latest/download/Utterclip.dmg)**
+   — always the newest release. (A `.zip` of the same app is on the
+   [release page](https://github.com/ralfchille/utterclip-app/releases/latest) if you prefer one.)
+2. Open it and drag **Utterclip** onto the **Applications** folder beside it.
+3. Launch it. The Utterclip mark appears in the menu bar; there is no Dock icon.
 4. The first time you use the global shortcut, macOS asks for **Accessibility** — that is the
    permission that lets Utterclip see which text field you were typing in and paste the result
    back. Everything else works without it.
