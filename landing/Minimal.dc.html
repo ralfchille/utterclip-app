@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utterclip — Speak the message. Paste the message.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+  :root { --ink:#0B0B0B; --paper:#FBFBFA; --rule:#E4E4E1; --fill:#F2F2F0; --card:#F6F6F4; --mute:#6B6B6B; --faint:#9C9C9A; --white:#FFFFFF; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:var(--paper); color:var(--ink); }
+  body { font-family:"Schibsted Grotesk", -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing:antialiased; font-size:17px; line-height:1.4; }
+  a { color:inherit; text-decoration:none; }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  .mono { font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:0; text-transform:uppercase; }
+  body { overflow-x:clip; }
+  .page { width:100%; max-width:1440px; margin:0 auto; padding:0 clamp(16px, calc(11vw - 40px), 120px) 88px; }
+  /* Every animated stage is drawn at a fixed size and scaled to the width it gets, so the
+     choreography is the same on a phone as on the canvas. The frame keeps the scaled height. */
+  .frame { position:relative; width:100%; aspect-ratio:600 / 820; }
+  .frame > * { position:absolute; left:0; top:0; transform-origin:top left; }
+  .frame.tall { aspect-ratio:600 / 880; }
+  .frame.wide { aspect-ratio:1200 / 780; margin-top:24px; }
+  .frame.wide.stack { aspect-ratio:400 / 1320; }
+  /* alternate sections sit on a full-width grey band */
+  .band { position:relative; padding-bottom:96px; }
+  .band::before { content:""; position:absolute; top:0; bottom:0; left:50%; width:100vw; transform:translateX(-50%); background:#F4F4F2; z-index:-1; }
+
+  /* ---- nav ---- */
+  .nav { display:flex; align-items:center; gap:21px; padding:22px 0 0; }
+  .nav img { display:block; width:39px; height:39px; border-radius:9px; box-shadow:0 6px 18px rgba(0,0,0,.15); }
+  .wordmark { font-size:30px; font-weight:600; }
+  .nav .links { margin-left:auto; display:flex; gap:28px; font-size:15px; }
+
+  /* ---- hero ---- */
+  .hero { display:grid; grid-template-columns: 560px 1fr; gap:40px; align-items:center; min-height:900px; padding-top:40px; }
+  h1 { margin:0; font-size:60px; line-height:1.02; font-weight:600; letter-spacing:-0.03em; }
+  .lead { margin:22px 0 0; font-size:19px; line-height:1.5; color:var(--mute); max-width:530px; }
+  .switch { display:inline-flex; margin-top:44px; padding:3px; border-radius:999px; background:var(--fill); position:relative; }
+  .switch button { position:relative; z-index:1; width:96px; height:38px; border-radius:999px; font-size:15px; font-weight:500; color:var(--mute); transition:color .35s ease; }
+  .switch button[aria-pressed="true"] { color:var(--paper); }
+  .switch .thumb { position:absolute; top:3px; left:3px; width:96px; height:38px; border-radius:999px; background:var(--ink); transition:transform .45s cubic-bezier(.3,.7,.15,1); }
+  .hero[data-device="mac"] .switch .thumb { transform:translateX(96px); }
+  .steps { display:flex; gap:28px; margin-top:44px; color:var(--mute); }
+  .steps span { position:relative; padding-left:14px; transition:color .5s ease; }
+  .steps span::before { content:""; position:absolute; left:0; top:6px; width:6px; height:6px; border-radius:50%; background:var(--rule); transition:background .5s ease, transform .5s cubic-bezier(.34,1.3,.64,1); }
+  .hero[data-step="1"] .steps span:nth-child(1),
+  .hero[data-step="2"] .steps span:nth-child(2), .hero[data-step="3"] .steps span:nth-child(3), .hero[data-step="4"] .steps span:nth-child(4) { color:var(--ink); }
+  .hero[data-step="1"] .steps span:nth-child(1)::before, .hero[data-step="2"] .steps span:nth-child(2)::before,
+  .hero[data-step="3"] .steps span:nth-child(3)::before, .hero[data-step="4"] .steps span:nth-child(4)::before { background:var(--ink); transform:scale(1.25); }
+  .cta { display:inline-flex; align-items:center; gap:10px; height:52px; padding:0 22px; border-radius:12px; background:var(--ink); color:var(--paper); font-size:16px; font-weight:500; }
+  .cta svg { width:17px; height:17px; }
+  .cta.quiet { background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--ink); }
+  .cta.soon { background:var(--fill); color:var(--mute); cursor:default; }
+  .cta .sub { font-weight:400; color:inherit; opacity:.7; margin-left:2px; }
+  .ctarow { display:flex; align-items:center; gap:12px; margin-top:64px; flex-wrap:wrap; }
+  .ctarow .mono { margin-left:10px; }
+  .ctarow .mono { color:var(--mute); }
+
+  /* ---- stage ---- */
+  .stage { width:600px; height:820px; }
+  .device { position:absolute; left:50%; top:50%; transition:transform 1s cubic-bezier(.3,.7,.15,1), opacity .5s ease; }
+  .stage .phone { transform:translate(-50%,-50%) scale(.86); }
+  .stage .mac { transform:translate(-50%,-50%) scale(1.05); }
+  .hero[data-device="ios"] .mac, .hero[data-device="mac"] .phone { opacity:0; pointer-events:none; }
+  .stage[data-phase="paste"] .phone { transform:translate(-50%,-50%) translateX(-140px) scale(.86); }
+  .stage[data-phase="paste"] .mac { transform:translate(-50%,-50%) translateX(-140px) scale(1.05); }
+
+  /* the message field the text is pasted into */
+  /* It arrives where it will stay: a window that slides as it fades reads as a jump, and
+     there is nothing for the movement to say. Only the text inside it changes. */
+  .composer { position:absolute; left:50%; top:50%; width:270px; transform:translate(45px,-50%); opacity:0; transition:opacity .45s ease; }
+  .stage[data-phase="paste"] .composer { opacity:1; transition-delay:.35s; }
+  .composer .to { font-size:13px; color:var(--mute); margin:0 0 10px 2px; }
+  /* A fixed height, not a minimum: the text landing must not change the box, or the window
+     re-centres and jumps up by the difference. An empty composer has room in it anyway. */
+  .composer .field { height:152px; border:1px solid var(--rule); border-radius:14px; background:var(--white); padding:14px 16px 44px; font-size:15px; line-height:1.45; position:relative; }
+  .composer .ph { color:var(--faint); }
+  .composer .txt { display:none; border-radius:4px; }
+  .stage.pasted .composer .ph { display:none; }
+  .stage.pasted .composer .txt { display:inline; animation:flash 1.4s ease-out; }
+  @keyframes flash { 0% { background:rgba(11,11,11,.16); } 100% { background:transparent; } }
+  .composer .send { position:absolute; right:10px; bottom:10px; width:30px; height:30px; border-radius:8px; background:var(--fill); display:grid; place-items:center; transition:background .5s ease, color .5s ease; }
+  .stage.pasted .composer .send { background:var(--ink); color:var(--paper); }
+  .composer .send svg { width:13px; height:13px; }
+
+  /* ---- iPhone ---- */
+  .phone { width:390px; height:844px; border-radius:58px; background:#0B0B0B; padding:12px; box-shadow:0 30px 60px rgba(11,11,11,.16); }
+  .phone .screen { position:relative; width:100%; height:100%; border-radius:46px; background:var(--paper); overflow:hidden; }
+  .phone .island { position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:20px; background:#0B0B0B; }
+  .phone .statusbar { display:flex; justify-content:space-between; padding:20px 30px 0 36px; font-size:17px; font-weight:600; }
+  .phone .statusbar svg { width:66px; height:14px; }
+  .ios-nav { display:flex; align-items:center; justify-content:space-between; padding:26px 16px 0; }
+  .ios-nav .title { font-size:17px; font-weight:600; }
+  .circ { width:44px; height:44px; border-radius:50%; background:var(--white); box-shadow:0 1px 4px rgba(0,0,0,.08), 0 6px 16px rgba(0,0,0,.06); display:grid; place-items:center; }
+  .circ svg, .mac-icons svg { width:20px; height:20px; }
+  .body { position:absolute; left:0; right:0; top:126px; bottom:236px; padding:0 16px; }
+  .mac .body { top:56px; bottom:112px; }
+  .hint { position:absolute; left:16px; right:16px; bottom:24px; text-align:center; color:var(--mute); font-size:17px; line-height:1.45; }
+  .mac .hint { font-size:13px; bottom:14px; }
+  /* ContentView.recordingIndicator: VStack(spacing: 24), padding(.top, 60). */
+  .rec { position:absolute; left:0; right:0; top:60px; display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .reclabel { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:600; color:var(--mute); }
+  .mac .reclabel { font-size:11px; }
+  .reclabel svg { width:17px; height:13px; }
+  .reclabel path { stroke:currentColor; stroke-width:2; stroke-linecap:round; fill:none; animation:wv 1.3s linear infinite; }
+  .reclabel path:nth-child(2) { animation-delay:.12s; } .reclabel path:nth-child(3) { animation-delay:.24s; }
+  .reclabel path:nth-child(4) { animation-delay:.36s; } .reclabel path:nth-child(5) { animation-delay:.48s; }
+  @keyframes wv { 0%, 70%, 100% { opacity:.35; } 20% { opacity:1; } }
+  /* .system(size: 64, weight: .light, design: .rounded).monospacedDigit() — ui-rounded is
+     SF Rounded itself on Apple hardware, which is most of the people this page is for. */
+  .timer { font-family:ui-rounded, "SF Pro Rounded", "Schibsted Grotesk", sans-serif; font-size:64px; font-weight:300; font-variant-numeric:tabular-nums; letter-spacing:normal; line-height:1.1; }
+  /* WaveformView: one capsule per mic sample, 3 pt wide, 3 pt apart, up to 44 tall, the
+     newest at the right edge — quiet samples stay dots. */
+  .wave { display:flex; justify-content:flex-end; align-items:center; gap:3px; width:240px; height:44px; overflow:hidden; }
+  .wave i { display:block; flex:none; width:3px; height:3px; border-radius:1.5px; background:var(--ink); }
+  .busy { position:absolute; left:0; right:0; top:44%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:16px; color:var(--mute); font-size:17px; }
+  .mac .busy { font-size:13px; gap:10px; }
+  .spin { position:relative; width:30px; height:30px; }
+  .spin i { position:absolute; left:50%; top:0; width:3px; height:8.5px; margin-left:-1.5px; border-radius:1.5px; background:var(--ink); transform-origin:50% 15px; opacity:.22; animation:spoke .85s linear infinite; }
+  .mac .spin { width:22px; height:22px; }
+  .mac .spin i { width:2.2px; height:6.2px; margin-left:-1.1px; transform-origin:50% 11px; }
+  @keyframes spoke { 0% { opacity:.95; } 100% { opacity:.18; } }
+  .card { border-radius:16px; background:var(--card); padding:16px; box-shadow:0 1px 0 rgba(0,0,0,.03), 0 10px 30px rgba(0,0,0,.05); }
+  .lbl { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--mute); height:14px; }
+  .lbl .ico { position:relative; width:14px; height:14px; flex:none; }
+  .lbl .ico svg { position:absolute; left:0; top:0; width:100%; height:100%; opacity:0; transition:opacity .3s ease; }
+  .lbl .ico .ic-clip { opacity:1; }
+  .result { margin-top:14px; font-size:24px; line-height:34px; min-height:34px; }
+  .mac .result { font-size:16px; line-height:24px; min-height:24px; }
+  .raw { margin-top:20px; padding:0 16px; }
+  .rawhead { display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:600; color:var(--mute); }
+  .rawhead .copyraw { display:inline-flex; align-items:center; gap:6px; font-weight:500; color:var(--ink); }
+  .mac .rawhead .copyraw { padding:6px 12px; border-radius:10px; background:var(--fill); font-size:12px; }
+  .rawhead svg { width:14px; height:14px; }
+  .rawtext { margin-top:8px; font-size:15px; line-height:1.4; color:var(--faint); }
+  .mac .rawtext { font-size:11.5px; }
+  .pills { position:absolute; left:16px; right:0; display:flex; gap:12px; overflow:hidden; white-space:nowrap; }
+  .phone .pills { bottom:154px; }
+  .pills span { flex:none; height:44px; padding:0 20px; border-radius:22px; background:var(--fill); font-size:17px; font-weight:500; display:inline-flex; align-items:center; }
+  .pills span.on { background:var(--ink); color:var(--paper); }
+  .controls { position:absolute; left:0; right:0; display:flex; justify-content:center; align-items:center; }
+  .phone .controls { bottom:24px; height:100px; }
+  .record { position:relative; width:84px; height:84px; border-radius:50%; background:var(--white); box-shadow:0 2px 6px rgba(0,0,0,.06), 0 12px 28px rgba(0,0,0,.08); display:grid; place-items:center; }
+  .record svg.mic { width:28px; height:28px; transition:opacity .3s; }
+  .record .stop { position:absolute; width:26px; height:26px; border-radius:7px; background:var(--paper); opacity:0; transform:scale(.6); transition:opacity .3s ease, transform .45s cubic-bezier(.34,1.4,.64,1); }
+  .sat { position:absolute; left:50%; margin-left:80px; transform:translateX(-50%) scale(.85); width:56px; height:56px; border-radius:50%; background:var(--white); box-shadow:0 2px 6px rgba(0,0,0,.06), 0 10px 24px rgba(0,0,0,.07); display:grid; place-items:center; opacity:0; transition:opacity .5s ease, transform .6s cubic-bezier(.34,1.3,.64,1); }
+  .sat svg { width:20px; height:20px; }
+
+  /* ---- Mac ---- */
+  .mac { width:340px; }
+  .menubar { display:none; }
+  .stagebar { position:absolute; left:-40px; right:-40px; top:88px; height:24px; display:flex; justify-content:center; align-items:center; border-bottom:1px solid var(--rule); background:rgba(255,255,255,.6); opacity:0; transition:opacity .5s ease; }
+  .stagebar img { display:block; width:17px; height:18px; }
+  .hero[data-device="mac"] .stagebar { opacity:1; }
+  .win { position:relative; height:560px; border-radius:20px; background:var(--white); box-shadow:0 0 0 1px rgba(0,0,0,.06), 0 24px 56px rgba(11,11,11,.16); overflow:hidden; }
+  .mac-head { display:flex; align-items:center; padding:12px 16px 0 20px; height:44px; }
+  .mac-title { font-size:13px; font-weight:600; }
+  .mac-icons { margin-left:auto; display:flex; gap:10px; }
+  .mac-icons span { width:30px; height:30px; display:grid; place-items:center; }
+  .mac-icons svg { width:14px; height:14px; }
+  .mac .card { border-radius:16px; padding:12px 16px 14px; }
+  .mac .lbl { font-size:11px; }
+  .mac .lbl .ico { width:11px; height:11px; }
+  .mac .result { margin-top:8px; }
+  .mac .raw { margin-top:16px; }
+  .mac .rawhead { font-size:11px; }
+  .mac .pills { bottom:82px; gap:8px; }
+  .mac .pills span { height:30px; padding:0 14px; border-radius:15px; font-size:12px; }
+  .mac .controls { bottom:12px; height:64px; }
+  .mac .record { width:56px; height:56px; box-shadow:0 1px 4px rgba(0,0,0,.05), 0 8px 20px rgba(0,0,0,.07); }
+  .mac .record svg.mic { width:20px; height:20px; }
+  .mac .record .stop { width:18px; height:18px; border-radius:5px; }
+  .mac .sat { width:38px; height:38px; margin-left:54px; }
+  .mac .sat svg { width:14px; height:14px; }
+  /* PasteBackBar: one full-width capsule under the record button — the return glyph 14 pt in,
+     the label medium, and the ✕ its own target at the trailing edge. */
+  .pasteback { position:absolute; left:16px; right:16px; bottom:20px; display:flex; align-items:center; gap:8px;
+    height:34px; padding:0 8px 0 14px; border-radius:17px; background:var(--ink); color:var(--paper);
+    font-size:13px; font-weight:500; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.12);
+    opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
+  .pasteback .ret { display:grid; place-items:center; width:13px; height:13px; flex:none; }
+  .pasteback .ret svg { width:13px; height:13px; }
+  .pasteback .who { overflow:hidden; text-overflow:ellipsis; }
+  .pasteback .x { margin-left:auto; display:grid; place-items:center; width:24px; height:24px; flex:none; opacity:.6; }
+  .pasteback .x svg { width:10px; height:10px; }
+  /* the button moves up to make room, the way the stack does in the app */
+  .mac .controls { transition:bottom .5s cubic-bezier(.2,.7,.2,1); }
+  .stage[data-phase="paste"] .mac .controls, .stage[data-phase="copied"] .mac .controls { bottom:70px; }
+  .stage[data-phase="paste"] .mac .pasteback, .stage[data-phase="copied"] .mac .pasteback { opacity:1; transform:none; }
+  .stage[data-phase="paste"] .mac .pills, .stage[data-phase="copied"] .mac .pills { opacity:0; }
+  .mac .pills { transition:opacity .45s ease; }
+
+  /* ---- state machine (shared by both devices) ---- */
+  .hint, .rec, .busy, .card, .raw { opacity:0; transition:opacity .55s cubic-bezier(.2,.7,.2,1); }
+  .busy { transform:translateY(-50%) translateY(8px); transition:opacity .55s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .rec { transform:translateY(8px); transition:opacity .3s cubic-bezier(.2,.7,.2,1), transform .5s cubic-bezier(.2,.7,.2,1); }
+  [data-phase="transcribing"] .busy, [data-phase="p-busy"] .busy { transition-delay:.22s; }
+  .card, .raw { transform:translateY(10px); transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .raw { transition-delay:.12s; }
+  [data-phase="idle"] .hint { opacity:1; }
+  [data-phase="recording"] .rec, [data-phase="p-record"] .rec { opacity:1; transform:none; }
+  [data-phase="recording"] .record, [data-phase="p-record"] .record { background:var(--ink); }
+  [data-phase="recording"] .record svg, [data-phase="p-record"] .record svg { opacity:0; }
+  [data-phase="recording"] .record .stop, [data-phase="p-record"] .record .stop { opacity:1; transform:scale(1); }
+  [data-phase="transcribing"] .busy, [data-phase="p-busy"] .busy { opacity:1; transform:translateY(-50%); }
+  [data-phase="transcribing"] .record, [data-phase="p-busy"] .record { opacity:.45; }
+  .record { transition:background .45s ease, opacity .45s ease; }
+  [data-phase="writing"] .card, [data-phase="writing"] .raw, [data-phase="copied"] .card, [data-phase="copied"] .raw, [data-phase="paste"] .card, [data-phase="paste"] .raw,
+  [data-phase="p-writing"] .card, [data-phase="p-writing"] .raw, [data-phase="p-copied"] .card, [data-phase="p-copied"] .raw,
+  [data-phase="syncing"] .card, [data-phase="syncing"] .raw, [data-phase="capsule"] .card, [data-phase="capsule"] .raw, [data-phase="landed"] .card, [data-phase="landed"] .raw { opacity:1; transform:none; }
+  [data-phase="copied"] .sat, [data-phase="paste"] .sat, [data-phase="p-copied"] .sat, [data-phase="syncing"] .sat, [data-phase="capsule"] .sat, [data-phase="landed"] .sat { opacity:1; transform:translateX(-50%) scale(1); }
+  .lbl .writing, .lbl .copied { display:none; }
+  [data-phase="writing"] .lbl .writing, [data-phase="p-writing"] .lbl .writing { display:inline; }
+  [data-phase="copied"] .lbl .copied, [data-phase="paste"] .lbl .copied, [data-phase="p-copied"] .lbl .copied, [data-phase="syncing"] .lbl .copied, [data-phase="capsule"] .lbl .copied, [data-phase="click"] .lbl .copied, [data-phase="landed"] .lbl .copied { display:inline; }
+  [data-phase="writing"] .ico .ic-clip, [data-phase="p-writing"] .ico .ic-clip, [data-phase="e-type"] .ico .ic-clip { opacity:0; }
+  [data-phase="writing"] .ico .ic-pen, [data-phase="p-writing"] .ico .ic-pen, [data-phase="e-type"] .ico .ic-pen { opacity:1; }
+  /* the app shows a checkmark for the moment it lands, and settles back to the clipboard after 1.8 s */
+  [data-phase="copied"] .ico .ic-clip, [data-phase="p-copied"] .ico .ic-clip, [data-phase="e-done"] .ico .ic-clip { opacity:0; }
+  [data-phase="copied"] .ico .ic-check, [data-phase="p-copied"] .ico .ic-check, [data-phase="e-done"] .ico .ic-check { opacity:1; }
+  .card.pop { animation:pop .6s cubic-bezier(.2,.7,.2,1); }
+  @keyframes pop { 0% { transform:scale(1); } 40% { transform:scale(1.01); } 100% { transform:scale(1); } }
+
+  /* ---- editing in place ---- */
+  .edit { display:grid; grid-template-columns:560px 1fr; gap:40px; align-items:center; min-height:960px; padding-top:60px; }
+  .edit h2, .sync h2 { margin:0 0 8px; font-size:44px; line-height:1.08; font-weight:600; letter-spacing:-0.025em; }
+  .edit .sub, .sync .sub { margin:0; color:var(--mute); font-size:17px; }
+  .editstage { width:600px; height:880px; }
+  .editstage .phone { transform:translate(-50%,-50%) scale(.94); }
+  .editstage .hint, .editstage .rec, .editstage .busy { display:none; }
+  .editstage .card, .editstage .raw { opacity:1; transform:none; }
+  .editstage .sat { opacity:1; transform:translateX(-50%) scale(1); }
+  .editstage .lbl .copied { display:inline; }
+  .editstage[data-phase="e-type"] .lbl .copied { display:none; }
+  .editstage[data-phase="e-done"] .lbl .copied { display:inline; }
+  .editstage[data-phase="e-type"] .lbl .writing { display:inline; }
+  .caret { display:inline-block; width:2px; height:26px; background:#0A84FF; vertical-align:-5px; margin-left:1px; border-radius:1px; opacity:0; }
+  .editstage[data-phase="e-edit"] .caret, .editstage[data-phase="e-type"] .caret, .editstage[data-phase="e-done"] .caret { opacity:1; animation:blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .pills { transition:opacity .45s ease, transform .5s cubic-bezier(.2,.7,.2,1); }
+  .editstage[data-phase="e-edit"] .pills, .editstage[data-phase="e-type"] .pills, .editstage[data-phase="e-done"] .pills { opacity:0; transform:translateY(8px); }
+  .editstage[data-phase="e-edit"] .sat, .editstage[data-phase="e-type"] .sat, .editstage[data-phase="e-done"] .sat { opacity:0; transform:translateX(-50%) scale(.85); }
+  /* On the phone the keyboard takes the bottom of the screen while the text is edited —
+     there is no confirm button to press, which is the point: it copies as you type. */
+  .keys { position:absolute; left:0; right:0; bottom:0; height:224px; background:#D3D4DA; padding:10px 3px 28px;
+    display:flex; flex-direction:column; justify-content:space-between; transform:translateY(100%); transition:transform .5s cubic-bezier(.2,.7,.2,1); }
+  .keys .krow { display:flex; justify-content:center; gap:6px; }
+  .keys i { display:block; height:42px; width:30px; border-radius:5px; background:#FCFCFD; box-shadow:0 1px 0 rgba(0,0,0,.28); }
+  .keys i.wide { width:46px; background:#AFB3BC; box-shadow:none; }
+  .keys i.space { width:170px; }
+  .editstage[data-phase="e-tap"] .keys, .editstage[data-phase="e-edit"] .keys, .editstage[data-phase="e-type"] .keys, .editstage[data-phase="e-done"] .keys { transform:translateY(0); }
+  .editstage[data-phase="e-edit"] .kdone, .editstage[data-phase="e-type"] .kdone, .editstage[data-phase="e-done"] .kdone { opacity:1; }
+  /* The phone's way to finish: one round button floating over the keyboard, right-aligned —
+     48 pt across, 14 pt clear of the keys, 16 pt in from the edge, as the app builds it. */
+  /* It belongs to the keyboard: with the keys down it would otherwise float over an empty screen. */
+  .kdone { position:absolute; right:16px; top:-62px; width:48px; height:48px; border-radius:50%; background:var(--ink); color:var(--paper); display:grid; place-items:center; box-shadow:0 3px 10px rgba(0,0,0,.18); opacity:0; transition:opacity .25s ease; }
+  .kdone svg { width:18px; height:18px; }
+  .editstage[data-phase="e-done"] .kdone { animation:press .5s cubic-bezier(.2,.7,.2,1); }
+  @keyframes press { 30% { transform:scale(.88); } 100% { transform:scale(1); } }
+  .tapdot { position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid var(--ink); opacity:0; pointer-events:none; }
+  .editstage[data-phase="e-tap"] .tapdot { animation:ripple .75s ease-out; }
+  .editstage .card { position:relative; }
+
+  /* ---- the prompt style ---- */
+  .prompt { display:grid; grid-template-columns:560px 1fr; gap:40px; align-items:center; min-height:960px; padding-top:40px; }
+  .prompt h2 { margin:0 0 8px; font-size:44px; line-height:1.08; font-weight:600; letter-spacing:-0.025em; }
+  .prompt .sub { margin:0; color:var(--mute); font-size:17px; max-width:480px; }
+  .promptstage .stagebar { opacity:1; }
+  .promptstage .raw { display:none; }
+  .promptstage .mac .card { padding-bottom:16px; }
+  .md > * { opacity:0; transform:translateY(6px); transition:opacity .55s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+  .md > .show { opacity:1; transform:none; }
+  .md h4 { margin:0; font-size:17px; font-weight:600; line-height:24px; }
+  .md ul { margin:0; padding-left:16px; }
+  .md li { line-height:24px; }
+  .md ul + h4 { margin-top:24px; }
+  /* The prompt is longer than a message, so its composer is taller — a fixed height again,
+     with room for the whole thing, so nothing reflows when it lands. */
+  .promptstage .composer .field { height:296px; white-space:pre-line; font-size:13px; line-height:1.5; }
+
+  /* ---- make it yours: three small live panels ---- */
+  .yours { padding-top:120px; }
+  .yours h2 { margin:0; font-size:44px; line-height:1.08; font-weight:600; letter-spacing:-0.025em; }
+  .trio { display:grid; grid-template-columns:repeat(3, 1fr); gap:40px; margin-top:52px; }
+  .trio .frame.mini { aspect-ratio:340 / 300; max-width:340px; }
+  .trio .mono { color:var(--mute); margin-top:24px; }
+  .trio p { margin:8px 0 0; font-size:17px; line-height:1.45; max-width:340px; }
+  /* Each panel centres what it holds, so the three read as one row however tall they are. */
+  .panel { width:340px; height:300px; display:flex; flex-direction:column; justify-content:center; }
+  .sheet { background:var(--white); border-radius:16px; box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 30px rgba(0,0,0,.06); padding:16px; }
+  .sheet .head { font-size:13px; font-weight:600; }
+  .sheet .lab { font-size:11px; color:var(--mute); margin-top:14px; }
+  .mini-pills { display:flex; gap:8px; flex-wrap:wrap; }
+  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .45s ease, color .45s ease; }
+  .mini-pills span.on { background:var(--ink); color:var(--paper); }
+  .mini-pills span.add { background:transparent; box-shadow:inset 0 0 0 1.5px var(--rule); color:var(--mute); }
+  .p-styles .mini-pills { flex-wrap:nowrap; margin-bottom:14px; }
+  .p-styles .inst { margin-top:6px; font-size:13px; line-height:1.55; min-height:82px; }
+  .p-styles .caret { height:14px; vertical-align:-2px; opacity:1; animation:blink 1.1s steps(1) infinite; }
+  .p-model .row + .row { margin-top:14px; padding-top:14px; border-top:1px solid var(--rule); }
+  .p-model .mini-pills { margin-top:8px; }
+  /* The selection is not a colour the pills take turns wearing — two pills mid-fade are both
+     dark, which is the flicker. It is one dark copy of the whole row, clipped to the pill it
+     is on: outside the clip nothing paints, so only ever one pill is dark, and moving it is a
+     single eased property. */
+  .p-model .seg { position:relative; }
+  /* margin:0 — the row it is cloned from carries a top margin, and an absolutely positioned
+     box still takes its margins, which sat the selection 8 px below the pill it marks. */
+  .p-model .seg-on { position:absolute; left:0; top:0; margin:0; width:100%; background:var(--ink); pointer-events:none; will-change:clip-path; transition:clip-path .55s cubic-bezier(.32,.72,.24,1); }
+  .p-model .seg-on span { background:transparent; color:var(--paper); transition:opacity .22s ease .3s; }
+  /* Crossing the gap between two pills, the clip shows the halves of both labels it covers.
+     The label goes with the pill it belongs to: out as the selection leaves, back as it lands. */
+  .p-model .seg-on.moving span { opacity:0; transition-duration:.12s; transition-delay:0s; }
+  .p-model .mini-pills span { height:26px; padding:0 11px; font-size:11.5px; }
+  .p-model .key { margin-top:8px; display:flex; align-items:center; gap:10px; height:34px; padding:0 12px; border-radius:10px; background:var(--fill); font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.02em; }
+  .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; }
+  .p-model .kept { margin-top:8px; font-size:11px; color:var(--mute); }
+  .p-history .sheet { padding-bottom:8px; }
+  /* Four rows tall and clipped, so the list cannot grow however long the page stays open;
+     the rows themselves never animate — the track they sit on does. */
+  .p-history .rows { margin-top:8px; height:152px; overflow:hidden;
+    -webkit-mask-image:linear-gradient(#000 calc(100% - 20px), transparent);
+    mask-image:linear-gradient(#000 calc(100% - 20px), transparent); }
+  .p-history .track { will-change:transform; }
+  .p-history .row { display:flex; gap:12px; align-items:center; height:38px; border-top:1px solid var(--rule); font-size:13px; line-height:1.35; }
+  .p-history .row .when { flex:none; width:64px; font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:11px; color:var(--mute); }
+  .p-history .row .what { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  @media (max-width: 900px) { .trio { grid-template-columns:1fr; gap:44px; } }
+
+  /* ---- sync scene ---- */
+  .sync { padding-top:120px; }
+  .scene { width:1200px; height:780px; }
+  .frame.stack > .scene { width:400px; height:1320px; }
+  .scene .pair { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; gap:24px; }
+  .frame.stack .pair { flex-direction:column; gap:20px; }
+  .scene .slot { position:relative; }
+  .scene .slot-phone { width:281px; height:608px; }
+  .scene .slot-mac { width:360px; height:594px; }
+  .scene .phone { position:absolute; left:0; top:0; transform:scale(.72); transform-origin:top left; }
+  .scene .mac { position:absolute; left:0; top:0; transform:scale(1.06); transform-origin:top left; }
+  .scene .mac .win .body, .scene .mac .pills, .scene .mac .controls { transition:opacity .3s; }
+  .scene .macstate { position:absolute; inset:0; }
+  .link { position:relative; width:110px; height:2px; background:repeating-linear-gradient(90deg, var(--rule) 0 6px, transparent 6px 14px); overflow:hidden; }
+  .frame.stack .link { width:2px; height:80px; background:repeating-linear-gradient(180deg, var(--rule) 0 6px, transparent 6px 14px); }
+  .frame.stack .link::after { left:-3px; top:-8px; }
+  .frame.stack .scene[data-phase="syncing"] .link::after { animation-name:travel-v; }
+  @keyframes travel-v { from { top:-8px; } to { top:100%; } }
+  .link::after { content:""; position:absolute; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--ink); left:-8px; opacity:0; }
+  .scene[data-phase="syncing"] .link::after { opacity:1; animation:travel .9s cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes travel { from { left:-8px; } to { left:100%; } }
+  .scene[data-phase="syncing"] .link::after { animation-duration:1.1s; animation-timing-function:cubic-bezier(.3,.6,.3,1); }
+  .capsule { position:absolute; left:16px; right:16px; top:62px; transform:translateY(-18px); height:30px; border-radius:15px; background:#1C1C1C; color:var(--paper); display:flex; align-items:center; gap:8px; padding:0 10px 0 12px; font-size:12px; white-space:nowrap; opacity:0; transition:opacity .5s ease, transform .7s cubic-bezier(.22,1,.36,1), background .5s ease, color .5s ease; z-index:3; }
+  .capsule .dot { width:6px; height:6px; border-radius:50%; background:var(--paper); flex:none; transition:background .5s ease; }
+  .capsule .live { display:none; font-weight:500; }
+  .scene[data-phase="p-record"] .capsule, .scene[data-phase="p-busy"] .capsule, .scene[data-phase="p-writing"] .capsule, .scene[data-phase="p-copied"] .capsule, .scene[data-phase="syncing"] .capsule {
+    opacity:1; transform:translateY(0); background:var(--fill); color:var(--mute); }
+  .scene[data-phase="p-record"] .capsule b, .scene[data-phase="p-busy"] .capsule b, .scene[data-phase="p-writing"] .capsule b, .scene[data-phase="p-copied"] .capsule b, .scene[data-phase="syncing"] .capsule b,
+  .scene[data-phase="p-record"] .capsule .prev, .scene[data-phase="p-busy"] .capsule .prev, .scene[data-phase="p-writing"] .capsule .prev, .scene[data-phase="p-copied"] .capsule .prev, .scene[data-phase="syncing"] .capsule .prev,
+  .scene[data-phase="p-record"] .capsule .x, .scene[data-phase="p-busy"] .capsule .x, .scene[data-phase="p-writing"] .capsule .x, .scene[data-phase="p-copied"] .capsule .x, .scene[data-phase="syncing"] .capsule .x { display:none; }
+  .scene[data-phase="p-record"] .capsule .live, .scene[data-phase="p-busy"] .capsule .live, .scene[data-phase="p-writing"] .capsule .live, .scene[data-phase="p-copied"] .capsule .live, .scene[data-phase="syncing"] .capsule .live { display:inline; }
+  .scene[data-phase="p-record"] .capsule .dot, .scene[data-phase="p-busy"] .capsule .dot, .scene[data-phase="p-writing"] .capsule .dot, .scene[data-phase="p-copied"] .capsule .dot, .scene[data-phase="syncing"] .capsule .dot { background:var(--mute); animation:pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity:.35; } 50% { opacity:1; } }
+  .capsule b { font-weight:600; }
+  .capsule .prev { color:rgba(255,255,255,.72); overflow:hidden; text-overflow:ellipsis; flex:1; }
+  .capsule .x { width:11px; height:11px; flex:none; opacity:.8; margin-left:2px; }
+  .scene[data-phase="capsule"] .capsule, .scene[data-phase="click"] .capsule { opacity:1; transform:translateY(0); }
+  .scene[data-phase="click"] .capsule { background:#000; transform:translateY(0) scale(.985); }
+  .pointer { position:absolute; width:20px; height:24px; left:150px; top:210px; opacity:0; transition:opacity .4s ease, left .9s cubic-bezier(.3,.7,.15,1), top .9s cubic-bezier(.3,.7,.15,1); z-index:4; }
+  .scene[data-phase="capsule"] .pointer { opacity:1; left:138px; top:100px; }
+  .scene[data-phase="click"] .pointer { opacity:1; left:146px; top:76px; }
+  .ripple { position:absolute; left:141px; top:70px; width:12px; height:12px; border-radius:50%; border:2px solid var(--ink); opacity:0; z-index:3; }
+  .scene[data-phase="click"] .ripple { animation:ripple .8s ease-out; }
+  @keyframes ripple { 0% { opacity:.7; transform:scale(.6); } 100% { opacity:0; transform:scale(3.2); } }
+  .scene .mac .mac-hint { position:absolute; left:16px; right:16px; bottom:150px; transition:opacity .5s ease; text-align:center; color:var(--mute); font-size:13px; line-height:1.45; opacity:1; transition:opacity .3s; }
+  .scene[data-phase="landed"] .mac .mac-hint, .scene[data-phase="reset"] .mac .mac-hint { opacity:0; }
+  .scene .mac .card, .scene .mac .raw { opacity:0; transform:translateY(6px); }
+  .scene .mac .rec, .scene .mac .busy { display:none; }
+  .scene .mac .record { background:var(--white); opacity:1; }
+  .scene .mac .record svg { opacity:1; }
+  .scene .mac .record .stop { opacity:0; transform:scale(.6); }
+  .scene .mac .sat { opacity:0; }
+  .scene[data-phase="click"] .phone .card, .scene[data-phase="click"] .phone .raw { opacity:1; transform:none; }
+  .scene[data-phase="click"] .phone .sat { opacity:1; transform:translateX(-50%) scale(1); }
+  .scene[data-phase="landed"] .mac .card, .scene[data-phase="landed"] .mac .raw { opacity:1; transform:none; }
+  .scene[data-phase="landed"] .mac .lbl .copied { display:inline; }
+  .scene[data-phase="landed"] .mac .sat { opacity:1; transform:translateX(-50%) scale(1); }
+  .scene .caption { position:absolute; left:0; right:0; bottom:-6px; text-align:center; color:var(--mute); }
+
+  /* ---- privacy ---- */
+  .privacy { padding-top:150px; }
+  .privacy h2 { margin:0; font-size:44px; line-height:1.08; font-weight:600; letter-spacing:-0.025em; max-width:760px; }
+  .facts { display:grid; grid-template-columns:repeat(4, 1fr); gap:32px; margin-top:56px; padding-top:28px; border-top:1px solid var(--rule); }
+  .facts .mono { color:var(--mute); }
+  .facts p { margin:12px 0 0; font-size:16px; line-height:1.5; }
+
+  /* ---- close ---- */
+  .close { padding-top:170px; text-align:center; }
+  .close h2 { margin:0; font-size:56px; line-height:1.04; font-weight:600; letter-spacing:-0.03em; }
+  .close .ctarow { justify-content:center; margin-top:44px; }
+  .close a.src { font-size:15px; text-decoration:underline; text-underline-offset:4px; }
+  .foot { display:flex; gap:24px; justify-content:center; margin-top:120px; padding-top:28px; border-top:1px solid var(--rule); color:var(--mute); font-size:13px; }
+
+  @media (max-width: 1100px) {
+    .hero, .edit, .prompt { grid-template-columns:1fr; gap:36px; min-height:0; padding-top:64px; }
+    .hero .copy, .edit .copy, .prompt .copy { max-width:640px; }
+    .hero .frame, .edit .frame, .prompt .frame { max-width:600px; margin:0 auto; }
+  }
+  @media (max-width: 700px) {
+    h1 { font-size:clamp(32px, 9.4vw, 60px); }
+    .lead { font-size:17px; margin-top:18px; }
+    .edit h2, .sync h2, .prompt h2, .privacy h2 { font-size:clamp(30px, 7.6vw, 44px); }
+    .close h2 { font-size:clamp(32px, 8.4vw, 56px); }
+    .facts { grid-template-columns:1fr 1fr; gap:24px; margin-top:40px; }
+    .steps { flex-wrap:wrap; gap:14px 22px; }
+    .ctarow { flex-wrap:wrap; gap:16px; margin-top:44px; }
+    .switch { margin-top:40px; }
+    .nav { padding-top:14px; gap:14px; }
+    .nav img { width:32px; height:32px; border-radius:7px; }
+    .wordmark { font-size:24px; }
+    .nav .links { gap:18px; }
+    .sync { padding-top:88px; } .privacy { padding-top:110px; } .close { padding-top:110px; }
+    .band { padding-bottom:72px; }
+    .foot { flex-wrap:wrap; gap:12px 20px; margin-top:80px; }
+  }
+  @media (max-width: 480px) { .facts { grid-template-columns:1fr; } }
+  @media (prefers-reduced-motion: reduce) { .wave i, .spin { animation:none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-mic" viewBox="0 0 56 56"><path d="M 35.1016 28.0000 L 35.1016 11.2656 C 35.1016 6.9297 32.1719 3.7187 28 3.7187 C 23.8281 3.7187 20.8984 6.9297 20.8984 11.2656 L 20.8984 28.0000 C 20.8984 32.3125 23.8281 35.5469 28 35.5469 C 32.1719 35.5469 35.1016 32.3125 35.1016 28.0000 Z M 17.0547 48.7422 C 16.1172 48.7422 15.2969 49.5859 15.2969 50.5234 C 15.2969 51.4609 16.1172 52.2813 17.0547 52.2813 L 38.9453 52.2813 C 39.8828 52.2813 40.7031 51.4609 40.7031 50.5234 C 40.7031 49.5859 39.8828 48.7422 38.9453 48.7422 L 29.7578 48.7422 L 29.7578 43.6094 C 38.2890 42.8594 43.9375 36.5547 43.9375 27.9766 L 43.9375 22.4687 C 43.9375 21.5547 43.1172 20.7578 42.2031 20.7578 C 41.2890 20.7578 40.4922 21.5547 40.4922 22.4687 L 40.4922 27.9766 C 40.4922 35.125 35.3359 40.375 28 40.375 C 20.6641 40.375 15.5078 35.125 15.5078 27.9766 L 15.5078 22.4687 C 15.5078 21.5547 14.7110 20.7578 13.7969 20.7578 C 12.8828 20.7578 12.0625 21.5547 12.0625 22.4687 L 12.0625 27.9766 C 12.0625 36.5547 17.7110 42.8594 26.2188 43.6094 L 26.2188 48.7422 Z" fill="currentColor"/></symbol>
+    <symbol id="i-micplus" viewBox="0 0 56 56"><g transform="translate(0 4) scale(.9)"><path d="M 36.5429 26.8516 L 36.5429 12.1094 C 36.5429 6.6953 33.0508 2.9219 28.0117 2.9219 C 22.9727 2.9219 19.4805 6.6953 19.4805 12.1094 L 19.4805 26.8516 C 19.4805 32.2422 22.9727 36.0390 28.0117 36.0390 C 33.0508 36.0390 36.5429 32.2422 36.5429 26.8516 Z M 33.0039 26.8516 C 33.0039 30.3203 31.0117 32.5469 28.0117 32.5469 C 25.0117 32.5469 23.0195 30.3203 23.0195 26.8516 L 23.0195 12.1094 C 23.0195 8.6406 25.0117 6.4141 28.0117 6.4141 C 31.0117 6.4141 33.0039 8.6406 33.0039 12.1094 Z M 17.5351 49.5391 C 16.5508 49.5391 15.7773 50.3359 15.7773 51.3203 C 15.7773 52.3047 16.5508 53.0781 17.5351 53.0781 L 38.4883 53.0781 C 39.4727 53.0781 40.2461 52.3047 40.2461 51.3203 C 40.2461 50.3359 39.4727 49.5391 38.4883 49.5391 L 29.7695 49.5391 L 29.7695 44.0781 C 38.7227 43.3281 44.7695 36.9063 44.7695 27.6953 L 44.7695 22.9375 C 44.7695 21.9531 43.9961 21.1797 43.0117 21.1797 C 42.0273 21.1797 41.2305 21.9531 41.2305 22.9375 L 41.2305 27.5547 C 41.2305 35.5469 36.0273 40.8437 28.0117 40.8437 C 19.9961 40.8437 14.7695 35.5469 14.7695 27.5547 L 14.7695 22.9375 C 14.7695 21.9531 13.9961 21.1797 13.0117 21.1797 C 12.0273 21.1797 11.2305 21.9531 11.2305 22.9375 L 11.2305 27.6953 C 11.2305 36.9063 17.3008 43.3281 26.2305 44.0781 L 26.2305 49.5391 Z" fill="currentColor"/></g><g transform="translate(30 0) scale(.46)"><circle cx="28" cy="28" r="27" fill="#FBFBFA"/><path d="M 27.9999 51.9063 C 41.0546 51.9063 51.9063 41.0781 51.9063 28 C 51.9063 14.9453 41.0312 4.0937 27.9765 4.0937 C 14.8983 4.0937 4.0937 14.9453 4.0937 28 C 4.0937 41.0781 14.9218 51.9063 27.9999 51.9063 Z M 27.9296 39.6719 C 26.6171 39.6719 25.9140 38.7109 25.9140 37.3516 L 25.9140 30.0625 L 18.2265 30.0625 C 16.8436 30.0625 15.8827 29.3359 15.8827 28.0469 C 15.8827 26.7109 16.7733 25.9609 18.2265 25.9609 L 25.9140 25.9609 L 25.9140 18.2031 C 25.9140 16.8437 26.6171 15.8828 27.9296 15.8828 C 29.2421 15.8828 30.0390 16.7968 30.0390 18.2031 L 30.0390 25.9609 L 37.7499 25.9609 C 39.1796 25.9609 40.0702 26.7109 40.0702 28.0469 C 40.0702 29.3359 39.1327 30.0625 37.7499 30.0625 L 30.0390 30.0625 L 30.0390 37.3516 C 30.0390 38.7578 29.2421 39.6719 27.9296 39.6719 Z" fill="currentColor"/></g></symbol>
+    <symbol id="i-history" viewBox="0 0 56 56"><path d="M 27.9999 54.4024 C 41.0546 54.4024 51.9063 43.5742 51.9063 30.4961 C 51.9063 18.9649 43.4687 9.1914 32.5234 7.0351 L 32.5234 3.7070 C 32.5234 2.0430 31.3749 1.5976 30.0858 2.5117 L 22.6093 7.7383 C 21.5546 8.4883 21.5312 9.6133 22.6093 10.3867 L 30.0624 15.6367 C 31.3749 16.5742 32.5234 16.1289 32.5234 14.4414 L 32.5234 11.0898 C 41.3827 13.1055 47.8983 21.0039 47.8983 30.4961 C 47.8983 41.5586 39.0390 50.4180 27.9999 50.4180 C 16.9374 50.4180 8.0546 41.5586 8.0780 30.4961 C 8.1014 23.8398 11.3358 17.9570 16.3280 14.3945 C 17.2890 13.6680 17.5936 12.5664 16.9843 11.5820 C 16.4218 10.6211 15.1327 10.3633 14.1014 11.1602 C 8.0546 15.5430 4.0937 22.6211 4.0937 30.4961 C 4.0937 43.5742 14.9218 54.4024 27.9999 54.4024 Z" fill="currentColor"/><path d="M28 19v11h8" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M9.86 6.27 L9.96 3.48 A8.76 8.76 0 0 1 14.04 3.48 L14.14 6.27 A6.12 6.12 0 0 1 14.54 6.43 L14.54 6.43 L16.58 4.53 A8.76 8.76 0 0 1 19.47 7.42 L17.57 9.46 A6.12 6.12 0 0 1 17.73 9.86 L17.73 9.86 L20.52 9.96 A8.76 8.76 0 0 1 20.52 14.04 L17.73 14.14 A6.12 6.12 0 0 1 17.57 14.54 L17.57 14.54 L19.47 16.58 A8.76 8.76 0 0 1 16.58 19.47 L14.54 17.57 A6.12 6.12 0 0 1 14.14 17.73 L14.14 17.73 L14.04 20.52 A8.76 8.76 0 0 1 9.96 20.52 L9.86 17.73 A6.12 6.12 0 0 1 9.46 17.57 L9.46 17.57 L7.42 19.47 A8.76 8.76 0 0 1 4.53 16.58 L6.43 14.54 A6.12 6.12 0 0 1 6.27 14.14 L6.27 14.14 L3.48 14.04 A8.76 8.76 0 0 1 3.48 9.96 L6.27 9.86 A6.12 6.12 0 0 1 6.43 9.46 L6.43 9.46 L4.53 7.42 A8.76 8.76 0 0 1 7.42 4.53 L9.46 6.43 A6.12 6.12 0 0 1 9.86 6.27 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 56 56"><path d="M 11.5050 56 L 32.9045 56 C 37.4664 56 39.6262 53.6859 39.6262 49.0799 L 39.6262 45.0027 L 43.9237 45.0027 C 48.4638 45.0027 50.7337 42.6887 50.7337 38.0826 L 50.7337 6.9201 C 50.7337 2.3141 48.4638 0 43.9237 0 L 22.6345 0 C 18.0945 0 15.8025 2.3141 15.8025 6.9201 L 15.8025 10.9972 L 11.5050 10.9972 C 6.9651 10.9972 4.6731 13.3113 4.6731 17.9174 L 4.6731 49.0799 C 4.6731 53.7080 6.9651 56 11.5050 56 Z M 27.9017 7.7796 C 26.9320 7.7796 26.4912 7.1405 26.4912 6.4794 L 26.4912 6.0165 C 26.4912 5.3333 26.9320 4.7162 27.9017 4.7162 L 38.6565 4.7162 C 39.6042 4.7162 40.0670 5.3333 40.0670 6.0165 L 40.0670 6.4794 C 40.0670 7.1405 39.6042 7.7796 38.6565 7.7796 Z M 11.6813 52.4518 C 9.4113 52.4518 8.2213 51.2176 8.2213 49.0138 L 8.2213 17.9614 C 8.2213 15.8017 9.4113 14.5455 11.7033 14.5455 L 19.3507 14.5455 L 19.3507 27.3278 C 19.3507 30.1047 20.7612 31.4711 23.4940 31.4711 L 36.0780 31.4711 L 36.0780 49.0138 C 36.0780 51.2176 34.8879 52.4518 32.5959 52.4518 Z M 23.9127 28.1432 C 23.0312 28.1432 22.6786 27.7906 22.6786 26.9311 L 22.6786 15.2286 L 35.3948 28.1432 Z" fill="currentColor"/></symbol>
+    <symbol id="i-x" viewBox="0 0 56 56"><path d="M 10.0234 43.0234 C 9.2266 43.8203 9.2031 45.1797 10.0234 45.9766 C 10.8438 46.7734 12.1797 46.7734 13.0000 45.9766 L 28.0000 30.9766 L 43.0000 45.9766 C 43.7969 46.7734 45.1563 46.7969 45.9766 45.9766 C 46.7734 45.1562 46.7734 43.8203 45.9766 43.0234 L 30.9531 28.0000 L 45.9766 13.0000 C 46.7734 12.2031 46.7969 10.8437 45.9766 10.0469 C 45.1328 9.2266 43.7969 9.2266 43.0000 10.0469 L 28.0000 25.0469 L 13.0000 10.0469 C 12.1797 9.2266 10.8203 9.2031 10.0234 10.0469 C 9.2266 10.8672 9.2266 12.2031 10.0234 13.0000 L 25.0234 28.0000 Z" fill="currentColor"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 56 56"><path d="M 7.8436 24.6016 C 9.0624 24.6016 9.9764 23.6641 9.9764 22.4219 L 9.9764 20.4531 L 9.4843 12.2734 L 15.6718 18.7656 L 22.8671 26.0312 C 23.2655 26.4531 23.7811 26.6406 24.3671 26.6406 C 25.6796 26.6406 26.6874 25.7734 26.6874 24.4609 C 26.6874 23.8281 26.4530 23.2656 26.0311 22.8437 L 18.8124 15.6250 L 12.2968 9.4609 L 20.4999 9.9297 L 22.4686 9.9297 C 23.7108 9.9297 24.6718 9.0625 24.6718 7.7968 C 24.6718 6.5312 23.7108 5.6406 22.4686 5.6406 L 9.4374 5.6406 C 7.0468 5.6406 5.6640 7.0234 5.6640 9.4141 L 5.6640 22.4219 C 5.6640 23.6406 6.5780 24.6016 7.8436 24.6016 Z M 33.5311 50.3594 L 46.5624 50.3594 C 48.9532 50.3594 50.3360 48.9766 50.3360 46.5859 L 50.3360 33.5781 C 50.3360 32.3594 49.4216 31.3984 48.1564 31.3984 C 46.9374 31.3984 46.0468 32.3359 46.0468 33.5781 L 46.0468 35.5469 L 46.5155 43.7266 L 40.3280 37.2344 L 33.1327 29.9688 C 32.7343 29.5469 32.2186 29.3594 31.6327 29.3594 C 30.3202 29.3594 29.3358 30.2266 29.3358 31.5390 C 29.3358 32.1719 29.5468 32.7344 29.9686 33.1563 L 37.2108 40.3750 L 43.7030 46.5391 L 35.4999 46.0703 L 33.5311 46.0703 C 32.2889 46.0703 31.3515 46.9375 31.3280 48.2031 C 31.3280 49.4687 32.2889 50.3594 33.5311 50.3594 Z" fill="currentColor"/></symbol>
+    <symbol id="i-send" viewBox="0 0 56 56"><path d="M 27.9883 50.1367 C 29.2071 50.1367 30.0976 49.2930 30.0976 48.0742 L 30.0976 17.2071 L 29.9102 12.2149 L 36.9180 19.9024 L 42.2617 25.1524 C 42.6367 25.5273 43.1992 25.7149 43.7383 25.7149 C 44.9102 25.7149 45.7773 24.8242 45.7773 23.6758 C 45.7773 23.1133 45.5664 22.6211 45.1211 22.1524 L 29.5586 6.5664 C 29.1133 6.0976 28.5742 5.8633 27.9883 5.8633 C 27.4258 5.8633 26.8867 6.0976 26.4414 6.5664 L 10.8789 22.1524 C 10.4336 22.6211 10.2227 23.1133 10.2227 23.6758 C 10.2227 24.8242 11.0898 25.7149 12.2383 25.7149 C 12.8008 25.7149 13.3633 25.5273 13.7383 25.1524 L 19.0586 19.9024 L 26.0898 12.1914 L 25.9024 17.2071 L 25.9024 48.0742 C 25.9024 49.2930 26.7695 50.1367 27.9883 50.1367 Z" fill="currentColor"/></symbol>
+    <symbol id="i-apple" viewBox="0 0 56 56"><path d="M33.9370467,26.5128481 C34.0071746,34.0650232 40.5622987,36.5781967 40.6349206,36.6102741 C40.579494,36.787517 39.5875211,40.1917925 37.1813698,43.708166 C35.1013579,46.748249 32.9425798,49.7771957 29.5418665,49.8399278 C26.2003256,49.9014987 25.1258336,47.8583854 21.3055063,47.8583854 C17.486333,47.8583854 16.2925236,49.7771906 13.129383,49.9014987 C9.84683186,50.0257159 7.34720367,46.6140516 5.24990601,43.5851051 C0.964332248,37.3892927 -2.31073284,26.0771949 2.08685175,18.4413444 C4.27147795,14.64935 8.17557011,12.2481009 12.4131131,12.1865253 C15.6364944,12.125039 18.6789832,14.3551087 20.649477,14.3551087 C22.6187214,14.3551087 26.3159929,11.6732544 30.2027979,12.0671186 C31.8299473,12.1348421 36.3973824,12.7243949 39.3302579,17.0173633 C39.0939405,17.1638624 33.880373,20.1989532 33.9370467,26.5128552 M27.6570067,7.96804814 C29.3997351,5.85854475 30.5726917,2.92192094 30.2526965,0 C27.7406844,0.100960353 24.7030975,1.67393506 22.9012871,3.78227787 C21.286519,5.64931362 19.8723452,8.63762341 20.2539138,11.5017132 C23.0538462,11.7183402 25.9141925,10.078893 27.6570067,7.96805157" fill="currentColor"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 56 56"><path d="M 43.2930 16.9258 L 45.6601 14.6055 C 46.8555 13.4101 46.9023 12.1211 45.8477 11.0430 L 45.0508 10.2461 C 43.9961 9.1914 42.7070 9.3086 41.5117 10.4570 L 39.1445 12.8008 Z M 15.6601 44.4883 L 41.2305 18.9414 L 37.1289 14.8164 L 11.5352 40.3867 L 9.3086 45.5898 C 9.0977 46.1523 9.6836 46.8086 10.2461 46.5742 Z" fill="currentColor"/></symbol>
+    <symbol id="i-return" viewBox="0 0 24 24"><path d="M19 6v4.5a2.5 2.5 0 0 1-2.5 2.5H6M9.5 9.5 6 13l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 56 56"><path d="M 23.0781 48.0273 C 24.0859 48.0273 24.8828 47.5820 25.4453 46.7148 L 47.5937 11.8398 C 48.0156 11.1602 48.2031 10.6445 48.2031 10.1054 C 48.2031 8.8164 47.3359 7.9727 46.0469 7.9727 C 45.1328 7.9727 44.5937 8.2773 44.0313 9.1680 L 22.9844 42.7070 L 12.0625 28.4102 C 11.4766 27.5898 10.9140 27.2617 10.0469 27.2617 C 8.7344 27.2617 7.7969 28.1758 7.7969 29.4649 C 7.7969 30.0039 8.0313 30.6133 8.4766 31.1758 L 20.6406 46.6680 C 21.3672 47.5820 22.0703 48.0273 23.0781 48.0273 Z" fill="currentColor"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 56 56"><path d="M24,0 C26.209139,0 28,1.790861 28,4 L28,48 C28,50.209139 26.209139,52 24,52 L4,52 C1.790861,52 0,50.209139 0,48 L0,4 C0,1.790861 1.790861,0 4,0 L24,0 Z M23,7 L5,7 C4.44771525,7 4,7.44771525 4,8 L4,47 C4,47.5522847 4.44771525,48 5,48 L23,48 C23.5522847,48 24,47.5522847 24,47 L24,8 C24,7.44771525 23.5522847,7 23,7 Z M19,44 C19.5522847,44 20,44.4477153 20,45 C20,45.5522847 19.5522847,46 19,46 L9,46 C8.44771525,46 8,45.5522847 8,45 C8,44.4477153 8.44771525,44 9,44 L19,44 Z M17.5,3 L12.5,3 C12.2238576,3 12,3.22385763 12,3.5 C12,3.77614237 12.2238576,4 12.5,4 L17.5,4 C17.7761424,4 18,3.77614237 18,3.5 C18,3.22385763 17.7761424,3 17.5,3 Z M10.5,3 C10.2238576,3 10,3.22385763 10,3.5 C10,3.77614237 10.2238576,4 10.5,4 C10.7761424,4 11,3.77614237 11,3.5 C11,3.22385763 10.7761424,3 10.5,3 Z" fill="currentColor"/></symbol>
+    <symbol id="i-desktop" viewBox="0 0 56 56"><path d="M 6.0860 43.2930 L 20.7579 43.2930 L 20.1251 47.6055 L 16.9142 47.6055 C 15.8360 47.6055 14.9220 48.4961 14.9220 49.5977 C 14.9220 50.6992 15.8360 51.6133 16.9142 51.6133 L 39.0860 51.6133 C 40.1642 51.6133 41.0782 50.6992 41.0782 49.5977 C 41.0782 48.4961 40.1642 47.6055 39.0860 47.6055 L 35.8751 47.6055 L 35.2423 43.2930 L 49.9144 43.2930 C 53.9219 43.2930 55.9374 41.3711 55.9374 37.2695 L 55.9374 10.4102 C 55.9374 6.3086 53.9219 4.3867 49.9144 4.3867 L 6.0860 4.3867 C 2.0782 4.3867 .6 6.3086 .6 10.4102 L .6 37.2695 C .6 41.3711 2.0782 43.2930 6.0860 43.2930 Z M 4.8438 32.9805 C 4.1407 32.9805 3.8360 32.6992 3.8360 31.9726 L 3.8360 10.4805 C 3.8360 8.8164 4.5626 8.1602 6.1564 8.1602 L 49.8438 8.1602 C 51.4609 8.1602 52.1641 8.8164 52.1641 10.4805 L 52.1641 31.9726 C 52.1641 32.6992 51.8593 32.9805 51.1561 32.9805 Z M 28.0001 40.9727 C 26.8282 40.9727 25.8204 39.9883 25.8204 38.7930 C 25.8204 37.6446 26.8282 36.6367 28.0001 36.6367 C 29.1720 36.6367 30.1798 37.6446 30.1798 38.7930 C 30.1798 39.9883 29.1720 40.9727 28.0001 40.9727 Z" fill="currentColor"/></symbol>
+    <symbol id="i-pointer" viewBox="0 0 22 26"><path d="M3 2l15 11-6.5 1.4L15 22l-3 1.3-3.5-7.6L3 20Z" fill="#FBFBFA" stroke="#0B0B0B" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 22 16"><path d="M2 6v4M6 3v10M10 1v14M14 4v8M18 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-status" viewBox="0 0 66 14"><rect x="0" y="8" width="3" height="5" rx="1" fill="currentColor"/><rect x="5" y="6" width="3" height="7" rx="1" fill="currentColor"/><rect x="10" y="4" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="2" width="3" height="11" rx="1" fill="currentColor"/><path d="M24 6.5a8 8 0 0 1 11 0M26.3 9a4.8 4.8 0 0 1 6.4 0M28.7 11.3l.8.8.8-.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="41" y="2.5" width="21" height="9.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="43" y="4.5" width="15" height="5.5" rx="1.5" fill="currentColor"/><path d="M63.5 5.5v3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<template id="tpl-phone">
+  <div class="device phone">
+    <div class="screen">
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><svg><use href="#i-status"/></svg></div>
+      <div class="ios-nav"><span class="circ"><svg><use href="#i-history"/></svg></span><div class="title">Utterclip</div><span class="circ"><svg><use href="#i-gear"/></svg></span></div>
+      <div class="body">
+        <div class="hint">Tap the mic, speak, tap again.<br>Your words land on the clipboard.</div>
+        <div class="rec"><div class="reclabel"><svg viewBox="0 0 22 16"><path d="M2 6v4"/><path d="M6 3v10"/><path d="M10 1v14"/><path d="M14 4v8"/><path d="M18 6v4"/></svg>Recording</div><div class="timer">0:00</div><div class="wave"></div></div>
+        <div class="busy"><div class="spin"></div><span>Transcribing…</span></div>
+        <div class="card"><div class="lbl"><span class="ico"><svg class="ic-clip"><use href="#i-clip"/></svg><svg class="ic-pen"><use href="#i-pen"/></svg><svg class="ic-check"><use href="#i-check"/></svg></span><span class="writing">Writing…</span><span class="copied">Copied</span></div><div class="result"></div></div>
+        <div class="raw"><div class="rawhead"><span>Raw transcript</span><span class="copyraw"><svg><use href="#i-clip"/></svg>Copy raw</span></div><div class="rawtext"></div></div>
+      </div>
+      <div class="pills"><span>Plain</span><span class="on">Slack</span><span>WhatsApp</span><span>Prompt</span><span>Email</span></div>
+      <div class="controls"><span class="record"><svg class="mic"><use href="#i-mic"/></svg><span class="stop"></span></span><span class="sat"><svg><use href="#i-micplus"/></svg></span></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-mac">
+  <div class="device mac">
+    <div class="menubar"><svg><use href="#i-wave"/></svg></div>
+    <div class="win">
+      <div class="capsule"><span class="dot"></span><span class="live">iPhone · Recording…</span><b>New from iPhone</b><span class="prev">Running about 10 minu…</span><svg class="x"><use href="#i-x"/></svg></div>
+      <div class="mac-head"><span class="mac-title">Utterclip</span><span class="mac-icons"><span><svg><use href="#i-history"/></svg></span><span><svg><use href="#i-gear"/></svg></span><span><svg><use href="#i-expand"/></svg></span><span><svg><use href="#i-x"/></svg></span></span></div>
+      <div class="body">
+        <div class="hint">Click the mic, speak, click again.<br>Your words land on the clipboard.</div>
+        <div class="rec"><div class="reclabel"><svg viewBox="0 0 22 16"><path d="M2 6v4"/><path d="M6 3v10"/><path d="M10 1v14"/><path d="M14 4v8"/><path d="M18 6v4"/></svg>Recording</div><div class="timer">0:00</div><div class="wave"></div></div>
+        <div class="busy"><div class="spin"></div><span>Transcribing…</span></div>
+        <div class="card"><div class="lbl"><span class="ico"><svg class="ic-clip"><use href="#i-clip"/></svg><svg class="ic-pen"><use href="#i-pen"/></svg><svg class="ic-check"><use href="#i-check"/></svg></span><span class="writing">Writing…</span><span class="copied">Copied</span></div><div class="result"></div></div>
+        <div class="raw"><div class="rawhead"><span>Raw transcript</span><span class="copyraw"><svg><use href="#i-clip"/></svg>Copy raw</span></div><div class="rawtext"></div></div>
+      </div>
+      <div class="pasteback"><span class="ret"><svg><use href="#i-return"/></svg></span><span class="who">Paste into Slack</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+      <div class="pills"><span>Plain</span><span class="on">Slack</span><span>WhatsApp</span><span>Prompt</span><span>Email</span></div>
+      <div class="controls"><span class="record"><svg class="mic"><use href="#i-mic"/></svg><span class="stop"></span></span><span class="sat"><svg><use href="#i-micplus"/></svg></span></div>
+    </div>
+  </div>
+</template>
+
+<div class="page">
+
+  <div class="nav">
+    <img src="icon.png" alt="">
+    <div class="wordmark">Utterclip</div>
+    <div class="links"><a href="#privacy">Privacy</a><a href="https://github.com/ralfchille/utterclip-app">Source</a></div>
+  </div>
+
+  <section class="hero" id="hero" data-device="ios" data-step="0">
+    <div class="copy">
+      <h1>Speak the message.<br>Paste the message.</h1>
+      <p class="lead">It comes back in the language you spoke — an English Slack message, a German WhatsApp reply, a French email.</p>
+      <div class="switch" role="group" aria-label="Device">
+        <span class="thumb"></span>
+        <button type="button" data-device="ios" aria-pressed="true">iPhone</button>
+        <button type="button" data-device="mac" aria-pressed="false">Mac</button>
+      </div>
+      <div class="steps mono"><span>01 Speak</span><span>02 Transcribe</span><span>03 Rewrite</span><span>04 Paste</span></div>
+      <div class="ctarow">
+        <span class="cta soon"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· coming soon</span></span>
+        <a class="cta quiet" href="https://github.com/ralfchille/utterclip-app/releases/latest"><svg><use href="#i-desktop"/></svg>Get it for Mac</a>
+        <span class="mono">Free · Open source</span>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="stage" id="stage" data-phase="idle">
+        <div class="stagebar" aria-hidden="true"><img src="menubar.png" alt="" width="17" height="18"></div>
+        <div class="composer" aria-hidden="true">
+          <div class="to">Message to #standup</div>
+          <div class="field"><span class="ph">Write a message…</span><span class="txt"></span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="edit band">
+    <div class="copy">
+      <h2>Fix a word. Right there.</h2>
+      <p class="sub">Tap the text where it is wrong, type. It is copied as you go.</p>
+    </div>
+    <div class="frame tall"><div class="editstage" id="editstage" data-phase="e-idle"></div></div>
+  </section>
+
+  <section class="prompt">
+    <div class="copy">
+      <h2>Say it once.<br>Send it as a prompt.</h2>
+      <p class="sub">The Prompt style shapes what you said into the job, the why, the guardrails, and what done means.</p>
+    </div>
+    <div class="frame">
+      <div class="stage promptstage" id="promptstage" data-phase="idle">
+        <div class="stagebar" aria-hidden="true"><img src="menubar.png" alt="" width="17" height="18"></div>
+        <div class="composer" aria-hidden="true">
+          <div class="to">New chat</div>
+          <div class="field"><span class="ph">Ask anything</span><span class="txt"></span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="yours band">
+    <h2>Make it yours.</h2>
+    <div class="trio">
+      <div>
+        <div class="frame mini" data-w="340"><div class="panel p-styles">
+          <div class="mini-pills"><span>Plain</span><span class="on">Slack</span><span>WhatsApp</span><span class="add">+ Add</span></div>
+          <div class="sheet"><div class="head">Slack</div><div class="lab">Instruction</div><div class="inst"><span class="base"></span><span class="extra"></span><i class="caret"></i></div></div>
+        </div></div>
+        <div class="mono">Styles</div>
+        <p>Adjust the rewrite instructions, or add your own.</p>
+      </div>
+      <div>
+        <div class="frame mini" data-w="340"><div class="panel p-model">
+          <div class="sheet">
+            <div class="row"><div class="head">Rewrite with</div><div class="mini-pills"><span>Apple Intelligence</span><span class="on">Anthropic</span><span>OpenAI</span><span>Gemini</span><span>Groq</span></div></div>
+            <div class="row"><div class="head">API key</div><div class="key">sk-ant-••••••••••••••••3f9a<svg><use href="#i-check"/></svg></div><div class="kept">Stored in your Keychain. Never on a server of ours.</div></div>
+          </div>
+        </div></div>
+        <div class="mono">Your model</div>
+        <p>Connect the LLM you prefer with your own API key — or stay on the device with Apple Intelligence.</p>
+      </div>
+      <div>
+        <div class="frame mini" data-w="340"><div class="panel p-history">
+          <div class="sheet"><div class="head">History</div><div class="rows"></div></div>
+        </div></div>
+        <div class="mono">History</div>
+        <p>Every rewrite kept, and synced to your other device.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sync">
+    <h2>One clipboard.</h2>
+    <p class="sub">Dictate on the phone; it is waiting on the Mac.</p>
+    <div class="frame wide"><div class="scene" id="scene" data-phase="p-record"></div></div>
+  </section>
+
+  <section class="privacy band" id="privacy">
+    <h2>Your voice never leaves the device.</h2>
+    <div class="facts">
+      <div><div class="mono">Transcription</div><p>On the device, with Whisper. The audio file is deleted straight after.</p></div>
+      <div><div class="mono">Rewrite</div><p>Apple Intelligence on the device, or an AI provider with your own key. Only the text goes.</p></div>
+      <div><div class="mono">Sync</div><p>History and settings travel inside your own iCloud, encrypted by Apple. One switch turns it off.</p></div>
+      <div><div class="mono">Nothing else</div><p>No account, no analytics, no server of ours. Open source under MIT.</p></div>
+    </div>
+  </section>
+
+  <section class="close">
+    <h2>Stop typing what<br>you could just say.</h2>
+    <div class="ctarow">
+      <span class="cta soon"><svg><use href="#i-phone"/></svg>iPhone <span class="sub">· coming soon</span></span>
+      <a class="cta quiet" href="https://github.com/ralfchille/utterclip-app/releases/latest"><svg><use href="#i-desktop"/></svg>Get it for Mac</a>
+    </div>
+    <div class="foot"><span>Utterclip</span><span>iOS 17 · macOS 14</span><span>MIT</span></div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  // Scale each design box to the width its frame gets; below 860 px the sync pair stacks.
+  function fit() {
+    document.querySelectorAll('.frame').forEach(function (f) {
+      var box = f.firstElementChild, w = +f.dataset.w || 600;
+      if (f.classList.contains('wide')) { var stack = f.clientWidth < 860; f.classList.toggle('stack', stack); w = stack ? 400 : 1200; }
+      if (!f.clientWidth) return;
+      var k = Math.min(1, f.clientWidth / w);
+      box.style.transform = 'translateX(' + ((f.clientWidth - w * k) / 2).toFixed(2) + 'px) scale(' + k.toFixed(4) + ')';
+    });
+  }
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { var ro = new ResizeObserver(fit); document.querySelectorAll('.frame').forEach(function (f) { ro.observe(f); }); }
+  fit();
+  var STYLED = "Running about 10 minutes late to standup. Go ahead and start without me — I'll catch up on the notes after.";
+  var RAW = "So I'm going to be about 10 minutes late to the stand-up. Could you start without me and I'll catch up on the notes afterwards.";
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function make(id) { return document.getElementById(id).content.firstElementChild.cloneNode(true); }
+  function waves(root) {
+    root.querySelectorAll('.wave').forEach(function (w) {
+      for (var i = 0; i < 40; i++) w.appendChild(document.createElement('i'));
+    });
+  }
+  function spinners(root) {
+    root.querySelectorAll('.spin').forEach(function (s) {
+      for (var i = 0; i < 8; i++) { var k = document.createElement('i'); k.style.transform = 'rotate(' + (i * 45) + 'deg)'; k.style.animationDelay = (-(7 - i) * 0.10625).toFixed(3) + 's'; s.appendChild(k); }
+    });
+  }
+  // The recorder samples the mic every 50 ms and keeps the last 40: each new level enters at
+  // the right and the strip scrolls left, so a phrase drifts away from where it was spoken.
+  // Room noise stays a dot, speech fills the bar — the same curve the app shapes levels with.
+  function animateWaves(root) {
+    var strips = Array.prototype.slice.call(root.querySelectorAll('.wave'));
+    var levels = []; for (var i = 0; i < 40; i++) levels.push(0.03);
+    var t0 = performance.now(), timer;
+    function draw() {
+      var t = (performance.now() - t0) / 1000;
+      var speaking = (t % 2.1) < 1.5;                                   // a phrase, then a breath
+      var level = speaking
+        ? 0.34 + 0.6 * Math.abs(Math.sin(t * 9.3) * Math.cos(t * 3.1 + 0.7)) * (0.65 + 0.35 * Math.sin(t * 1.6))
+        : 0.02 + Math.random() * 0.05;
+      levels.push(Math.max(0.02, Math.min(1, level + (Math.random() - 0.5) * 0.1)));
+      levels.shift();
+      strips.forEach(function (w) {
+        for (var i = 0; i < w.children.length; i++) {
+          w.children[i].style.height = Math.max(3, levels[i] * 44).toFixed(1) + 'px';
+        }
+      });
+      timer = setTimeout(draw, 50);
+    }
+    draw();
+    return function () {
+      clearTimeout(timer);
+      strips.forEach(function (w) {
+        for (var i = 0; i < w.children.length; i++) w.children[i].style.height = '3px';
+      });
+    };
+  }
+  function setText(root, sel, text) { root.querySelectorAll(sel).forEach(function (el) { el.textContent = text; }); }
+  // Types the rewrite word by word into every result on the given root; resolves when done.
+  function typeInto(root, text, perWord, done) {
+    var words = text.split(' '), i = 0, timer;
+    setText(root, '.result', '');
+    if (reduced) { setText(root, '.result', text); done && done(); return function () {}; }
+    timer = setInterval(function () {
+      i++;
+      setText(root, '.result', words.slice(0, i).join(' '));
+      if (i >= words.length) { clearInterval(timer); done && done(); }
+    }, perWord);
+    return function () { clearInterval(timer); };
+  }
+  function runTimer(root, seconds) {
+    var t = 0; setText(root, '.timer', '0:00');
+    var id = setInterval(function () { t++; setText(root, '.timer', '0:0' + Math.min(t, 9)); if (t >= seconds) clearInterval(id); }, 1000);
+    return function () { clearInterval(id); };
+  }
+  function pop(root) { root.querySelectorAll('.card').forEach(function (c) { c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }); }
+
+  /* ---------- hero walkthrough: same loop on whichever device is showing ---------- */
+  var hero = document.getElementById('hero'), stage = document.getElementById('stage');
+  var phone = make('tpl-phone'), mac = make('tpl-mac');
+  stage.insertBefore(mac, stage.firstChild); stage.insertBefore(phone, stage.firstChild);
+  mac.querySelector('.capsule').remove();            // the capsule belongs to the sync scene
+  waves(stage); spinners(stage);
+  setText(stage, '.rawtext', RAW);
+
+  var cancels = [];
+  function clearCancels() { cancels.forEach(function (c) { c(); }); cancels = []; }
+  function phase(name, step) { stage.dataset.phase = name; hero.dataset.step = String(step); if (name !== 'paste') stage.classList.remove('pasted'); }
+  var loop = [
+    ['idle', 0, 1800, function () { setText(stage, '.result', ''); }],
+    ['recording', 1, 3200, function () { cancels.push(runTimer(stage, 3)); cancels.push(animateWaves(stage)); }],
+    ['transcribing', 2, 1200, null],
+    ['writing', 3, 1900, function () { cancels.push(typeInto(stage, STYLED, 78)); }],
+    ['copied', 3, 1800, function () { setText(stage, '.result', STYLED); pop(stage); }],
+    ['paste', 4, 6500, function () { setTimeout(function () { stage.querySelector('.composer .txt').textContent = STYLED; stage.classList.add('pasted'); }, 900); }]   // the finished state is the one worth looking at
+  ];
+  var idx = -1, next;
+  function advance() {
+    clearCancels();
+    idx = (idx + 1) % loop.length;
+    var s = loop[idx];
+    phase(s[0], s[1]); if (s[3]) s[3]();
+    next = setTimeout(advance, s[2]);
+  }
+  if (reduced) { phase('copied', 3); setText(stage, '.result', STYLED); } else { advance(); }
+
+  // iPhone / Mac: the same moment, on the other device
+  var sw = document.querySelector('.switch');
+  sw.querySelectorAll('button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      hero.dataset.device = b.dataset.device;
+      sw.querySelectorAll('button').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+    });
+  });
+
+  /* ---------- editing in place: tap the word, retype it, confirm ---------- */
+  var editStage = document.getElementById('editstage'), ePhone = make('tpl-phone');
+  editStage.appendChild(ePhone); waves(ePhone); spinners(ePhone);
+  setText(ePhone, '.rawtext', RAW);
+  var eRes = ePhone.querySelector('.result'), eCard = ePhone.querySelector('.card');
+  var keys = document.createElement('div'); keys.className = 'keys';
+  [10, 9, 9].forEach(function (n, r) {
+    var row = document.createElement('div'); row.className = 'krow';
+    for (var i = 0; i < n; i++) { var k = document.createElement('i'); if (r === 2 && (i === 0 || i === n - 1)) k.className = 'wide'; row.appendChild(k); }
+    keys.appendChild(row);
+  });
+  var lastRow = document.createElement('div'); lastRow.className = 'krow';
+  ['wide', 'space', 'wide'].forEach(function (c) { var k = document.createElement('i'); k.className = c; lastRow.appendChild(k); });
+  keys.appendChild(lastRow);
+  var kdone = document.createElement('span'); kdone.className = 'kdone';
+  kdone.innerHTML = '<svg><use href="#i-check"/></svg>';
+  keys.appendChild(kdone);
+  ePhone.querySelector('.screen').appendChild(keys);
+  var tapdot = document.createElement('span'); tapdot.className = 'tapdot'; eCard.appendChild(tapdot);
+  function setWord(w) {
+    eRes.innerHTML = 'Running about <span class="w">' + w + '</span><i class="caret"></i> minutes late to standup. Go ahead and start without me \u2014 I\'ll catch up on the notes after.';
+  }
+  setWord('10');
+  var eTimers = [];
+  function later(ms, fn) { eTimers.push(setTimeout(fn, ms)); }
+  var eLoop = [
+    ['e-idle', 1800, function () { setWord('10'); }],
+    ['e-tap', 650, function () {
+      var w = eRes.querySelector('.w'), r = w.getBoundingClientRect(), c = eCard.getBoundingClientRect();
+      var s = r.width / w.offsetWidth || 1;                            // the phone is scaled; measure in its own units
+      tapdot.style.left = ((r.left - c.left) / s + w.offsetWidth * 0.6) + 'px';
+      tapdot.style.top = ((r.top - c.top) / s + w.offsetHeight * 0.55) + 'px';
+    }],
+    ['e-edit', 900, null],
+    ['e-type', 1700, function () { later(250, function () { setWord('1'); }); later(480, function () { setWord(''); }); later(820, function () { setWord('1'); }); later(1080, function () { setWord('15'); }); }],
+    ['e-done', 1200, function () { later(320, function () { pop(ePhone); }); }],
+    ['e-hold', 3000, null]
+  ];
+  var eIdx = -1;
+  function eAdvance() {
+    eTimers.forEach(clearTimeout); eTimers = [];
+    eIdx = (eIdx + 1) % eLoop.length;
+    var s = eLoop[eIdx];
+    editStage.dataset.phase = s[0]; if (s[2]) s[2]();
+    setTimeout(eAdvance, s[1]);
+  }
+  if (reduced) { editStage.dataset.phase = 'e-edit'; setWord('15'); } else { eAdvance(); }
+
+  /* ---------- the prompt style: one dictation, shaped for an assistant ---------- */
+  var PROMPT_RAW = "Uh, so rewrite the release notes for one point one, um, because the current draft is too technical for the App Store, keep it under a hundred words, no jargon, and it's done when a non-developer gets what changed.";
+  var PROMPT_BLOCKS = [
+    ['The job', ['Rewrite the release notes for 1.1.']],
+    ['The why', ['Too technical for the App Store.']],
+    ['The guardrails', ['Under 100 words.', 'No jargon.']],
+    ['Done means', ['A non-developer gets what changed.']]
+  ];
+  var PROMPT_MD = PROMPT_BLOCKS.map(function (b) { return '## ' + b[0] + '\n' + b[1].map(function (l) { return '- ' + l; }).join('\n'); }).join('\n\n');
+  var pStage = document.getElementById('promptstage'), pMac = make('tpl-mac');
+  pStage.insertBefore(pMac, pStage.firstChild.nextSibling);
+  pMac.querySelector('.capsule').remove();
+  waves(pStage); spinners(pStage);
+  pMac.querySelectorAll('.pills span').forEach(function (s) { s.classList.toggle('on', s.textContent === 'Prompt'); });
+  pMac.querySelector('.rawtext').textContent = PROMPT_RAW;
+  pMac.querySelector('.pasteback .who').textContent = 'Paste into Claude';
+  var pResult = pMac.querySelector('.result');
+  function buildBlocks() {
+    var md = document.createElement('div'); md.className = 'md';
+    PROMPT_BLOCKS.forEach(function (b) {
+      var h = document.createElement('h4'); h.textContent = b[0]; md.appendChild(h);
+      var ul = document.createElement('ul'); b[1].forEach(function (l) { var li = document.createElement('li'); li.textContent = l; ul.appendChild(li); }); md.appendChild(ul);
+    });
+    pResult.innerHTML = ''; pResult.appendChild(md);
+    return Array.prototype.slice.call(md.children);
+  }
+  var pTimers = [], pCancels = [];
+  function pLater(ms, fn) { pTimers.push(setTimeout(fn, ms)); }
+  var pLoop = [
+    ['idle', 1800, function () { pResult.innerHTML = ''; pStage.classList.remove('pasted'); }],
+    ['recording', 3200, function () { pCancels.push(runTimer(pStage, 3)); pCancels.push(animateWaves(pStage)); }],
+    ['transcribing', 1200, null],
+    ['writing', 2600, function () {
+      var blocks = buildBlocks();
+      if (reduced) { blocks.forEach(function (b) { b.classList.add('show'); }); return; }
+      blocks.forEach(function (b, i) { pLater(150 + i * 230, function () { b.classList.add('show'); }); });
+    }],
+    ['copied', 1800, function () { pop(pStage); }],
+    ['paste', 5000, function () { pLater(900, function () { pStage.querySelector('.composer .txt').textContent = PROMPT_MD; pStage.classList.add('pasted'); }); }]
+  ];
+  var pIdx = -1;
+  function pAdvance() {
+    pTimers.forEach(clearTimeout); pTimers = []; pCancels.forEach(function (c) { c(); }); pCancels = [];
+    pIdx = (pIdx + 1) % pLoop.length;
+    var s = pLoop[pIdx];
+    pStage.dataset.phase = s[0]; if (s[2]) s[2]();
+    setTimeout(pAdvance, s[1]);
+  }
+  if (reduced) { pStage.dataset.phase = 'copied'; buildBlocks().forEach(function (b) { b.classList.add('show'); }); } else { pAdvance(); }
+
+  /* ---------- make it yours ---------- */
+  (function () {
+    // styles: the Slack instruction, with one more rule typed in and taken out again
+    var base = document.querySelector('.p-styles .base'), extra = document.querySelector('.p-styles .extra');
+    base.textContent = 'Rewrite the transcript as a clear, concise Slack message to colleagues. Professional but friendly. Keep it brief, no greeting or sign-off.';
+    var add = ' No emoji.', i = 0, dir = 1;
+    if (!reduced) (function step() {
+      i += dir; extra.textContent = add.slice(0, i);
+      var wait = dir > 0 ? (i >= add.length ? (dir = -1, 2200) : 85) : (i <= 0 ? (dir = 1, 1600) : 45);
+      setTimeout(step, wait);
+    })(); else extra.textContent = add;
+    // model: the choice moves along the providers
+    var seg = document.querySelector('.p-model .mini-pills');
+    var provs = [].slice.call(seg.children), pi = 1;
+    var canClip = window.CSS && CSS.supports && CSS.supports('clip-path', 'inset(1px 1px 1px 1px round 1px)');
+    if (canClip) {
+      seg.classList.add('seg');
+      var on = seg.cloneNode(true);
+      on.className = 'mini-pills seg-on';
+      on.setAttribute('aria-hidden', 'true');
+      [].forEach.call(on.children, function (s) { s.classList.remove('on'); });
+      provs.forEach(function (s) { s.classList.remove('on'); });   // the layer marks the choice now
+      seg.appendChild(on);
+      var settleText;
+      var clipTo = function (el, moving) {
+        on.style.clipPath = 'inset(' + el.offsetTop + 'px ' + (seg.offsetWidth - el.offsetLeft - el.offsetWidth) + 'px '
+          + (seg.offsetHeight - el.offsetTop - el.offsetHeight) + 'px ' + el.offsetLeft + 'px round ' + (el.offsetHeight / 2) + 'px)';
+        if (!moving) return;
+        on.classList.add('moving');
+        clearTimeout(settleText);
+        settleText = setTimeout(function () { on.classList.remove('moving'); }, 400);
+      };
+      var settle = function () { on.style.transition = 'none'; clipTo(provs[pi]); void on.offsetHeight; on.style.transition = ''; };
+      settle();
+      document.fonts && document.fonts.ready.then(settle);       // the pills move when the real face arrives
+      window.addEventListener('resize', settle);
+      if (!reduced) setInterval(function () { pi = (pi + 1) % provs.length; clipTo(provs[pi], true); }, 2400);
+    } else if (!reduced) {
+      setInterval(function () { provs[pi].classList.remove('on'); pi = (pi + 1) % provs.length; provs[pi].classList.add('on'); }, 2400);
+    }
+    // history: a new dictation arrives on top, the oldest leaves
+    var items = [
+      ['09:41', 'Running about 10 minutes late to standup. Go ahead and…'],
+      ['Yesterday', 'Rewrite the release notes for 1.1 — the current draft is too…'],
+      ['Mon', 'Can you summarise the thread for the team, keep it short…'],
+      ['Mon', 'Thanks for the review, I took the two points about the…'],
+      ['Sun', 'Reminder to move the planning call to Thursday afternoon…'],
+      ['Sat', 'Draft: three options for the onboarding copy, keep the…']
+    ];
+    var rows = document.querySelector('.p-history .rows'), VISIBLE = 4, ROW = 38, next = VISIBLE;
+    var track = document.createElement('div'); track.className = 'track'; rows.appendChild(track);
+    function row(it) { var r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span class="when">' + it[0] + '</span><span class="what">' + it[1] + '</span>'; return r; }
+    for (var k = 0; k < VISIBLE; k++) track.appendChild(row(items[k]));
+    // One move: the new dictation goes on top with the list held one row high, then the list
+    // settles down onto it. Every tick starts by putting the track back to four rows at rest,
+    // so a tick the browser skipped — a background tab runs no animation frames — leaves
+    // nothing behind to accumulate or jump.
+    function tick() {
+      track.style.transition = 'none';
+      track.style.transform = 'none';
+      while (track.children.length > VISIBLE) track.lastElementChild.remove();
+      track.insertBefore(row(items[next]), track.firstChild);
+      next = (next + 1) % items.length;
+      track.style.transform = 'translateY(-' + ROW + 'px)';
+      void track.offsetHeight;                     // commit the shift before arming the ease
+      track.style.transition = 'transform .65s cubic-bezier(.2,.7,.2,1)';
+      track.style.transform = 'translateY(0)';
+    }
+    if (!reduced) setInterval(tick, 3200);
+  })();
+
+  /* ---------- sync scene: dictate on the phone, it arrives on the Mac ---------- */
+  var scene = document.getElementById('scene');
+  var sPhone = make('tpl-phone'), sMac = make('tpl-mac');
+  var pair = document.createElement('div'); pair.className = 'pair';
+  var slotP = document.createElement('div'); slotP.className = 'slot slot-phone'; slotP.appendChild(sPhone);
+  var link = document.createElement('div'); link.className = 'link';
+  var slotM = document.createElement('div'); slotM.className = 'slot slot-mac'; slotM.appendChild(sMac);
+  pair.appendChild(slotP); pair.appendChild(link); pair.appendChild(slotM); scene.appendChild(pair);
+  // the pointer and its click live in the window, so they scale and move with it
+  var win = sMac.querySelector('.win');
+  var pointer = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); pointer.setAttribute('class', 'pointer');
+  var use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-pointer'); pointer.appendChild(use);
+  var ripple = document.createElement('div'); ripple.className = 'ripple';
+  win.appendChild(ripple); win.appendChild(pointer);
+  waves(scene); spinners(scene);
+  var macHint = document.createElement('div'); macHint.className = 'mac-hint'; macHint.innerHTML = 'Click the mic, speak, click again.<br>Your words land on the clipboard.';
+  sMac.querySelector('.win').appendChild(macHint);
+  sMac.querySelector('.hint').remove(); sMac.querySelector('.pasteback').remove();
+  setText(sPhone, '.rawtext', RAW); setText(sMac, '.rawtext', RAW); setText(sMac, '.result', STYLED);
+
+  var sCancels = [], liveTitle = sMac.querySelector('.capsule .live');
+  var liveText = { 'p-record': 'iPhone · Recording…', 'p-busy': 'iPhone · Transcribing…', 'p-writing': 'iPhone · Rewriting…' };
+  function sPhase(name) { scene.dataset.phase = name; if (liveText[name]) liveTitle.textContent = liveText[name]; }
+  var sLoop = [
+    ['p-record', 3000, function () { setText(sPhone, '.result', ''); sCancels.push(runTimer(sPhone, 3)); sCancels.push(animateWaves(sPhone)); }],
+    ['p-busy', 1100, null],
+    ['p-writing', 1700, function () { sCancels.push(typeInto(sPhone, STYLED, 70)); }],
+    ['p-copied', 900, function () { setText(sPhone, '.result', STYLED); pop(sPhone); }],
+    ['syncing', 1000, null],
+    ['capsule', 1900, null],
+    ['click', 700, null],
+    ['landed', 2800, function () { pop(sMac); }],
+    ['reset', 600, null]
+  ];
+  var sIdx = -1;
+  function sAdvance() {
+    sCancels.forEach(function (c) { c(); }); sCancels = [];
+    sIdx = (sIdx + 1) % sLoop.length;
+    var s = sLoop[sIdx];
+    sPhase(s[0]); if (s[2]) s[2]();
+    setTimeout(sAdvance, s[1]);
+  }
+  if (reduced) { sPhase('landed'); setText(sPhone, '.result', STYLED); } else { sAdvance(); }
+})();
+</script>
+</body>
+</html>

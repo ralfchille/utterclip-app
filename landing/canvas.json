@@ -1,0 +1,63 @@
+{
+  "artboards": [
+    {
+      "file": "Sketch.dc.html",
+      "title": "Sketch · structure and guidelines",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 4160
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "Landing page · 1440",
+      "x": 1620,
+      "y": 0,
+      "w": 1440,
+      "h": 7480
+    },
+    {
+      "file": "Mobile.dc.html",
+      "title": "Landing page · 390",
+      "x": 3240,
+      "y": 0,
+      "w": 390,
+      "h": 7460
+    },
+    {
+      "file": "Minimal.dc.html",
+      "title": "Alternative · minimal, animated",
+      "x": 3800,
+      "y": 0,
+      "w": 1440,
+      "h": 6000,
+      "is_interactive": true
+    }
+  ],
+  "annotations": [
+    {
+      "id": "note-type",
+      "x": 0,
+      "y": -210,
+      "w": 700,
+      "text": "Type: Schibsted Grotesk — the app's own face — for display and UI, Source Serif 4 for body, JetBrains Mono for labels and the spec table — all free on Google Fonts. Black and white only: #0B0B0B on #FBFBFA, one inverted section so the middle of the page has a floor.\n\nThe screenshots are the real app, not mockups.\n\nWritten for people who write a lot of messages — to colleagues and to assistants — so section 05 shows one dictation taking both shapes."
+    },
+    {
+      "id": "note-motion",
+      "x": 1620,
+      "y": -210,
+      "w": 700,
+      "text": "Two animations: the waveform under 01 CAPTURE and the sentence resolving under 02 TRANSCRIBE. They are CSS here because this canvas cannot load the Lottie runtime — it has no network access beyond fonts. The sketch marks both as Lottie slots; the motion you see is the motion to build.\n\nNothing else moves. Everything here runs on a loop, so it reads as instrument rather than decoration."
+    },
+    {
+      "id": "note-minimal",
+      "x": 3800,
+      "y": -260,
+      "w": 720,
+      "text": "Alternative direction: nothing to read. The hero runs the whole process on the device — speak, transcribe, rewrite, paste — and the iPhone / Mac switch shows the same moment on the other device. Then editing in place — tap a word, retype it, confirm — the Prompt style shaping a dictation into the job, the why, the guardrails and done-means for an assistant, and the one thing words never got across: dictate on the phone, a capsule appears on the Mac, one click and the text is there. Privacy stays as four facts. The two lines Ralf liked open and close the page.\n\nThe app UI is rebuilt in HTML at the app's own metrics (24/34 on the phone, 16/24 on the Mac) so the motion stays crisp at any size; a screen recording would not survive the canvas. Click into the artboard to use the switch."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
