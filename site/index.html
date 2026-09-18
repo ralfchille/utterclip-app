@@ -289,7 +289,7 @@
   .sheet .head { font-size:13px; font-weight:600; }
   .sheet .lab { font-size:11px; color:var(--mute); margin-top:14px; }
   .mini-pills { display:flex; gap:8px; flex-wrap:wrap; }
-  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .42s ease, color .16s ease .26s; }
+  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .42s ease, color 0s linear .13s; }
   .mini-pills span.on { background:var(--ink); color:var(--paper); }
   .mini-pills span.add { background:transparent; box-shadow:inset 0 0 0 1.5px var(--rule); color:var(--mute); }
   .p-styles .mini-pills { flex-wrap:nowrap; margin-bottom:14px; }
@@ -302,6 +302,14 @@
   .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; opacity:0; transform:scale(.7); transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.4,.64,1); }
   .p-model .key.ok svg { opacity:1; transform:none; }
   .p-model .mini-pills.instant span { transition:none; }
+  /* The label must not fade with the pill. Fading both together washes it out mid-way (two
+     greys meeting), and holding the dark ink while the background darkens hides the word
+     altogether just before it flips. So the background fades and the colour cuts, once, at
+     the crossover — 0s with a delay, not a short transition. Either side of that instant the
+     label is legible. 130 ms is where the two curves cross, measured rather than guessed:
+     dark ink on the pill reads 4.2:1 there and paper reads 4.5:1, and either side of it one
+     of them is far better. Cutting later — 190 ms was the first attempt — lets the ink fall
+     to 2.2:1 first, which is the word disappearing. */
   /* The key arrives the way a paste arrives: all of it at once, not letter by letter. */
   .p-model .kv { opacity:0; transition:opacity .18s ease; }
   .p-model .key.filled .kv { opacity:1; }
