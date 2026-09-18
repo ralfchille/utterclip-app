@@ -60,6 +60,11 @@ mkdir -p "$staging"
 # -R keeps the signature intact; cp without it would flatten the bundle's symlinks.
 cp -R "$app" "$staging/"
 ln -s /Applications "$staging/Applications"
+# macOS 26 draws the Applications alias in a disk image as an empty dashed square — a Finder
+# bug, largely fixed around 26.4, but a window whose right-hand target is invisible reads as
+# broken. The backdrop names the target and points at it, so the window works either way.
+mkdir -p "$staging/.background"
+cp "$root/scripts/dmg-background.tiff" "$staging/.background/background.tiff"
 
 step "Creating a writable image"
 # Sized from the contents with room for the filesystem's own overhead.
@@ -84,6 +89,7 @@ tell application "Finder"
         set arrangement of opts to not arranged
         set icon size of opts to 128
         set text size of opts to 13
+        set background picture of opts to file ".background:background.tiff"
         set position of item "Utterclip.app" of container window to {150, 195}
         set position of item "Applications" of container window to {450, 195}
         close
