@@ -282,7 +282,7 @@
   .sheet .head { font-size:13px; font-weight:600; }
   .sheet .lab { font-size:11px; color:var(--mute); margin-top:14px; }
   .mini-pills { display:flex; gap:8px; flex-wrap:wrap; }
-  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .4s ease, color .4s ease; }
+  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .42s ease, color .16s ease .26s; }
   .mini-pills span.on { background:var(--ink); color:var(--paper); }
   .mini-pills span.add { background:transparent; box-shadow:inset 0 0 0 1.5px var(--rule); color:var(--mute); }
   .p-styles .mini-pills { flex-wrap:nowrap; margin-bottom:14px; }
@@ -294,6 +294,7 @@
   .p-model .key { margin-top:8px; display:flex; align-items:center; gap:10px; height:34px; padding:0 12px; border-radius:10px; background:var(--fill); font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.02em; }
   .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; opacity:0; transform:scale(.7); transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.4,.64,1); }
   .p-model .key.ok svg { opacity:1; transform:none; }
+  .p-model .mini-pills.instant span { transition:none; }
   /* The key arrives the way a paste arrives: all of it at once, not letter by letter. */
   .p-model .kv { opacity:0; transition:opacity .18s ease; }
   .p-model .key.filled .kv { opacity:1; }
@@ -813,14 +814,20 @@
     // pasted in, the tick, and only then the provider lighting up. The provider is read
     // from the key, so Anthropic going dark is the consequence of sk-ant-, not a slideshow.
     var keyBox = document.querySelector('.p-model .key');
-    var anthropic = document.querySelector('.p-model .mini-pills span.on');
+    var pillRow = document.querySelector('.p-model .mini-pills');
+    var anthropic = pillRow.querySelector('span.on');
     if (!reduced) {
       var mTimers = [];
       var mLater = function (ms, fn) { mTimers.push(setTimeout(fn, ms)); };
       (function cycle() {
         mTimers.forEach(clearTimeout); mTimers = [];
         keyBox.classList.remove('filled', 'ok');
+        // Cut back to the start rather than playing the lighting backwards: a pill fading
+        // to grey while the field empties is a flicker, not a step in the story.
+        pillRow.classList.add('instant');
         anthropic.classList.remove('on');
+        void pillRow.offsetHeight;
+        pillRow.classList.remove('instant');
         mLater(1500, function () { keyBox.classList.add('filled'); });   // pasted
         mLater(1900, function () { keyBox.classList.add('ok'); });       // checked
         mLater(2300, function () { anthropic.classList.add('on'); });    // and so, Anthropic
