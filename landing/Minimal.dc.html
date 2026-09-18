@@ -282,7 +282,7 @@
   .sheet .head { font-size:13px; font-weight:600; }
   .sheet .lab { font-size:11px; color:var(--mute); margin-top:14px; }
   .mini-pills { display:flex; gap:8px; flex-wrap:wrap; }
-  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; }
+  .mini-pills span { height:30px; padding:0 14px; border-radius:15px; background:var(--fill); font-size:12px; font-weight:500; display:inline-flex; align-items:center; transition:background .4s ease, color .4s ease; }
   .mini-pills span.on { background:var(--ink); color:var(--paper); }
   .mini-pills span.add { background:transparent; box-shadow:inset 0 0 0 1.5px var(--rule); color:var(--mute); }
   .p-styles .mini-pills { flex-wrap:nowrap; margin-bottom:14px; }
@@ -292,7 +292,11 @@
   .p-model .mini-pills { margin-top:8px; }
   .p-model .mini-pills span { height:26px; padding:0 11px; font-size:11.5px; }
   .p-model .key { margin-top:8px; display:flex; align-items:center; gap:10px; height:34px; padding:0 12px; border-radius:10px; background:var(--fill); font-family:"JetBrains Mono", ui-monospace, Menlo, monospace; font-size:12px; letter-spacing:.02em; }
-  .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; }
+  .p-model .key svg { width:12px; height:12px; margin-left:auto; flex:none; opacity:0; transform:scale(.7); transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.4,.64,1); }
+  .p-model .key.ok svg { opacity:1; transform:none; }
+  /* The key arrives the way a paste arrives: all of it at once, not letter by letter. */
+  .p-model .kv { opacity:0; transition:opacity .18s ease; }
+  .p-model .key.filled .kv { opacity:1; }
   .p-model .kept { margin-top:8px; font-size:11px; color:var(--mute); }
   .p-history .sheet { padding-bottom:8px; }
   /* Four rows tall and clipped, so the list cannot grow however long the page stays open;
@@ -483,7 +487,7 @@
         <span class="mono">Free · Open source</span>
       </div>
     </div>
-    <div class="frame">
+    <div class="frame" data-max="0.88">
       <div class="stage" id="stage" data-phase="idle">
         <div class="stagebar" aria-hidden="true"><img src="menubar.png" alt="" width="17" height="18"></div>
         <div class="composer" aria-hidden="true">
@@ -533,7 +537,7 @@
         <div class="frame mini" data-w="340"><div class="panel p-model">
           <div class="sheet">
             <div class="row"><div class="head">Rewrite with</div><div class="mini-pills"><span>Apple Intelligence</span><span class="on">Anthropic</span><span>OpenAI</span><span>Gemini</span><span>Groq</span></div></div>
-            <div class="row"><div class="head">API key</div><div class="key">sk-ant-••••••••••••••••3f9a<svg><use href="#i-check"/></svg></div><div class="kept">Stored in your Keychain. Never on a server of ours.</div></div>
+            <div class="row"><div class="head">API key</div><div class="key ok"><span class="kv">sk-ant-••••••••••••••••3f9a</span><svg><use href="#i-check"/></svg></div><div class="kept">Stored in your Keychain. Never on a server of ours.</div></div>
           </div>
         </div></div>
         <div class="mono">Your model</div>
@@ -584,8 +588,12 @@
       var box = f.firstElementChild, w = +f.dataset.w || 600;
       if (f.classList.contains('wide')) { var stack = f.clientWidth < 860; f.classList.toggle('stack', stack); w = stack ? 400 : 1200; }
       if (!f.clientWidth) return;
-      var k = Math.min(1, f.clientWidth / w);
-      box.style.transform = 'translateX(' + ((f.clientWidth - w * k) / 2).toFixed(2) + 'px) scale(' + k.toFixed(4) + ')';
+      // data-max holds a box below the width it could fill — the hero's, so the headline
+      // beside it is not crowded. Centre it in both directions, or the room it gives back
+      // all collects underneath it.
+      var k = Math.min(+f.dataset.max || 1, f.clientWidth / w);
+      var dx = (f.clientWidth - w * k) / 2, dy = (f.clientHeight - box.offsetHeight * k) / 2;
+      box.style.transform = 'translate(' + dx.toFixed(2) + 'px,' + dy.toFixed(2) + 'px) scale(' + k.toFixed(4) + ')';
     });
   }
   window.addEventListener('resize', fit);
@@ -801,8 +809,24 @@
       var wait = dir > 0 ? (i >= add.length ? (dir = -1, 2200) : 85) : (i <= 0 ? (dir = 1, 1600) : 45);
       setTimeout(step, wait);
     })(); else extra.textContent = add;
-    // model: Anthropic stays lit, because the key under it is an Anthropic key. The
-    // selection used to travel along the row, which made a claim the key contradicted.
+    // model: the card explains itself in the order it happens — an empty field, a key
+    // pasted in, the tick, and only then the provider lighting up. The provider is read
+    // from the key, so Anthropic going dark is the consequence of sk-ant-, not a slideshow.
+    var keyBox = document.querySelector('.p-model .key');
+    var anthropic = document.querySelector('.p-model .mini-pills span.on');
+    if (!reduced) {
+      var mTimers = [];
+      var mLater = function (ms, fn) { mTimers.push(setTimeout(fn, ms)); };
+      (function cycle() {
+        mTimers.forEach(clearTimeout); mTimers = [];
+        keyBox.classList.remove('filled', 'ok');
+        anthropic.classList.remove('on');
+        mLater(1500, function () { keyBox.classList.add('filled'); });   // pasted
+        mLater(1900, function () { keyBox.classList.add('ok'); });       // checked
+        mLater(2300, function () { anthropic.classList.add('on'); });    // and so, Anthropic
+        mLater(6800, cycle);
+      })();
+    }
     // history: a new dictation arrives on top, the oldest leaves
     var items = [
       ['09:41', 'Running about 10 minutes late to standup. Go ahead and…'],
