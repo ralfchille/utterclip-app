@@ -488,7 +488,7 @@
         <span class="mono">Free · Open source</span>
       </div>
     </div>
-    <div class="frame" data-max="0.88">
+    <div class="frame">
       <div class="stage" id="stage" data-phase="idle">
         <div class="stagebar" aria-hidden="true"><img src="menubar.png" alt="" width="17" height="18"></div>
         <div class="composer" aria-hidden="true">
@@ -589,10 +589,12 @@
       var box = f.firstElementChild, w = +f.dataset.w || 600;
       if (f.classList.contains('wide')) { var stack = f.clientWidth < 860; f.classList.toggle('stack', stack); w = stack ? 400 : 1200; }
       if (!f.clientWidth) return;
-      // data-max holds a box below the width it could fill — the hero's, so the headline
-      // beside it is not crowded. Centre it in both directions, or the room it gives back
-      // all collects underneath it.
-      var k = Math.min(+f.dataset.max || 1, f.clientWidth / w);
+      // Every walkthrough sits at 0.88 of the width it could fill, so a device is never the
+      // loudest thing on its row. The exception is the three cards under "Make it yours":
+      // they are small already, and shrinking them costs legibility they cannot spare.
+      // Centre the held-back box in both directions, or the room it gives back collects
+      // underneath it.
+      var k = Math.min(f.classList.contains('mini') ? 1 : 0.88, f.clientWidth / w);
       var dx = (f.clientWidth - w * k) / 2, dy = (f.clientHeight - box.offsetHeight * k) / 2;
       box.style.transform = 'translate(' + dx.toFixed(2) + 'px,' + dy.toFixed(2) + 'px) scale(' + k.toFixed(4) + ')';
     });
