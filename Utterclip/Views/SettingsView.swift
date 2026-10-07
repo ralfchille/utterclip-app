@@ -203,15 +203,15 @@ struct SettingsView: View {
                     Text("Emails, phone numbers, links and addresses are swapped for placeholders before the transcript is sent to the AI provider, and put back in the result. Names stay as they are — detecting them is unreliable and they matter for tone. Audio never leaves the device.")
                 }
 
-                #if os(macOS)
-                // Which build this is, where a Mac app is looked for: the bottom of Settings,
-                // rather than an About window a menu bar app has no menu to open.
+                // Which build this is, at the bottom of Settings — the place both platforms
+                // look for it, and the only place either can: a menu bar app has no menu to
+                // open an About window from, and an iPhone app has nowhere else at all.
+                // It is also how anyone reporting something can say which build they saw.
                 Text(Self.buildDescription)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
-                #endif
             }
             .groupedFormStyle()
             .subtleSeparators()
@@ -232,7 +232,7 @@ struct SettingsView: View {
         }
     }
 
-    /// "Utterclip 1.1 (4)" — the marketing version with the build behind it, the way Apple
+    /// "Utterclip 1.2 (6)" — the marketing version with the build behind it, the way Apple
     /// writes it everywhere else.
     private static var buildDescription: String {
         let info = Bundle.main.infoDictionary

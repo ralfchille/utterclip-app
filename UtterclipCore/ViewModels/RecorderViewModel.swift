@@ -150,9 +150,18 @@ public final class RecorderViewModel {
     public var onDeviceAvailable: Bool { LocalRewriter.isAvailable }
     public var onDeviceUnavailabilityReason: String? { LocalRewriter.unavailabilityReason }
 
+    /// Mirrors the stored default so that Observation can see it. The property below reads
+    /// this rather than UserDefaults directly: a computed property over a plain store
+    /// registers no dependency when SwiftUI reads it and announces nothing when it is
+    /// written, so the picker bound to it never redrew. The value had already moved — the
+    /// setting simply looked as though it refused to change, and worst where a result was on
+    /// screen, since then not even `selectedStyle` changed to force the view to catch up.
+    private var storedDefaultStyleID: String =
+        SyncedDefaults.shared.string(forKey: RecorderViewModel.defaultStyleKey) ?? Styles.defaultStyle.id
+
     public var defaultStyleID: String {
         get {
-            let stored = defaults.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
+            let stored = storedDefaultStyleID
             // A saved default may name a style that no longer exists (a removed built-in id,
             // or a deleted user-added style) — fall back so the picker and the one-tap
             // rewrite stay consistent.
@@ -160,6 +169,7 @@ public final class RecorderViewModel {
             return StyleStore.shared.styles.first?.id ?? Styles.defaultStyle.id
         }
         set {
+            storedDefaultStyleID = newValue
             defaults.set(newValue, forKey: Self.defaultStyleKey)
             // With nothing on screen the pills show the upcoming style; keep them in step with
             // the new default. A shown result keeps its own pill — the text belongs to it.
@@ -199,6 +209,7 @@ public final class RecorderViewModel {
         defer { isApplyingRemoteSettings = false }
         copyAsMarkdown = defaults.bool(forKey: Self.copyAsMarkdownKey)
         redactPersonalData = defaults.object(forKey: Self.redactPersonalDataKey) as? Bool ?? true
+        storedDefaultStyleID = defaults.string(forKey: Self.defaultStyleKey) ?? Styles.defaultStyle.id
         if rawTranscript == nil {
             selectedStyle = StyleStore.shared.style(withID: defaultStyleID)
         } else if StyleStore.shared.styleIfPresent(withID: selectedStyle.id) == nil {

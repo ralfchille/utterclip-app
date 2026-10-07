@@ -45,7 +45,7 @@ let project = Project(
             // them to match. Bump the build number whenever the widget changes: iOS caches
             // widget gallery previews per bundle version and won't re-render otherwise.
             "MARKETING_VERSION": "1.2",
-            "CURRENT_PROJECT_VERSION": "5",
+            "CURRENT_PROJECT_VERSION": "6",
             // FoundationModels exists from iOS 26 / macOS 26; weak-link so older systems
             // still launch.
             "OTHER_LDFLAGS": ["$(inherited)", "-weak_framework", "FoundationModels"],
