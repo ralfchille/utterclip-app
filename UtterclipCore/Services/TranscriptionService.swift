@@ -21,6 +21,18 @@ public final class TranscriptionService {
     }
 
     public private(set) var state: State = .cold
+
+    /// When the current warm-up began, so the idle screen can show how long it has been
+    /// going. Nil whenever nothing is loading: a spinner with no clock beside it tells the
+    /// user nothing about whether to keep waiting.
+    public private(set) var warmUpStartedAt: Date?
+
+    /// Whether this warm-up has to fetch the model from Hugging Face — the slow first
+    /// launch — rather than read it off the disk. Decided once, when warm-up starts,
+    /// because the folder appears partway through and the message must not change under
+    /// the user mid-wait.
+    public private(set) var isDownloadingModel = false
+
     private var whisperKit: WhisperKit?
     private let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "transcription")
 
@@ -32,6 +44,16 @@ public final class TranscriptionService {
     private static let supersededModelVariants = ["openai_whisper-small"]
 
     private init() {}
+
+    /// Whether the model is already downloaded. Same folder `tidyModelStorage()` knows
+    /// about; the variant name is a substring because WhisperKit prefixes it
+    /// ("openai_whisper-small_216MB").
+    private static var modelIsOnDisk: Bool {
+        let repoFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appending(path: "huggingface/models/argmaxinc/whisperkit-coreml")
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: repoFolder.path)) ?? []
+        return names.contains { $0.contains(modelVariant) }
+    }
 
     /// Housekeeping once the model is ready: drop models from earlier builds, and keep the
     /// cache out of iCloud/computer backups — it is ~220 MB of re-downloadable data.
@@ -60,6 +82,8 @@ public final class TranscriptionService {
         case .cold, .failed: break
         }
         state = .warming
+        warmUpStartedAt = Date()
+        isDownloadingModel = !Self.modelIsOnDisk
         print("[utterclip] warm-up started")
         Task {
             var lastError: Error?
@@ -76,6 +100,7 @@ public final class TranscriptionService {
 
                     self.whisperKit = kit
                     self.state = .ready
+                    self.warmUpStartedAt = nil
                     Self.tidyModelStorage()
                     let elapsed = ContinuousClock.now - start
                     logger.info("Whisper model ready in \(elapsed, privacy: .public) (attempt \(attempt))")
@@ -91,6 +116,7 @@ public final class TranscriptionService {
             }
             // String(describing:) keeps WhisperKit's error detail that
             // localizedDescription often drops.
+            self.warmUpStartedAt = nil
             self.state = .failed(lastError.map { String(describing: $0) } ?? "Unknown error")
         }
     }

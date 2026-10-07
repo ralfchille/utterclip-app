@@ -256,8 +256,12 @@ struct ContentView: View {
                     PasteBack.shared.offer()
                     // Straight into the text with a caret at the end: a rewrite is usually
                     // read and tweaked, not admired. Skipped while a paste-back is waiting,
-                    // where Return belongs to the confirm bar rather than to the text.
+                    // where Return belongs to the confirm bar rather than to the text — and
+                    // skipped for a result pulled in from History or from the phone, which
+                    // you came to use rather than to correct: it stays as it is, ready to
+                    // paste or to dictate over.
                     if pasteBack.offeredAppName == nil, styledDraft == nil,
+                       viewModel.resultOrigin == .dictated,
                        let styled = viewModel.styledText {
                         beginEditing(styled)
                         resultLabel = .idle
@@ -356,15 +360,38 @@ struct ContentView: View {
     }
 
     /// Spinner over centered text while the model is still loading; gone once it's ready.
+    ///
+    /// A bare spinner asks the user to wait without saying for what or for how long, and the
+    /// first launch is the slow one — a ~220 MB download, then CoreML specialising the model
+    /// for this machine. So: what is happening, a clock that proves it is still happening,
+    /// and what the wait costs next time, which is the part that stops it feeling broken.
     @ViewBuilder
     private var modelLoadingIndicator: some View {
         switch viewModel.transcription.state {
         case .cold, .warming:
-            VStack(spacing: 10) {
+            let downloading = viewModel.transcription.isDownloadingModel
+            VStack(spacing: 8) {
                 ProgressView()
-                Text("Model loads in the background — you can record right away.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 2)
+                Text(downloading ? "Downloading the speech model" : "Loading the speech model")
+                    .font(.footnote.weight(.medium))
+                if let since = viewModel.transcription.warmUpStartedAt {
+                    // Ticks once a second; monospaced so the line does not jitter as the
+                    // digits change.
+                    TimelineView(.periodic(from: since, by: 1)) { context in
+                        Text(downloading
+                             ? "About 220 MB, once · \(Self.elapsed(since: since, now: context.date))"
+                             : Self.elapsed(since: since, now: context.date))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+                Text(downloading
+                     ? "You can record now. Next launch takes seconds."
+                     : "You can record now.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
             }
@@ -372,6 +399,12 @@ struct ContentView: View {
         case .ready, .failed:
             EmptyView()
         }
+    }
+
+    /// "0:07", "1:23" — minutes only once there are any, the way a stopwatch reads.
+    private static func elapsed(since: Date, now: Date) -> String {
+        let seconds = max(0, Int(now.timeIntervalSince(since)))
+        return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
     @ViewBuilder

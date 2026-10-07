@@ -63,6 +63,13 @@ public final class RecorderViewModel {
     private var phoneObserver: NSObjectProtocol?
     /// Dictations already pulled in (or dismissed): the indicator does not come back for them.
     private var claimedRemoteIDs: Set<UUID> = []
+
+    /// Where the result on screen came from. The Mac opens a dictation you just spoke
+    /// straight into the editor — a rewrite is usually read and tweaked, not admired — but
+    /// one you pulled in from History or from the phone is there to be used, so it stays as
+    /// it is, ready to paste or to dictate over.
+    public enum ResultOrigin { case dictated, pulledIn }
+    public private(set) var resultOrigin: ResultOrigin = .dictated
     /// Phone activity up to this timestamp was dismissed; only newer activity shows again.
     private var dismissedActivityAt = Date.distantPast
 
@@ -316,6 +323,7 @@ public final class RecorderViewModel {
                 entry.styleID = style.id
             }
             commitCurrentEntry() // stored before "done" is published, so both sync together
+            resultOrigin = .dictated
             phase = .done
             haptic(.light)
             return
@@ -355,6 +363,7 @@ public final class RecorderViewModel {
         // Store first, announce second: the "done" activity record names this dictation, and
         // the other device can only show it if both records travel in the same export.
         commitCurrentEntry()
+        resultOrigin = .dictated
         phase = .done
         // The result arriving is the moment the whole dictation was for, and it was the one
         // thing that happened without a word. The same tap as confirming an edit, and only on
@@ -438,6 +447,7 @@ public final class RecorderViewModel {
         } else {
             Clipboard.copy(entry.rawTranscript)
         }
+        resultOrigin = .pulledIn
         phase = .done
         haptic(.light)
     }
