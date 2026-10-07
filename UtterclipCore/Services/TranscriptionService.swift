@@ -33,6 +33,12 @@ public final class TranscriptionService {
     /// the user mid-wait.
     public private(set) var isDownloadingModel = false
 
+    /// How far the download has got, 0...1, or nil when nothing is downloading — which is
+    /// every launch after the first, and the second half of the first one. A download of a
+    /// few hundred megabytes is the one part of the wait whose length is actually knowable,
+    /// so it is the one part that gets a bar rather than a spinner.
+    public private(set) var downloadFraction: Double?
+
     private var whisperKit: WhisperKit?
     private let logger = Logger(subsystem: "com.ralfchille.utterclip", category: "transcription")
 
@@ -83,7 +89,9 @@ public final class TranscriptionService {
         }
         state = .warming
         warmUpStartedAt = Date()
-        isDownloadingModel = !Self.modelIsOnDisk
+        let needsDownload = !Self.modelIsOnDisk
+        isDownloadingModel = needsDownload
+        downloadFraction = needsDownload ? 0 : nil
         print("[utterclip] warm-up started")
         Task {
             var lastError: Error?
@@ -95,12 +103,25 @@ public final class TranscriptionService {
                     // "small" is the same model at ~500 MB). Language is auto-detected, so
                     // German and English both work untoggled. prewarm forces CoreML/ANE
                     // specialization here at launch instead of on the user's first recording.
+                    // Downloaded here rather than inside WhisperKit's own setup, which
+                    // reports nothing while it runs. Same variant and the same default base
+                    // (Documents/huggingface), so what lands is exactly what the loader
+                    // below then finds locally — nothing is fetched twice.
+                    if needsDownload {
+                        _ = try await WhisperKit.download(variant: Self.modelVariant) { progress in
+                            Task { @MainActor in self.report(progress.fractionCompleted) }
+                        }
+                        // Downloaded; what remains is CoreML specialising the model for this
+                        // machine, whose length nothing can tell us. Back to a spinner.
+                        self.downloadFraction = nil
+                    }
                     let config = WhisperKitConfig(model: Self.modelVariant, prewarm: true)
                     let kit = try await WhisperKit(config)
 
                     self.whisperKit = kit
                     self.state = .ready
                     self.warmUpStartedAt = nil
+                    self.downloadFraction = nil
                     Self.tidyModelStorage()
                     let elapsed = ContinuousClock.now - start
                     logger.info("Whisper model ready in \(elapsed, privacy: .public) (attempt \(attempt))")
@@ -117,8 +138,17 @@ public final class TranscriptionService {
             // String(describing:) keeps WhisperKit's error detail that
             // localizedDescription often drops.
             self.warmUpStartedAt = nil
+            self.downloadFraction = nil
             self.state = .failed(lastError.map { String(describing: $0) } ?? "Unknown error")
         }
+    }
+
+    /// Hugging Face reports progress many times a second and the bar cannot show more than
+    /// it can draw; a percent is the smallest step worth a redraw.
+    private func report(_ fraction: Double) {
+        guard isDownloadingModel else { return }
+        if let shown = downloadFraction, abs(fraction - shown) < 0.01, fraction < 1 { return }
+        downloadFraction = min(max(fraction, 0), 1)
     }
 
     public func transcribe(_ audioURL: URL) async throws -> String {

@@ -369,25 +369,38 @@ struct ContentView: View {
     private var modelLoadingIndicator: some View {
         switch viewModel.transcription.state {
         case .cold, .warming:
-            let downloading = viewModel.transcription.isDownloadingModel
+            let transcription = viewModel.transcription
             VStack(spacing: 8) {
-                ProgressView()
-                    .padding(.bottom, 2)
-                Text(downloading ? "Downloading the speech model" : "Loading the speech model")
+                // A bar only where there is something real to fill it: the download knows
+                // its own size. The specialising that follows does not, and a bar that
+                // crawls or jumps invents a precision nobody has.
+                if let fraction = transcription.downloadFraction {
+                    ProgressView(value: fraction)
+                        .progressViewStyle(.linear)
+                        .frame(maxWidth: 200)
+                } else {
+                    ProgressView()
+                        .padding(.bottom, 2)
+                }
+                Text(transcription.downloadFraction != nil
+                     ? "Downloading the speech model"
+                     : "Preparing the speech model")
                     .font(.footnote.weight(.medium))
-                if let since = viewModel.transcription.warmUpStartedAt {
+                if let since = transcription.warmUpStartedAt {
                     // Ticks once a second; monospaced so the line does not jitter as the
                     // digits change.
                     TimelineView(.periodic(from: since, by: 1)) { context in
-                        Text(downloading
-                             ? "About 220 MB, once · \(Self.elapsed(since: since, now: context.date))"
-                             : Self.elapsed(since: since, now: context.date))
+                        let clock = Self.elapsed(since: since, now: context.date)
+                        Text(transcription.downloadFraction.map {
+                            "\(Int($0 * 100))% of about 220 MB · "
+                                + (Self.remaining(fraction: $0, since: since, now: context.date) ?? clock)
+                        } ?? clock)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
                     }
                 }
-                Text(downloading
+                Text(transcription.isDownloadingModel
                      ? "You can record now. Next launch takes seconds."
                      : "You can record now.")
                     .font(.caption)
@@ -396,9 +409,22 @@ struct ContentView: View {
                     .fixedSize(horizontal: false, vertical: true) // wrap, never truncate
             }
             .frame(maxWidth: .infinity)
+            .animation(.snappy, value: transcription.downloadFraction == nil)
         case .ready, .failed:
             EmptyView()
         }
+    }
+
+    /// How much longer the download has, from the rate it has managed so far — the thing
+    /// someone watching a slow bar actually wants to know. Nil until there is enough of it
+    /// to divide by: an estimate from the first instant is noise, and a wrong one that
+    /// settles down later reads worse than no estimate at all.
+    private static func remaining(fraction: Double, since: Date, now: Date) -> String? {
+        let elapsed = now.timeIntervalSince(since)
+        guard fraction >= 0.05, fraction < 1, elapsed >= 3 else { return nil }
+        let left = Int((elapsed / fraction - elapsed).rounded())
+        guard left > 0 else { return nil }
+        return left < 90 ? "about \(left)s left" : "about \(Int((Double(left) / 60).rounded())) min left"
     }
 
     /// "0:07", "1:23" — minutes only once there are any, the way a stopwatch reads.
