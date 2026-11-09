@@ -44,7 +44,7 @@ let project = Project(
             // Shared by app, core framework and widget extension — the store requires
             // them to match. Bump the build number whenever the widget changes: iOS caches
             // widget gallery previews per bundle version and won't re-render otherwise.
-            "MARKETING_VERSION": "1.2",
+            "MARKETING_VERSION": "1.2.1",
             "CURRENT_PROJECT_VERSION": "7",
             // FoundationModels exists from iOS 26 / macOS 26; weak-link so older systems
             // still launch.
