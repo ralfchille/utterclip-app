@@ -194,6 +194,13 @@ struct ContentView: View {
             }
             .onChange(of: viewModel.recorder.isRecording, initial: true) { _, isRecording in
                 RecordingState.isRecording = isRecording // for the Mac status item's click logic
+                #if os(iOS)
+                // Auto-Lock would end a long dictation halfway through a sentence, so the
+                // screen stays on for as long as the mic is open and goes back to the user's
+                // Auto-Lock setting the moment it closes. Every way in (button, widget, Action
+                // button, Continue dictating) flips `isRecording`, so this one place covers all.
+                UIApplication.shared.isIdleTimerDisabled = isRecording
+                #endif
             }
             .onReceive(NotificationCenter.default.publisher(for: .utterclipStartRecording)) { _ in
                 guard !viewModel.recorder.isRecording, !recordUnavailable else { return }
